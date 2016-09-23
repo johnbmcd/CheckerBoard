@@ -124,13 +124,13 @@ int offset = 40;				//40;
 int upperoffset = 20;			//20;
 
 char szWinName[] = "CheckerBoard";	/* name of window class */
-int board8[8][8];					/* global which holds the board */
+int gui_board8[8][8];				/* the board being displayed in the GUI*/
+int gui_color = CB_BLACK;			/* color is the side to move next in the GUI */
 int setup = 0;						/* 1 if in setup mode */
 int increment = 0;					// 1 if in an incremental time level
 static int addcomment = 0;
 int handicap = 0;
 int testset_number = 0;
-int color = CB_BLACK;					/* color is the side to move next */
 int playnow = 0; 						/* playnow is passed to the checkers engines, it is set to nonzero if the user chooses 'play' */
 int analyze = 0;						/* is set to 1 if the computer is analyzing the game - obsolete?*/
 int reset = 0;
@@ -641,7 +641,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					if(setup)
 						MessageBox(hwnd, "Cannot copy position in setup mode.\nLeave the setup mode first if you\nwant to copy this position.","Error", MB_OK);
 					else
-						FENtoclipboard(hwnd, board8, color, GPDNgame.gametype);
+						FENtoclipboard(hwnd, gui_board8, gui_color, GPDNgame.gametype);
 					break;
 
 				case GAME_FENFROMCLIPBOARD:
@@ -652,7 +652,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						{
 						PostMessage(hwnd, WM_COMMAND, ABORTENGINE, 0);
 
-						if(FENtoboard8(board8, gamestring, &color, GPDNgame.gametype))
+						if(FENtoboard8(gui_board8, gamestring, &gui_color, GPDNgame.gametype))
 							{
 							updateboardgraphics(hwnd);
 							reset = 1;
@@ -685,8 +685,8 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 
 						/* Detect fen or game, load it in either case. */
 						if (is_fen(gamestring)) {
-							if (!FENtoboard8(board8, gamestring, &color, GPDNgame.gametype)) {
-								doload(&GPDNgame, gamestring, &color, board8);
+							if (!FENtoboard8(gui_board8, gamestring, &gui_color, GPDNgame.gametype)) {
+								doload(&GPDNgame, gamestring, &gui_color, gui_board8);
 								sprintf(str,"game copied");
 							}
 							else {
@@ -695,7 +695,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 							}
 						}
 						else {
-							doload(&GPDNgame, gamestring, &color, board8);
+							doload(&GPDNgame, gamestring, &gui_color, gui_board8);
 							sprintf(str,"position copied");
 						}
 						free(gamestring);
@@ -754,7 +754,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						// set up position
 						if(userbookcur < userbooknum) // only if there are any positions
 							{
-							bitboardtoboard8(&(userbook[userbookcur].position), board8);
+							bitboardtoboard8(&(userbook[userbookcur].position), gui_board8);
 							updateboardgraphics(hwnd);
 							}
 						break;
@@ -766,10 +766,10 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					if (current->last != NULL)
 						{
 						current = current->last;
-						undomove(current->move, board8);
+						undomove(current->move, gui_board8);
 						updateboardgraphics(hwnd);
 						// shouldnt this color thing be handled in undomove?
-						color = CB_CHANGECOLOR(color);
+						gui_color = CB_CHANGECOLOR(gui_color);
 						sprintf(str,"takeback: ");
 						// and print move number and move into the status bar
 						// get move number:
@@ -815,7 +815,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						// set up position
 						if(userbookcur < userbooknum) // only if there are any positions
 							{
-							bitboardtoboard8(&(userbook[userbookcur].position), board8);
+							bitboardtoboard8(&(userbook[userbookcur].position), gui_board8);
 							updateboardgraphics(hwnd);
 							}
 						break;
@@ -824,9 +824,9 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					// normal case - move forward one move
 					if( current->next!=NULL )
 						{
-						domove(current->move, board8);
+						domove(current->move, gui_board8);
 						updateboardgraphics(hwnd);
-						color = CB_CHANGECOLOR(color);
+						gui_color = CB_CHANGECOLOR(gui_color);
 						// get move number:
 						i = getmovenumber(current);
 
@@ -865,8 +865,8 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					while ( current->last != NULL )
 						{
 						current = current->last;
-						undomove( current->move, board8);
-						color = CB_CHANGECOLOR(color);
+						undomove( current->move, gui_board8);
+						gui_color = CB_CHANGECOLOR(gui_color);
 						}
 					if(CBstate == OBSERVEGAME)
 						PostMessage(hwnd,WM_COMMAND,INTERRUPTENGINE,0);
@@ -1149,7 +1149,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						// set up position
 						if(userbookcur < userbooknum) // only if there are any positions
 							{
-							bitboardtoboard8(&(userbook[userbookcur].position), board8);
+							bitboardtoboard8(&(userbook[userbookcur].position), gui_board8);
 							updateboardgraphics(hwnd);
 							}
 						}
@@ -1181,7 +1181,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						// set up position
 						if(userbookcur < userbooknum && userbooknum!=0) // only if there are any positions
 							{
-							bitboardtoboard8(&(userbook[userbookcur].position), board8);
+							bitboardtoboard8(&(userbook[userbookcur].position), gui_board8);
 							updateboardgraphics(hwnd);
 							}
 						// save user book
@@ -1271,7 +1271,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 
 				case ENGINEEVAL:
 					// static eval of the current positions
-					board8toFEN(board8,str2,color,GPDNgame.gametype);
+					board8toFEN(gui_board8,str2,gui_color,GPDNgame.gametype);
 					sprintf(Lstr,"staticevaluation %s",str2);
 					if(enginecommand(Lstr,reply))
 						MessageBox(hwnd,reply,"Static Evaluation",MB_OK);
@@ -1355,7 +1355,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						sprintf(str, "Setup done");
 						// get FEN string
 						reset_current_game_pdn();
-						board8toFEN(board8, GPDNgame.FEN, color, GPDNgame.gametype);
+						board8toFEN(gui_board8, GPDNgame.FEN, gui_color, GPDNgame.gametype);
 						sprintf(GPDNgame.setup, "1");
 						}
 					break;
@@ -1365,7 +1365,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					for(k=0;k<=7;k++) 
 						{
 						for(l=0;l<=7;l++) 
-							board8[k][l]=0;
+							gui_board8[k][l]=0;
 						}
 					updateboardgraphics(hwnd);
 					break;
@@ -1407,7 +1407,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					break;
 
 				case SETUPCC:
-					handlesetupcc(&color);
+					handlesetupcc(&gui_color);
 					break;
 
 				case HELPHELP:      
@@ -1637,7 +1637,7 @@ int handlesetupcc(int *color)
 
 	// and the setup codes 
 	sprintf(GPDNgame.setup,"1");
-	board8toFEN(board8,str2,*color,GPDNgame.gametype);
+	board8toFEN(gui_board8,str2,*color,GPDNgame.gametype);
 	sprintf(GPDNgame.FEN,str2);
 	return 1;
 	}
@@ -1649,16 +1649,16 @@ int handle_rbuttondown(int x, int y)
 		coorstocoors(&x,&y, gCBoptions.invert, gCBoptions.mirror);
 		if( (x+y+1)%2)
 			{
-			switch(board8[x][y])
+			switch(gui_board8[x][y])
 				{
 				case CB_WHITE|CB_MAN: 
-					board8[x][y] = CB_WHITE|CB_KING;
+					gui_board8[x][y] = CB_WHITE|CB_KING;
 					break;
 				case CB_WHITE|CB_KING: 
-					board8[x][y] = 0;
+					gui_board8[x][y] = 0;
 					break;
 				default: 
-					board8[x][y] = CB_WHITE|CB_MAN;
+					gui_board8[x][y] = CB_WHITE|CB_MAN;
 					break;
 				}
 			}
@@ -1678,16 +1678,16 @@ int handle_lbuttondown(int x, int y)
 		coorstocoors(&x,&y,gCBoptions.invert, gCBoptions.mirror);
 		if( (x+y+1)%2)
 			{
-			switch(board8[x][y])
+			switch(gui_board8[x][y])
 				{
 				case CB_BLACK|CB_MAN: 
-					board8[x][y]=CB_BLACK|CB_KING;
+					gui_board8[x][y]=CB_BLACK|CB_KING;
 					break;
 				case CB_BLACK|CB_KING: 
-					board8[x][y]=0;
+					gui_board8[x][y]=0;
 					break;
 				default: 
-					board8[x][y]=CB_BLACK|CB_MAN;
+					gui_board8[x][y]=CB_BLACK|CB_MAN;
 					break;
 				}
 			}
@@ -1713,7 +1713,7 @@ int handle_lbuttondown(int x, int y)
 			legalmovenumber = 0;
 			for(i=1; i<=32; i++)
 				{
-				if(islegal(board8, color, coorstonumber(x1,y1_,GPDNgame.gametype), i, &GCBmove) != 0)
+				if(islegal(gui_board8, gui_color, coorstonumber(x1,y1_,GPDNgame.gametype), i, &GCBmove) != 0)
 					{
 					legal++;
 					legalmovenumber = i;
@@ -1726,7 +1726,7 @@ int handle_lbuttondown(int x, int y)
 			if(legal == 0) {
 				for(i=1; i<=32; i++)
 				{
-				if(islegal(board8, color, i, coorstonumber(x1,y1_,GPDNgame.gametype), &GCBmove) != 0)
+				if(islegal(gui_board8, gui_color, i, coorstonumber(x1,y1_,GPDNgame.gametype), &GCBmove) != 0)
 					{
 					legal++;
 					legalmovenumber = i;
@@ -1746,7 +1746,7 @@ int handle_lbuttondown(int x, int y)
 				// if yes, do it! 
 				// if we are in user book mode, add it to user book!
 				//if(islegal((int *)board8,color,coorstonumber(x1,y1,GPDNgame.gametype),legalmovenumber,&GCBmove)!=0)
-				if(islegal(board8,color,from,to,&GCBmove)!=0)
+				if(islegal(gui_board8,gui_color,from,to,&GCBmove)!=0)
 					// a legal move!
 					{
 					// insert move in the linked list 
@@ -1756,7 +1756,7 @@ int handle_lbuttondown(int x, int y)
 					
 					// if we are in userbook mode, we save the move
 					if(CBstate == BOOKADD)
-						addmovetouserbook(board8, &GCBmove);
+						addmovetouserbook(gui_board8, &GCBmove);
 
 					// call animation function which will also execute the move
 					CloseHandle(hAniThread);
@@ -1775,12 +1775,12 @@ int handle_lbuttondown(int x, int y)
 				}
 			}
 		// if the stone is the color of the side to move, allow it to be selected
-		if((color==CB_BLACK && board8[x1][y1_]&CB_BLACK) || (color==CB_WHITE && board8[x1][y1_]&CB_WHITE))
+		if((gui_color==CB_BLACK && gui_board8[x1][y1_]&CB_BLACK) || (gui_color==CB_WHITE && gui_board8[x1][y1_]&CB_WHITE))
 			{
 			// re-print board to overwrite last selection if there was one
 			updateboardgraphics(hwnd);
 			// and then select stone
-			selectstone(x1, y1_, hwnd, board8);
+			selectstone(x1, y1_, hwnd, gui_board8);
 			}
 		// else, reset the click count to 0.
 		else
@@ -1803,12 +1803,12 @@ int handle_lbuttondown(int x, int y)
 		// here [FEN "W:WK14:B19,18,11,10."]
 		// however, with the new one-click-move input, this will work fine now!
 
-		if((color==CB_BLACK && board8[x2][y2]&CB_BLACK) || (color==CB_WHITE && board8[x2][y2]&CB_WHITE))
+		if((gui_color==CB_BLACK && gui_board8[x2][y2]&CB_BLACK) || (gui_color==CB_WHITE && gui_board8[x2][y2]&CB_WHITE))
 			{
 			// re-print board to overwrite last selection if there was one
 			updateboardgraphics(hwnd);
 			// and then select stone
-			selectstone(x2, y2, hwnd, board8);
+			selectstone(x2, y2, hwnd, gui_board8);
 			// set second click to first click
 			x1 = x2;
 			y1_ = y2;
@@ -1821,7 +1821,7 @@ int handle_lbuttondown(int x, int y)
 				legalmovenumber = 0;
 				for(i=1; i<=32; i++)
 					{
-					if(islegal(board8, color, coorstonumber(x1,y1_,GPDNgame.gametype), i, &GCBmove)!=0)
+					if(islegal(gui_board8, gui_color, coorstonumber(x1,y1_,GPDNgame.gametype), i, &GCBmove)!=0)
 						{
 						legal++;
 						legalmovenumber = i;
@@ -1831,7 +1831,7 @@ int handle_lbuttondown(int x, int y)
 			sprintf(str,"");
 			if(legal == 1) // only one legal move
 				{
-				if(islegal(board8,color,coorstonumber(x1,y1_,GPDNgame.gametype),legalmovenumber,&GCBmove)!=0)
+				if(islegal(gui_board8,gui_color,coorstonumber(x1,y1_,GPDNgame.gametype),legalmovenumber,&GCBmove)!=0)
 					// a legal move!
 					{
 					// insert move in the linked list 
@@ -1842,7 +1842,7 @@ int handle_lbuttondown(int x, int y)
 
 					// if we are in userbook mode, we save the move
 					if(CBstate == BOOKADD)
-						addmovetouserbook(board8, &GCBmove);
+						addmovetouserbook(gui_board8, &GCBmove);
 
 					// call animation function which will also execute the move
 					setanimationbusy(TRUE);
@@ -1867,7 +1867,7 @@ int handle_lbuttondown(int x, int y)
 		// check move and if ok
 		if(islegal!=NULL)
 			{
-			if(islegal(board8,color,coorstonumber(x1,y1_,GPDNgame.gametype),coorstonumber(x2,y2, GPDNgame.gametype),&GCBmove)!=0)
+			if(islegal(gui_board8,gui_color,coorstonumber(x1,y1_,GPDNgame.gametype),coorstonumber(x2,y2, GPDNgame.gametype),&GCBmove)!=0)
 				// a legal move!
 				{
 				// insert move in the linked list 
@@ -1878,7 +1878,7 @@ int handle_lbuttondown(int x, int y)
 
 				// if we are in userbook mode, we save the move
 				if(CBstate == BOOKADD)
-					addmovetouserbook(board8, &GCBmove);
+					addmovetouserbook(gui_board8, &GCBmove);
 
 				// call animation function which will also execute the move
 				setanimationbusy(TRUE);
@@ -1946,13 +1946,13 @@ int handletimer(void)
 	}*/
 
 	// update toolbar to display whose turn it is 
-	if(oldcolor!=color)
+	if(oldcolor!=gui_color)
 		{
-		if(color==CB_BLACK)
+		if(gui_color==CB_BLACK)
 			SendMessage(tbwnd, TB_CHANGEBITMAP, (WPARAM)SETUPCC,MAKELPARAM(10,0));
 		else
 			SendMessage(tbwnd, TB_CHANGEBITMAP, (WPARAM)SETUPCC,MAKELPARAM(9,0));
-		oldcolor=color;
+		oldcolor=gui_color;
 		InvalidateRect(hwnd,NULL,0);
 		}
 
@@ -2415,18 +2415,18 @@ int selectgame(int how)
 
 				// search for games with current position
 				// transform the current position into a bitboard:
-				boardtobitboard(board8, &currentposition);
+				boardtobitboard(gui_board8, &currentposition);
 				if (how == GAMEFINDCR)
-					boardtocrbitboard(board8, &currentposition);
+					boardtocrbitboard(gui_board8, &currentposition);
 
 				sprintf(str, "searching database...");
 				SendMessage(hStatusWnd, SB_SETTEXT, (WPARAM)0, (LPARAM)str);
 				if (how == GAMEFIND)
-					pdnfind(&currentposition, color, pos_match_games);
+					pdnfind(&currentposition, gui_color, pos_match_games);
 				if (how == SEARCHMASK)
-					pdnfind(&currentposition, color, pos_match_games);
+					pdnfind(&currentposition, gui_color, pos_match_games);
 				if (how == GAMEFINDCR)
-					pdnfind(&currentposition, CB_CHANGECOLOR(color), pos_match_games);
+					pdnfind(&currentposition, CB_CHANGECOLOR(gui_color), pos_match_games);
 				if (how == GAMEFINDTHEME)
 					pdnfindtheme(&currentposition, pos_match_games);
 
@@ -2609,7 +2609,7 @@ int loadgamefromPDNstring(int gameindex, char *dbstring)
 		}
 	// now the game is in gamestring. use pdnparser routines to convert
 	//	it into a GPDNgame
-	doload(&GPDNgame, gamestring, &color, board8);
+	doload(&GPDNgame, gamestring, &gui_color, gui_board8);
 	free(gamestring);
 
 	// game is fully loaded, clean up 
@@ -2662,7 +2662,7 @@ int handletooltiprequest(LPTOOLTIPTEXT TTtext)
 		case DISPLAYINVERT: TTtext->lpszText="Invert Board";
 			break;
 		case SETUPCC:
-			if(color==CB_BLACK)
+			if(gui_color==CB_BLACK)
 				TTtext->lpszText="Red to move";
 			else
 				TTtext->lpszText="White to move";
@@ -2860,7 +2860,7 @@ int createcheckerboard(HWND hwnd)
 	SetWindowText(hwnd,str2);
 
 	// initialize the board which is stored in board8 
-	InitCheckerBoard(board8);
+	InitCheckerBoard(gui_board8);
 
 	// print version number in status bar
 	sprintf(str, "This is CheckerBoard %s, %s", VERSION, PLACE);
@@ -2925,12 +2925,12 @@ int start11man(int number)
 	fclose(fp);
 
 	// now we have the right FEN in str
-	FENtoboard8(board8, str, &color, GT_ENGLISH);
+	FENtoboard8(gui_board8, str, &gui_color, GT_ENGLISH);
 
 	// set linked list 
 	initlinkedlist();
 	GPDNgame.head = head;
-	board8toFEN(board8, str, color, GT_ENGLISH);
+	board8toFEN(gui_board8, str, gui_color, GT_ENGLISH);
 	sprintf(GPDNgame.FEN,"%s",str);
 	sprintf(GPDNgame.event,"11-man #%i",number+1);
 	sprintf(GPDNgame.setup,"1");
@@ -2967,8 +2967,8 @@ void game_to_colors_reversed_pdn(char *pdn)
 void forward_to_game_end(void)
 {
 	while (current->next != NULL) {
-		domove(current->move, board8);
-		color = CB_CHANGECOLOR(color);
+		domove(current->move, gui_board8);
+		gui_color = CB_CHANGECOLOR(gui_color);
 		current = current->next;
 	}
 }
@@ -2982,34 +2982,34 @@ int start3move(void)
 
 	extern int three[174][4]; // describes 3-move-openings
 
-	InitCheckerBoard(board8);
+	InitCheckerBoard(gui_board8);
 	InvalidateRect(hwnd,NULL,0);
-	color=CB_BLACK;
+	gui_color=CB_BLACK;
 	// set linked list 
 	initlinkedlist();
 	GPDNgame.head = head;
 
-	getmovelist(1, m,board8,&dummy);
-	domove(m[three[op][0]],board8);
+	getmovelist(1, m,gui_board8,&dummy);
+	domove(m[three[op][0]],gui_board8);
 	appendmovetolist(m[three[op][0]]);
 
-	color = CB_CHANGECOLOR(color);
-	getmovelist(-1, m,board8,&dummy);
-	domove(m[three[op][1]],board8);
+	gui_color = CB_CHANGECOLOR(gui_color);
+	getmovelist(-1, m,gui_board8,&dummy);
+	domove(m[three[op][1]],gui_board8);
 	appendmovetolist(m[three[op][1]]);
 
-	color = CB_CHANGECOLOR(color);
-	getmovelist(1, m,board8,&dummy);
-	domove(m[three[op][2]],board8);
+	gui_color = CB_CHANGECOLOR(gui_color);
+	getmovelist(1, m,gui_board8,&dummy);
+	domove(m[three[op][2]],gui_board8);
 	appendmovetolist(m[three[op][2]]);
 
-	color = CB_CHANGECOLOR(color);
+	gui_color = CB_CHANGECOLOR(gui_color);
 
 	if (gametype() == GT_ITALIAN) {
 		char pdn[80];
 
 		game_to_colors_reversed_pdn(pdn);
-		doload(&GPDNgame, pdn, &color, board8);
+		doload(&GPDNgame, pdn, &gui_color, gui_board8);
 		forward_to_game_end();
 	}
 
@@ -3048,10 +3048,10 @@ DWORD ThreadFunc(LPVOID param)
 
 
 	// test if there is a move at all: if not, return and set state to NORMAL
-	if(color==CB_BLACK) c=1;
+	if(gui_color==CB_BLACK) c=1;
 	else
 		c=-1;
-	n = getmovelist(c, m,board8,&dummy);
+	n = getmovelist(c, m,gui_board8,&dummy);
 	if(n==0)
 		{
 		sprintf(str,"there is no move in this position");
@@ -3068,7 +3068,7 @@ DWORD ThreadFunc(LPVOID param)
 	// check if this position is in the userbook
 	if(gCBoptions.userbook)
 		{
-		boardtobitboard(board8,&userbookpos);
+		boardtobitboard(gui_board8,&userbookpos);
 		for(i=0;i<userbooknum;i++)
 			{
 			if(userbookpos.bm == userbook[i].position.bm &&
@@ -3091,9 +3091,9 @@ DWORD ThreadFunc(LPVOID param)
 		{
 		//board8 is a global [8][8] int which holds the board
 		//get 3 copies of the global board8
-		memcpy(b8copy,board8,64*sizeof(int));
-		memcpy(original8board,board8,64*sizeof(int));
-		memcpy(originalcopy,board8,64*sizeof(int));
+		memcpy(b8copy,gui_board8,64*sizeof(int));
+		memcpy(original8board,gui_board8,64*sizeof(int));
+		memcpy(originalcopy,gui_board8,64*sizeof(int));
 
 		// set thread priority 
 		// next lower ist '_LOWEST', higher '_NORMAL' 
@@ -3113,9 +3113,9 @@ DWORD ThreadFunc(LPVOID param)
 
 			// if in engine match handicap mode, give primary engine half the time of secondary engine.
 			if(CBstate == ENGINEMATCH && handicap && currentengine == 1)
-				result=(getmove)(originalcopy,color,maxtime/2,str,&playnow,reset+2*gCBoptions.exact+4*increment,0,&LCBmove);
+				result=(getmove)(originalcopy,gui_color,maxtime/2,str,&playnow,reset+2*gCBoptions.exact+4*increment,0,&LCBmove);
 			else
-				result=(getmove)(originalcopy,color,maxtime,str,&playnow,reset+2*gCBoptions.exact+4*increment,0,&LCBmove);
+				result=(getmove)(originalcopy,gui_color,maxtime,str,&playnow,reset+2*gCBoptions.exact+4*increment,0,&LCBmove);
 
 			/* Display the Play! bitmap with black foreground when the engine is not searching. */
 			PostMessage(tbwnd, TB_CHANGEBITMAP, (WPARAM)MOVESPLAY, MAKELPARAM(2, 0));
@@ -3151,7 +3151,7 @@ DWORD ThreadFunc(LPVOID param)
 		// game forward 
 		if(CBstate!=OBSERVEGAME && CBstate!=ANALYZEGAME && CBstate!=ANALYZEPDN &&
 			!abortcalculation)
-			memcpy(board8,originalcopy,64*sizeof(int));
+			memcpy(gui_board8,originalcopy,64*sizeof(int));
 
 		// if we are in engine match mode and one of the engines claims a win
 		// or a loss or a draw we stop 
@@ -3168,7 +3168,7 @@ DWORD ThreadFunc(LPVOID param)
 			//	 else the engine must return the appropriate information in LCBmove
 			if(gametype()==GT_ENGLISH) /* should be 'if gametype==21' */
 				{
-				if(color==CB_BLACK)
+				if(gui_color==CB_BLACK)
 					n=getmovelist(1,m,b8copy,&dummy);
 				else
 					n=getmovelist(-1,m,b8copy,&dummy);
@@ -3177,7 +3177,7 @@ DWORD ThreadFunc(LPVOID param)
 					{//put original board8 in b8copy, execute move and compare with returned board8...
 					memcpy(b8copy,original8board,64*sizeof(int));
 					domove(m[i],b8copy);
-					if(memcmp(board8,b8copy,64*sizeof(int))==0)
+					if(memcmp(gui_board8,b8copy,64*sizeof(int))==0)
 						{
 						move4tonotation(m[i],PDN);
 						move=m[i];
@@ -3187,12 +3187,12 @@ DWORD ThreadFunc(LPVOID param)
 					}
 
 				if(found == 0)
-					memcpy(board8,original8board,64*sizeof(int));
+					memcpy(gui_board8,original8board,64*sizeof(int));
 				}
 			else // gametype not 21, not regular checkers, use the move of the engine 
 				{
 				move = LCBmove;
-				memcpy(board8,original8board,64*sizeof(int));
+				memcpy(gui_board8,original8board,64*sizeof(int));
 				found = 1;
 				}
 			}
@@ -3413,7 +3413,7 @@ DWORD AutoThreadFunc(LPVOID param)
 				logtofile(testlogname, str, "a");
 
 				// convert position to internal board
-				FENtoboard8(board8, FEN, &color,GPDNgame.gametype);
+				FENtoboard8(gui_board8, FEN, &gui_color,GPDNgame.gametype);
 				updateboardgraphics(hwnd);
 				reset = 1;
 				newposition = TRUE;
@@ -3775,7 +3775,7 @@ DWORD AutoThreadFunc(LPVOID param)
 					movecount++;
 
 					// set which engine  
-					if((gamenumber + color) %2)
+					if((gamenumber + gui_color) %2)
 						setcurrentengine(1);
 					else
 						setcurrentengine(2);
@@ -4436,12 +4436,12 @@ int builtinislegal(int board8[8][8], int color, int from, int to, struct CBmove 
 
 void newgame(void)
 	{
-	InitCheckerBoard(board8);
+	InitCheckerBoard(gui_board8);
 	reset_current_game_pdn();
 	newposition = TRUE;
 	reset = 1;
 	gCBoptions.mirror = is_mirror_gametype(GPDNgame.gametype);
-	color = get_startcolor(GPDNgame.gametype);
+	gui_color = get_startcolor(GPDNgame.gametype);
 	
 	if(gCBoptions.level==17)
 		maxtime=initialtime;	
