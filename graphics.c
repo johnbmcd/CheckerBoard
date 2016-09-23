@@ -313,8 +313,6 @@ DWORD AnimationThreadFunc(HWND hwnd)
 	clock_t ticks;
 	clock_t timer;
 	int elapsed_ms;
-	extern char str[1024];
-	//extern enum state CBstate;
 	int xoffset = 0;
 	int yoffset = 0;
 	int size;

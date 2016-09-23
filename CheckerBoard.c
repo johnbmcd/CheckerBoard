@@ -167,8 +167,8 @@ HWND hDlgSelectgame;
 
 std::vector<gamepreview> game_previews;
 
-// str holds the output string shown in the status bar - it is updated by WM_TIMER messages
-char str[1024]="";
+// statusbar_txt holds the output string shown in the status bar - it is updated by WM_TIMER messages
+char statusbar_txt[1024]="";
 char playername[256];				// name of the player we are searching games of
 char eventname[256];				// event we're searching for
 char datename[256];					// date we're searching for
@@ -519,7 +519,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					if (DialogBox(g_hInst, "IDD_SAVEGAME", hwnd, (DLGPROC)DialogFuncSavegame)) {
 						if (getfilename(filename, OF_SAVEASHTML)) {
 							saveashtml(filename, &GPDNgame);
-							sprintf(str, "game saved as HTML!");
+							sprintf(statusbar_txt, "game saved as HTML!");
 						}
 					}
 					break;
@@ -563,7 +563,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 							userbooknum = fread(userbook,  sizeof(struct userbookentry),MAXUSERBOOK,fp);
 							fclose(fp);
 							}
-						sprintf(str,"found %zi positions in user book", userbooknum);
+						sprintf(statusbar_txt,"found %zi positions in user book", userbooknum);
 						}
 					break;
 
@@ -578,7 +578,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					//cpuid(str);
 					sprintf(str1024,"Black: %s\nWhite: %s\nEvent: %s\nResult: %s",GPDNgame.black,GPDNgame.white,GPDNgame.event,GPDNgame.resultstring);
 					MessageBox(hwnd,str1024,"Game information",MB_OK);
-					sprintf(str,"");
+					sprintf(statusbar_txt,"");
 					break;
 
 				case SEARCHMASK:
@@ -614,13 +614,13 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					break;
 
 				case LOADNEXT:
-					sprintf(str,"load next game");
+					sprintf(statusbar_txt,"load next game");
 					cblog("load next game\n");
 					loadnextgame();
 					break;
 
 				case LOADPREVIOUS:
-					sprintf(str,"load previous game");
+					sprintf(statusbar_txt,"load previous game");
 					cblog("load previous game\n");
 					loadpreviousgame();
 					break;
@@ -646,7 +646,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 
 				case GAME_FENFROMCLIPBOARD:
 					// first, get the stuff that is in the clipboard
-					gamestring = textfromclipboard(hwnd, str);
+					gamestring = textfromclipboard(hwnd, statusbar_txt);
 					// now if we have something, do something with it
 					if(gamestring != NULL)
 						{
@@ -657,13 +657,13 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 							updateboardgraphics(hwnd);
 							reset = 1;
 							newposition = TRUE;
-							sprintf(str,"position copied");
+							sprintf(statusbar_txt,"position copied");
 							PostMessage(hwnd,WM_COMMAND,GAMEINFO,0);
 							sprintf(GPDNgame.setup,"1");
 							sprintf(GPDNgame.FEN,gamestring);
 							}
 						else
-							sprintf(str,"no valid FEN position in clipboard!");
+							sprintf(statusbar_txt,"no valid FEN position in clipboard!");
 						free(gamestring);
 						}
 					break;
@@ -677,7 +677,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 
 				case GAMEPASTE:
 					// copy game or fen string from the clipboard...
-					gamestring = textfromclipboard(hwnd, str);
+					gamestring = textfromclipboard(hwnd, statusbar_txt);
 
 					// now that the game is in gamestring doload() on it 
 					if (gamestring != NULL) {
@@ -687,16 +687,16 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						if (is_fen(gamestring)) {
 							if (!FENtoboard8(gui_board8, gamestring, &gui_color, GPDNgame.gametype)) {
 								doload(&GPDNgame, gamestring, &gui_color, gui_board8);
-								sprintf(str,"game copied");
+								sprintf(statusbar_txt,"game copied");
 							}
 							else {
 								reset_current_game_pdn();
-								sprintf(str,"position copied");
+								sprintf(statusbar_txt,"position copied");
 							}
 						}
 						else {
 							doload(&GPDNgame, gamestring, &gui_color, gui_board8);
-							sprintf(str,"position copied");
+							sprintf(statusbar_txt,"position copied");
 						}
 						free(gamestring);
 
@@ -707,7 +707,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						PostMessage(hwnd,WM_COMMAND,GAMEINFO,0);
 					}
 					else
-						sprintf(str,"clipboard open failed");
+						sprintf(statusbar_txt,"clipboard open failed");
 					break;
 
 				case MOVESPLAY:		
@@ -749,7 +749,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						if(userbookcur>0)
 							userbookcur--;
 						userbookcur %= userbooknum;
-						sprintf(str,"position %zi of %zi: %i-%i", userbookcur+1,userbooknum,coortonumber(userbook[userbookcur].move.from, GPDNgame.gametype), coortonumber(userbook[userbookcur].move.to,GPDNgame.gametype));
+						sprintf(statusbar_txt,"position %zi of %zi: %i-%i", userbookcur+1,userbooknum,coortonumber(userbook[userbookcur].move.from, GPDNgame.gametype), coortonumber(userbook[userbookcur].move.to,GPDNgame.gametype));
 
 						// set up position
 						if(userbookcur < userbooknum) // only if there are any positions
@@ -770,7 +770,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						updateboardgraphics(hwnd);
 						// shouldnt this color thing be handled in undomove?
 						gui_color = CB_CHANGECOLOR(gui_color);
-						sprintf(str,"takeback: ");
+						sprintf(statusbar_txt,"takeback: ");
 						// and print move number and move into the status bar
 						// get move number:
 						if(current != NULL)
@@ -780,12 +780,12 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 								sprintf(Lstr,"%i... %s",i/2,current->PDN);
 							else
 								sprintf(Lstr,"%i. %s",i/2,current->PDN);
-							strcat(str,Lstr);
+							strcat(statusbar_txt,Lstr);
 
 							if(strcmp(current->comment,"")!=0)
 								{
 								sprintf(Lstr," %s",current->comment);
-								strcat(str,Lstr);
+								strcat(statusbar_txt,Lstr);
 								}
 							}
 						if(CBstate == OBSERVEGAME)
@@ -794,7 +794,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 							abortengine();
 							}
 					else 
-						sprintf(str,"Takeback not possible: you are at the start of the game!");
+						sprintf(statusbar_txt,"Takeback not possible: you are at the start of the game!");
 
 					newposition=TRUE;
 					reset=1;
@@ -811,7 +811,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						if(userbookcur<userbooknum-1)
 							userbookcur++;
 						userbookcur %= userbooknum;
-						sprintf(str,"position %zi of %zi: %i-%i", userbookcur+1,userbooknum,coortonumber(userbook[userbookcur].move.from,GPDNgame.gametype), coortonumber(userbook[userbookcur].move.to,GPDNgame.gametype));
+						sprintf(statusbar_txt,"position %zi of %zi: %i-%i", userbookcur+1,userbooknum,coortonumber(userbook[userbookcur].move.from,GPDNgame.gametype), coortonumber(userbook[userbookcur].move.to,GPDNgame.gametype));
 						// set up position
 						if(userbookcur < userbooknum) // only if there are any positions
 							{
@@ -835,12 +835,12 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 							sprintf(Lstr,"%i... %s",i/2,current->PDN);
 						else
 							sprintf(Lstr,"%i. %s",i/2,current->PDN);
-						sprintf(str,"%s ",Lstr);
+						sprintf(statusbar_txt,"%s ",Lstr);
 
 						if(strcmp(current->comment,"")!=0)
 							{
 							sprintf(Lstr,"%s",current->comment);
-							strcat(str,Lstr);
+							strcat(statusbar_txt,Lstr);
 							}
 						current = current->next;
 
@@ -853,7 +853,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						}
 					else
 						{
-						sprintf(str,"Forward not possible: End of game");
+						sprintf(statusbar_txt,"Forward not possible: End of game");
 						}
 					break;
 
@@ -871,7 +871,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					if(CBstate == OBSERVEGAME)
 						PostMessage(hwnd,WM_COMMAND,INTERRUPTENGINE,0);
 					updateboardgraphics(hwnd);
-					sprintf(str,"you are now at the start of the game");
+					sprintf(statusbar_txt,"you are now at the start of the game");
 					newposition=TRUE;
 					reset=1;
 					break;
@@ -885,7 +885,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					if(CBstate == OBSERVEGAME)
 						PostMessage(hwnd,WM_COMMAND,INTERRUPTENGINE,0);
 					updateboardgraphics(hwnd);
-					sprintf(str,"you are now at the end of the game");
+					sprintf(statusbar_txt,"you are now at the end of the game");
 					newposition=TRUE;
 					reset=1;
 					break;
@@ -989,17 +989,17 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					maxtime=initialtime;
 					gCBoptions.level=17;
 					checklevelmenu(hmenu,LEVELINCREMENT, &gCBoptions);
-					sprintf(str,"increment level set: initial time %.0f, increment time %.0f (seconds)",initialtime,incrementtime);
+					sprintf(statusbar_txt,"increment level set: initial time %.0f, increment time %.0f (seconds)",initialtime,incrementtime);
 					break;
 				case LEVELADDTIME:
 					// add  seconds when '+' is pressed
 					if(gCBoptions.level == 17)
 						{
 						maxtime+=1.0;
-						sprintf(str,"remaining time: %.1f",maxtime);
+						sprintf(statusbar_txt,"remaining time: %.1f",maxtime);
 						}
 					else
-						sprintf(str,"error: not in increment mode!");
+						sprintf(statusbar_txt,"error: not in increment mode!");
 					break;
 
 				case LEVELSUBTRACTTIME:
@@ -1007,10 +1007,10 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					if(gCBoptions.level==17)
 						{
 						maxtime-=1.0;
-						sprintf(str,"remaining time: %.1f",maxtime);
+						sprintf(statusbar_txt,"remaining time: %.1f",maxtime);
 						}
 					else
-						sprintf(str,"error: not in increment mode!");
+						sprintf(statusbar_txt,"error: not in increment mode!");
 					break;
 
 				// piece sets 
@@ -1031,7 +1031,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 				case PIECESET+14:
 				case PIECESET+15:
 					gCBoptions.piecesetindex = LOWORD(wParam)-PIECESET;
-					sprintf(str,"piece set %i: %s", gCBoptions.piecesetindex, piecesetname[gCBoptions.piecesetindex]);
+					sprintf(statusbar_txt,"piece set %i: %s", gCBoptions.piecesetindex, piecesetname[gCBoptions.piecesetindex]);
 					SetCurrentDirectory(CBdirectory);
 					SetCurrentDirectory("bmp");
 					initbmp(hwnd,piecesetname[gCBoptions.piecesetindex]);
@@ -1048,10 +1048,10 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					if(ChooseColor(&ccs))
 						{
 						gCBoptions.colors[0]=(COLORREF) ccs.rgbResult;
-						sprintf(str,"new highlighting color");
+						sprintf(statusbar_txt,"new highlighting color");
 						}
 					else
-						sprintf(str,"no new colors! error %i",CommDlgExtendedError());
+						sprintf(statusbar_txt,"no new colors! error %i",CommDlgExtendedError());
 					updateboardgraphics(hwnd);
 					break;
 
@@ -1061,10 +1061,10 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					if(ChooseColor(&ccs))
 						{
 						gCBoptions.colors[1]=(COLORREF) ccs.rgbResult;
-						sprintf(str,"new board number color");
+						sprintf(statusbar_txt,"new board number color");
 						}
 					else
-						sprintf(str,"no new colors! error %i",CommDlgExtendedError());
+						sprintf(statusbar_txt,"no new colors! error %i",CommDlgExtendedError());
 					updateboardgraphics(hwnd);
 					break;
 
@@ -1135,7 +1135,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					// go in view book mode
 					if(userbooknum == 0)
 						{
-						sprintf(str,"no moves in user book");
+						sprintf(statusbar_txt,"no moves in user book");
 						break;
 						}
 					if(CBstate == BOOKVIEW)
@@ -1145,7 +1145,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						changeCBstate(CBstate,BOOKVIEW);
 						// now display the first user book position
 						userbookcur = 0;
-						sprintf(str,"position %zi of %zi: %i-%i", userbookcur+1,userbooknum,coortonumber(userbook[userbookcur].move.from,GPDNgame.gametype), coortonumber(userbook[userbookcur].move.to,GPDNgame.gametype));
+						sprintf(statusbar_txt,"position %zi of %zi: %i-%i", userbookcur+1,userbooknum,coortonumber(userbook[userbookcur].move.from,GPDNgame.gametype), coortonumber(userbook[userbookcur].move.to,GPDNgame.gametype));
 						// set up position
 						if(userbookcur < userbooknum) // only if there are any positions
 							{
@@ -1175,9 +1175,9 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						if(userbookcur==userbooknum)
 							userbookcur--;
 						// display what position we have:
-						sprintf(str,"position %zi of %zi: %i-%i", userbookcur+1,userbooknum,coortonumber(userbook[userbookcur].move.from,GPDNgame.gametype), coortonumber(userbook[userbookcur].move.to,GPDNgame.gametype));
+						sprintf(statusbar_txt,"position %zi of %zi: %i-%i", userbookcur+1,userbooknum,coortonumber(userbook[userbookcur].move.from,GPDNgame.gametype), coortonumber(userbook[userbookcur].move.to,GPDNgame.gametype));
 						if(userbooknum==0)
-							sprintf(str,"no moves in user book");
+							sprintf(statusbar_txt,"no moves in user book");
 						// set up position
 						if(userbookcur < userbooknum && userbooknum!=0) // only if there are any positions
 							{
@@ -1192,14 +1192,14 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 							fclose(fp);
 							}
 						else
-							sprintf(str,"unable to write to user book");
+							sprintf(statusbar_txt,"unable to write to user book");
 						}
 					else
 						{
 						if(CBstate == BOOKVIEW)
-							sprintf(str,"no moves in user book");
+							sprintf(statusbar_txt,"no moves in user book");
 						else
-							sprintf(str,"You must be in 'view user book' mode to delete moves!");
+							sprintf(statusbar_txt,"You must be in 'view user book' mode to delete moves!");
 						}
 					break;
 
@@ -1349,10 +1349,10 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						x1=-1;
 						}
 					if(setup) 
-						sprintf(str, "Setup mode...");
+						sprintf(statusbar_txt, "Setup mode...");
 					if(!setup)
 						{
-						sprintf(str, "Setup done");
+						sprintf(statusbar_txt, "Setup done");
 						// get FEN string
 						reset_current_game_pdn();
 						board8toFEN(gui_board8, GPDNgame.FEN, gui_color, GPDNgame.gametype);
@@ -1387,7 +1387,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					togglebook %= 4;
 					// set opening book on/off
 					sprintf(Lstr, "set book %i", togglebook);
-					enginecommand(Lstr, str);
+					enginecommand(Lstr, statusbar_txt);
 					break;
 
 				case TOGGLEENGINE:
@@ -1739,7 +1739,7 @@ int handle_lbuttondown(int x, int y)
 			}
 
 			// remove the output that islegal generated, it's disturbing ("1-32 illegal move")
-			sprintf(str,"");
+			sprintf(statusbar_txt,"");
 			if(legal == 1)
 				{
 				// is it the only legal move?
@@ -1828,7 +1828,7 @@ int handle_lbuttondown(int x, int y)
 						}
 					}
 				}
-			sprintf(str,"");
+			sprintf(statusbar_txt,"");
 			if(legal == 1) // only one legal move
 				{
 				if(islegal(gui_board8,gui_color,coorstonumber(x1,y1_,GPDNgame.gametype),legalmovenumber,&GCBmove)!=0)
@@ -1916,21 +1916,21 @@ int handletimer(void)
 	int  ch = '=';
 
 
-	if(strcmp(oldstr,str)!=0)
+	if(strcmp(oldstr,statusbar_txt)!=0)
 		{
-		SendMessage(hStatusWnd, SB_SETTEXT, (WPARAM) 0, (LPARAM) str);
-		sprintf(oldstr,"%s",str);
+		SendMessage(hStatusWnd, SB_SETTEXT, (WPARAM) 0, (LPARAM) statusbar_txt);
+		sprintf(oldstr,"%s",statusbar_txt);
 		// if we're running a test set, create a pseudolog-file
 		if(CBstate == RUNTESTSET)
 			{
-			if(strchr(str,ch) != NULL)
+			if(strchr(statusbar_txt,ch) != NULL)
 				{
 				strcpy(filename, CBdocuments);
 				PathAppend(filename, "testlog.txt");
 				Lfp = fopen(filename, "a");
 				if(Lfp != NULL)
 					{
-					fprintf(Lfp,"%s\n",str);
+					fprintf(Lfp,"%s\n",statusbar_txt);
 					fclose(Lfp);
 					}
 				}
@@ -2015,7 +2015,7 @@ int addmovetouserbook(int b[8][8], struct CBmove *move)
 	// userbooknum is a global, as it is also used in removing stuff from book
 	if(userbooknum >= MAXUSERBOOK)
 		{
-		sprintf(str,"user book size limit reached!");
+		sprintf(statusbar_txt,"user book size limit reached!");
 		return 0;
 		}
 
@@ -2038,10 +2038,10 @@ int addmovetouserbook(int b[8][8], struct CBmove *move)
 	if(n == userbooknum)
 		{
 		(userbooknum)++;
-		sprintf(str,"added move to userbook (%zi moves)",userbooknum);
+		sprintf(statusbar_txt,"added move to userbook (%zi moves)",userbooknum);
 		}
 	else
-		sprintf(str,"replaced move in userbook (%zi moves)",userbooknum);
+		sprintf(statusbar_txt,"replaced move in userbook (%zi moves)",userbooknum);
 	// save user book
 	fp = fopen(userbookname,"wb");
 	if(fp != NULL)
@@ -2050,7 +2050,7 @@ int addmovetouserbook(int b[8][8], struct CBmove *move)
 		fclose(fp);
 		}
 	else
-		sprintf(str,"unable to write to user book");
+		sprintf(statusbar_txt,"unable to write to user book");
 	
 	return 1;
 	}
@@ -2075,7 +2075,7 @@ int handlegamereplace(int replaceindex, char *databasename)
 		dbstring = (char *) malloc(filesize);
 		if(dbstring == NULL)
 			{
-			sprintf(str,"malloc error");
+			sprintf(statusbar_txt,"malloc error");
 			return 0;
 			}	
 
@@ -2083,7 +2083,7 @@ int handlegamereplace(int replaceindex, char *databasename)
 
 		if(fp == NULL)
 			{
-			sprintf(str,"invalid filename");
+			sprintf(statusbar_txt,"invalid filename");
 			free(dbstring);
 			return 0;
 			}							
@@ -2096,7 +2096,7 @@ int handlegamereplace(int replaceindex, char *databasename)
 		gamestring = (char *) malloc(GAMEBUFSIZE);
 		if(gamestring == NULL) 
 			{
-			sprintf(str,"malloc error");
+			sprintf(statusbar_txt,"malloc error");
 			free(dbstring);
 			return 0;
 			}	
@@ -2144,7 +2144,7 @@ int loadnextgame(void)
 	int i;
 
 	if (game_previews.size() == 0) {
-		sprintf(str, "no game list to move through");
+		sprintf(statusbar_txt, "no game list to move through");
 		return(0);
 	}
 
@@ -2156,26 +2156,26 @@ int loadnextgame(void)
 		return(0);
 
 	if (gameindex != game_previews[i].game_index) {
-		sprintf(str, "error while looking for next game...");
+		sprintf(statusbar_txt, "error while looking for next game...");
 		return 0;
 	}
 
 	if (i >= (int)game_previews.size() - 1) {
-		sprintf(str, "at last game in list");
+		sprintf(statusbar_txt, "at last game in list");
 		return 0;
 	}
 
 	gameindex = game_previews[i + 1].game_index;
 
 	// ok, if we arrive here, we have a valid game index for the game to load.
-	sprintf(str, "should load game %i", gameindex);
+	sprintf(statusbar_txt, "should load game %i", gameindex);
 	// load the database into memory
 	dbstring = loadPDNdbstring(database);
 	// extract game from database
 	loadgamefromPDNstring(gameindex, dbstring);
 	// free up database memory
 	free(dbstring);
-	sprintf(str,"loaded game %i of %i", i + 2, (int)game_previews.size());
+	sprintf(statusbar_txt,"loaded game %i of %i", i + 2, (int)game_previews.size());
 
 	// return the number of the game we loaded
 	return(i + 2);
@@ -2188,7 +2188,7 @@ int loadpreviousgame(void)
 	int i;
 
 	if (game_previews.size() == 0) {
-		sprintf(str, "no game list to move through");
+		sprintf(statusbar_txt, "no game list to move through");
 		return(0);
 	}
 
@@ -2201,23 +2201,23 @@ int loadpreviousgame(void)
 
 	if(gameindex != game_previews[i].game_index)
 		{
-		sprintf(str,"error while looking for next game...");
+		sprintf(statusbar_txt,"error while looking for next game...");
 		return 0;
 		}
 
 	if(i == 0)
 		{
-		sprintf(str,"at first game in list");
+		sprintf(statusbar_txt,"at first game in list");
 		return 0;
 		}
 
 	gameindex = game_previews[i - 1].game_index;
 
-	sprintf(str,"should load game %i",gameindex);
+	sprintf(statusbar_txt,"should load game %i",gameindex);
 	dbstring = loadPDNdbstring(database);
 	loadgamefromPDNstring(gameindex, dbstring);
 	free(dbstring);
-	sprintf(str,"loaded game %i of %i", i, (int)game_previews.size());
+	sprintf(statusbar_txt,"loaded game %i of %i", i, (int)game_previews.size());
 
 	return 0;
 	}
@@ -2342,8 +2342,8 @@ int selectgame(int how)
 	gamepreview preview;
 	std::vector<int> pos_match_games;	/* Index of games matching the position part of search criteria */
 
-	sprintf(str, "wait ...");
-	SendMessage(hStatusWnd, SB_SETTEXT, (WPARAM)0, (LPARAM)str);
+	sprintf(statusbar_txt, "wait ...");
+	SendMessage(hStatusWnd, SB_SETTEXT, (WPARAM)0, (LPARAM)statusbar_txt);
 	// stop engine
 	PostMessage(hwnd, WM_COMMAND, ABORTENGINE, 0);
 
@@ -2352,11 +2352,11 @@ int selectgame(int how)
 		// only possible if there is a last search!
 		// re-uses game_previews array.
 		if (re_search_ok == 0) {
-			sprintf(str, "no old search to re-search!");
+			sprintf(statusbar_txt, "no old search to re-search!");
 			return 0;
 		}
 
-		sprintf(str, "re-searching! game_previews.size() is %zd", game_previews.size());
+		sprintf(statusbar_txt, "re-searching! game_previews.size() is %zd", game_previews.size());
 		// load database into dbstring:
 		dbstring = loadPDNdbstring(database);
 
@@ -2390,15 +2390,15 @@ int selectgame(int how)
 				sprintf(database, "");
 		}
 		else {
-			sprintf(str, "database is '%s'", database);
+			sprintf(statusbar_txt, "database is '%s'", database);
 			result = 1;
 		}
 
 		if (strcmp(database, "") != 0 && result) {
-			sprintf(str, "loading...");
+			sprintf(statusbar_txt, "loading...");
 			// get number of games
 			i = PDNparseGetnumberofgames(database);
-			sprintf(str, "%i games in database", i);
+			sprintf(statusbar_txt, "%i games in database", i);
 
 			if (how == GAMEFIND || how == GAMEFINDTHEME || how == GAMEFINDCR ||
 				(how == SEARCHMASK && searchwithposition == 1)) {
@@ -2406,8 +2406,8 @@ int selectgame(int how)
 				// search for a position: this is done by calling pdnopen to index
 				// the pdn file, pdnfind to return a list of games with the current position
 				if (reindex) {
-					sprintf(str, "indexing database...");
-					SendMessage(hStatusWnd, SB_SETTEXT, (WPARAM)0, (LPARAM)str);
+					sprintf(statusbar_txt, "indexing database...");
+					SendMessage(hStatusWnd, SB_SETTEXT, (WPARAM)0, (LPARAM)statusbar_txt);
 					// index database with pdnopen; fills pdn_positions[].
 					pdnopen(database, GPDNgame.gametype);
 					reindex = 0;
@@ -2419,8 +2419,8 @@ int selectgame(int how)
 				if (how == GAMEFINDCR)
 					boardtocrbitboard(gui_board8, &currentposition);
 
-				sprintf(str, "searching database...");
-				SendMessage(hStatusWnd, SB_SETTEXT, (WPARAM)0, (LPARAM)str);
+				sprintf(statusbar_txt, "searching database...");
+				SendMessage(hStatusWnd, SB_SETTEXT, (WPARAM)0, (LPARAM)statusbar_txt);
 				if (how == GAMEFIND)
 					pdnfind(&currentposition, gui_color, pos_match_games);
 				if (how == SEARCHMASK)
@@ -2432,19 +2432,19 @@ int selectgame(int how)
 
 				// pos_match_games now contains a list of games matching the position part of search criteria
 				if (pos_match_games.size() == 0) {
-					sprintf(str, "no games matching position criteria found");
+					sprintf(statusbar_txt, "no games matching position criteria found");
 					re_search_ok = 0;
 					game_previews.clear();
-					SendMessage(hStatusWnd, SB_SETTEXT, (WPARAM)0, (LPARAM)str);
+					SendMessage(hStatusWnd, SB_SETTEXT, (WPARAM)0, (LPARAM)statusbar_txt);
 					return 0;
 				}
 				else {
-					sprintf(str, "%zd games matching position criteria found", pos_match_games.size());
+					sprintf(statusbar_txt, "%zd games matching position criteria found", pos_match_games.size());
 					re_search_ok = 1;
 				}
 			}
 			
-			SendMessage(hStatusWnd, SB_SETTEXT, (WPARAM)0, (LPARAM)str);
+			SendMessage(hStatusWnd, SB_SETTEXT, (WPARAM)0, (LPARAM)statusbar_txt);
 
 			// read database file into buffer 'dbstring' 
 			dbstring = loadPDNdbstring(database);
@@ -2551,7 +2551,7 @@ int selectgame(int how)
 				}
 			}
 			assert(entry == game_previews.size());
-			sprintf(str, "%i games found matching search criteria", entry);
+			sprintf(statusbar_txt, "%i games found matching search criteria", entry);
 
 			// save old game index
 			oldgameindex = gameindex;
@@ -2569,7 +2569,7 @@ int selectgame(int how)
 				gameindex = oldgameindex;
 			else {
 				// a game was selected; with index <selected_game> in the dialog box 
-				sprintf(str, "game previews index is %i", selected_game);
+				sprintf(statusbar_txt, "game previews index is %i", selected_game);
 				// transform dialog box index to game index in database
 				gameindex = game_previews[selected_game].game_index;
 				// load game with index 'gameindex' 
@@ -2588,7 +2588,7 @@ int selectgame(int how)
 	if(dbstring != NULL)
 		free(dbstring);
 
-	SendMessage(hStatusWnd, SB_SETTEXT, (WPARAM)0, (LPARAM)str);
+	SendMessage(hStatusWnd, SB_SETTEXT, (WPARAM)0, (LPARAM)statusbar_txt);
 	return 1;
 }
 
@@ -2616,7 +2616,7 @@ int loadgamefromPDNstring(int gameindex, char *dbstring)
 	updateboardgraphics(hwnd);
 	reset = 1;
 	newposition = TRUE;
-	sprintf(str,"game loaded");
+	sprintf(statusbar_txt,"game loaded");
 	SetCurrentDirectory(CBdirectory);
 	//  only display info if not in analyzepdnmode
 	if(CBstate != ANALYZEPDN)
@@ -2863,7 +2863,7 @@ int createcheckerboard(HWND hwnd)
 	InitCheckerBoard(gui_board8);
 
 	// print version number in status bar
-	sprintf(str, "This is CheckerBoard %s, %s", VERSION, PLACE);
+	sprintf(statusbar_txt, "This is CheckerBoard %s, %s", VERSION, PLACE);
 	return 1;
 	}
 
@@ -2878,14 +2878,14 @@ int showfile(char *filename)
 	hinst = ShellExecute(NULL,"open",filename,NULL,NULL,SW_SHOW);
 	error = PtrToLong(hinst);
 
-	sprintf(str,"CheckerBoard could not open\nthe file %s\nError code %i",filename, error);
+	sprintf(statusbar_txt,"CheckerBoard could not open\nthe file %s\nError code %i",filename, error);
 	if(error<32)
 		{
-		if(error==ERROR_FILE_NOT_FOUND) strcat(str,": File not found");
-		if(error==SE_ERR_NOASSOC) strcat(str,": no .htm viewer configured");
-		MessageBox(hwnd,str,"Error !",MB_OK);
+		if(error==ERROR_FILE_NOT_FOUND) strcat(statusbar_txt,": File not found");
+		if(error==SE_ERR_NOASSOC) strcat(statusbar_txt,": no .htm viewer configured");
+		MessageBox(hwnd,statusbar_txt,"Error !",MB_OK);
 		}
-	else sprintf(str,"opened %s", filename);
+	else sprintf(statusbar_txt,"opened %s", filename);
 	return 1;
 	}
 
@@ -3014,7 +3014,7 @@ int start3move(void)
 	}
 
 	updateboardgraphics(hwnd);	
-	sprintf(str,"ACF opening number %i",op+1);
+	sprintf(statusbar_txt,"ACF opening number %i",op+1);
 	newposition=TRUE;
 
 	// new march 2005, jon kreuzer told me this was missing.
@@ -3054,12 +3054,12 @@ DWORD ThreadFunc(LPVOID param)
 	n = getmovelist(c, m,gui_board8,&dummy);
 	if(n==0)
 		{
-		sprintf(str,"there is no move in this position");
+		sprintf(statusbar_txt,"there is no move in this position");
 		// if this happens in autoplay or in an enginematch, set mode back to normal 
 		if (CBstate == AUTOPLAY) 
-			{gameover=TRUE;sprintf(str,"game over");}
+			{gameover=TRUE;sprintf(statusbar_txt,"game over");}
 		if (CBstate==ENGINEMATCH || CBstate==ENGINEGAME) 
-			{gameover=TRUE;sprintf(str,"game over");}
+			{gameover=TRUE;sprintf(statusbar_txt,"game over");}
 		//setanimationbusy(FALSE); // is this necessary??
 		setenginebusy(FALSE);
 		return 1;
@@ -3080,7 +3080,7 @@ DWORD ThreadFunc(LPVOID param)
 				move = userbook[i].move;
 				founduserbookmove = 1;
 				found = 1;
-				sprintf(str,"found move in user book");
+				sprintf(statusbar_txt,"found move in user book");
 				}
 			}
 		}
@@ -3113,9 +3113,9 @@ DWORD ThreadFunc(LPVOID param)
 
 			// if in engine match handicap mode, give primary engine half the time of secondary engine.
 			if(CBstate == ENGINEMATCH && handicap && currentengine == 1)
-				result=(getmove)(originalcopy,gui_color,maxtime/2,str,&playnow,reset+2*gCBoptions.exact+4*increment,0,&LCBmove);
+				result=(getmove)(originalcopy,gui_color,maxtime/2,statusbar_txt,&playnow,reset+2*gCBoptions.exact+4*increment,0,&LCBmove);
 			else
-				result=(getmove)(originalcopy,gui_color,maxtime,str,&playnow,reset+2*gCBoptions.exact+4*increment,0,&LCBmove);
+				result=(getmove)(originalcopy,gui_color,maxtime,statusbar_txt,&playnow,reset+2*gCBoptions.exact+4*increment,0,&LCBmove);
 
 			/* Display the Play! bitmap with black foreground when the engine is not searching. */
 			PostMessage(tbwnd, TB_CHANGEBITMAP, (WPARAM)MOVESPLAY, MAKELPARAM(2, 0));
@@ -3125,12 +3125,12 @@ DWORD ThreadFunc(LPVOID param)
 				maxtime += incrementtime;
 				maxtime -= (clock()-starttime)/(double)CLK_TCK;
 				sprintf(Lstr," time remaining:%.1fs  ",maxtime);
-				strcat(Lstr,str);
-				sprintf(str,"%s",Lstr);
+				strcat(Lstr,statusbar_txt);
+				sprintf(statusbar_txt,"%s",Lstr);
 				}
 			}
 		else
-			sprintf(str,"error: no engine defined!");
+			sprintf(statusbar_txt,"error: no engine defined!");
 		// reset playnow immediately 
 		playnow=0;
 
@@ -3140,10 +3140,10 @@ DWORD ThreadFunc(LPVOID param)
 			{
 			if(current != NULL)
 				{
-				if(strlen(str)<COMMENTLENGTH)
-					sprintf(current->comment,"%s",str); //%255 to make sure it fits in the string
+				if(strlen(statusbar_txt)<COMMENTLENGTH)
+					sprintf(current->comment,"%s",statusbar_txt); //%255 to make sure it fits in the string
 				else
-					strncpy(current->comment,str,COMMENTLENGTH-2);
+					strncpy(current->comment,statusbar_txt,COMMENTLENGTH-2);
 				}
 			}
 		// now, we execute the move on the board, but only if we are not in observe or analyze mode 
@@ -3157,7 +3157,7 @@ DWORD ThreadFunc(LPVOID param)
 		// or a loss or a draw we stop 
 		if(result!=CB_UNKNOWN && (CBstate==ENGINEMATCH))
 			{
-			sprintf(current->comment,"%s : gameover claimed",str);
+			sprintf(current->comment,"%s : gameover claimed",statusbar_txt);
 			gameover=TRUE;
 			}
 		//got board8 & a copy before move was made
@@ -3223,7 +3223,7 @@ DWORD ThreadFunc(LPVOID param)
 			// don't add analysis if there is only one move
 			if(n==1)
 				break;
-			sprintf(current->analysis, "%s", str);
+			sprintf(current->analysis, "%s", statusbar_txt);
 			break;
 
 		case ENGINEMATCH:
@@ -3236,7 +3236,7 @@ DWORD ThreadFunc(LPVOID param)
 				if(Lfp != NULL)
 					{
 					fprintf(Lfp,"\n%s played %s",Lstr,PDN);
-					fprintf(Lfp,"\nanalysis: %s",str);
+					fprintf(Lfp,"\nanalysis: %s",statusbar_txt);
 					fclose(Lfp);
 					}
 			}
@@ -3309,7 +3309,7 @@ int changeCBstate(int oldstate, int newstate)
 			break;
 		}
 	// clear status bar
-	sprintf(str,"");
+	sprintf(statusbar_txt,"");
 	return 1;
 	}
 
@@ -3393,7 +3393,7 @@ DWORD AutoThreadFunc(LPVOID param)
 				Lfp = fopen(testsetname, "r");
 				if(Lfp == NULL)
 					{
-					sprintf(str,"could not find %s", testsetname);
+					sprintf(statusbar_txt,"could not find %s", testsetname);
 					break;
 					}
 
@@ -3409,8 +3409,8 @@ DWORD AutoThreadFunc(LPVOID param)
 				testset_number++;
 
 				// write FEN in testlog
-				sprintf(str,"#%i: %s", testset_number, FEN);
-				logtofile(testlogname, str, "a");
+				sprintf(statusbar_txt,"#%i: %s", testset_number, FEN);
+				logtofile(testlogname, statusbar_txt, "a");
 
 				// convert position to internal board
 				FENtoboard8(gui_board8, FEN, &gui_color,GPDNgame.gametype);
@@ -3428,7 +3428,7 @@ DWORD AutoThreadFunc(LPVOID param)
 					{
 					gameover = FALSE; 
 					changeCBstate(CBstate,NORMAL);
-					sprintf(str,"game over");
+					sprintf(statusbar_txt,"game over");
 					}
 				// else continue game by sending a play command
 				else
@@ -3459,9 +3459,9 @@ DWORD AutoThreadFunc(LPVOID param)
 					currentengine^=3;
 					setcurrentengine(currentengine);
 					enginename(Lstr);
-					sprintf(str,"CheckerBoard%s: ", g_app_instance_suffix);
-					strcat(str,Lstr);
-					SetWindowText(hwnd,str);
+					sprintf(statusbar_txt,"CheckerBoard%s: ", g_app_instance_suffix);
+					strcat(statusbar_txt,Lstr);
+					SetWindowText(hwnd,statusbar_txt);
 					}
 				PostMessage(hwnd,WM_COMMAND,MOVESPLAY,0);
 				setenginestarting(TRUE);
@@ -3473,7 +3473,7 @@ DWORD AutoThreadFunc(LPVOID param)
 					{
 					gameover=FALSE;
 					changeCBstate(CBstate,NORMAL);
-					sprintf(str,"Game analysis finished!");
+					sprintf(statusbar_txt,"Game analysis finished!");
 					strcpy(analysisfilename, CBdocuments);
 					PathAppend(analysisfilename, "analysis");
 					PathAppend(analysisfilename, "analysis.htm");
@@ -3491,8 +3491,8 @@ DWORD AutoThreadFunc(LPVOID param)
 				PathAppend(analysisfilename, "analysis.txt");
 				Lfp = fopen(analysisfilename,"w");
 				fclose(Lfp);
-				sprintf(str,"played in game: 1. %s",current->PDN);
-				logtofile(analysisfilename, str, "a");
+				sprintf(statusbar_txt,"played in game: 1. %s",current->PDN);
+				logtofile(analysisfilename, statusbar_txt, "a");
 
 				PostMessage(hwnd,WM_COMMAND,MOVESPLAY,0);
 				setenginestarting(TRUE);
@@ -3542,7 +3542,7 @@ DWORD AutoThreadFunc(LPVOID param)
 					// we're done with the file
 					{
 					changeCBstate(CBstate,NORMAL);
-					sprintf(str,"PDN analysis finished!");
+					sprintf(statusbar_txt,"PDN analysis finished!");
 					break;
 					}
 
@@ -3611,7 +3611,7 @@ DWORD AutoThreadFunc(LPVOID param)
 						fgets(Lstr,255,Lfp);
 						sscanf(Lstr,"+:%i =:%i -:%i unknown:%i +B:%i -B:%i",&wins,&draws,&losses,&unknowns,&blackwins,&blacklosses);
 						gamenumber = wins+losses+draws+unknowns;
-						sprintf(str,"resuming match at game #%i, (+:%i -:%i =:%i unknown:%i)",gamenumber,wins,losses,draws,unknowns);
+						sprintf(statusbar_txt,"resuming match at game #%i, (+:%i -:%i =:%i unknown:%i)",gamenumber,wins,losses,draws,unknowns);
 						fclose(Lfp);
 
 						// read match-progress file 	// TODO: this should be superfluous, write directly to file...
@@ -3739,7 +3739,7 @@ DWORD AutoThreadFunc(LPVOID param)
 					gameover = FALSE;
 					gamenumber++;
 
-					sprintf(str,"gamenumber is %i\n", gamenumber);
+					sprintf(statusbar_txt,"gamenumber is %i\n", gamenumber);
 
 					if(matchcontinues == 0)				
 						{
@@ -4427,9 +4427,9 @@ int builtinislegal(int board8[8][8], int color, int from, int to, struct CBmove 
 			}
 		}
 	if(isjump)
-		sprintf(str,"illegal move - you must jump! for multiple jumps, click only from and to square");
+		sprintf(statusbar_txt,"illegal move - you must jump! for multiple jumps, click only from and to square");
 	else
-		sprintf(str,"%i-%i not a legal move",from,to);
+		sprintf(statusbar_txt,"%i-%i not a legal move",from,to);
 	return 0;
 	}
 
@@ -4598,7 +4598,7 @@ void doload(struct PDNgame *PDNgame, char *gamestring, int *color, int board8[8]
 			current = newlistentry;
 			}
 		else
-			sprintf(str,"malloc failure!");
+			sprintf(statusbar_txt,"malloc failure!");
 		}
 
 	// when we arrive here, we allocated one item too much in the linked list. 
