@@ -191,7 +191,6 @@ char filename[255]="";
 char engine1[255]="";
 char engine2[255]="";
 int currentengine=1; 	 // 1=primary, 2=secondary 
-int goneforward;
 int op=0;
 int togglemode = 0;		// 1-2-player toggle state
 int togglebook = 0;		// engine book state (0/1/2/3)
@@ -878,8 +877,6 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						}
 						++GPDNgame.movesindex;
 
-						goneforward = 1;
-
 						if (CBstate == OBSERVEGAME)
 							PostMessage(hwnd, WM_COMMAND, INTERRUPTENGINE, 0);
 						newposition = TRUE;
@@ -1509,12 +1506,6 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					testset_number = 0;
 					changeCBstate(CBstate,RUNTESTSET);
 					break;
-
-				/*case CM_BUILDEGDB:
-					// build six-piece db with dbgen.bat
-					if(MessageBox(hwnd,"Building the 6-piece database will\ntake a while (4 hours on a fast computer).\nDo you wish to coninue?","Confirm database build",MB_OKCANCEL|MB_ICONQUESTION) == IDOK)
-						builddb(str);
-					break;*/
 				}
 			break;
 
