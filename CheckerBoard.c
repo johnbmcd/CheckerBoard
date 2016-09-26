@@ -90,7 +90,7 @@ CBmove GCBmove;
 
 // all checkerboard options are collected in CBoptions; like this, they can be saved 
 // as one struct in the registry, instead of using lots of commands.
-CBoptions gCBoptions;
+CBoptions cboptions;
 
 int g_app_instance;					/* 0, 1, 2, ... */
 char g_app_instance_suffix[10];		/* "", "[1]", "[2]", ... */
@@ -451,7 +451,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 			cxClient += 2*(GetSystemMetrics(SM_CXSIZEFRAME)-4);
 			cyClient = cxClient;
 			lprec->right = lprec->left + cxClient;
-			lprec->bottom = lprec->top + cyClient + offset + menuheight + titlebarheight + 2; //+ gCBoptions.addoffset;
+			lprec->bottom = lprec->top + cyClient + offset + menuheight + titlebarheight + 2; //+ cboptions.addoffset;
 			break;
 
 		case WM_SIZE:	 
@@ -518,9 +518,9 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					PostMessage(hwnd, WM_COMMAND, ABORTENGINE, 0);
 					if (gametype() == GT_ENGLISH)
 						{
-						if(gCBoptions.op_crossboard || gCBoptions.op_barred || gCBoptions.op_mailplay)
+						if(cboptions.op_crossboard || cboptions.op_barred || cboptions.op_mailplay)
 							{
-							op=getopening(&gCBoptions);
+							op=getopening(&cboptions);
 							PostMessage(hwnd,WM_COMMAND,START3MOVE,0);
 							}
 						else
@@ -543,7 +543,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 
 				case GAMESAVE: 
 					// show save game dialog. if OK, call 'dosave' to do the work 
-					SetCurrentDirectory(gCBoptions.userdirectory);
+					SetCurrentDirectory(cboptions.userdirectory);
 					if (DialogBox(g_hInst, "IDD_SAVEGAME", hwnd, (DLGPROC)DialogFuncSavegame))
 						{
 						if(getfilename(filename,OF_SAVEGAME))
@@ -585,7 +585,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 
 				case GAMEDATABASE:
 					// set working database 
-					sprintf(database,"%s",gCBoptions.userdirectory);
+					sprintf(database,"%s",cboptions.userdirectory);
 					getfilename(database,OF_LOADGAME);
 					// set reindex flag
 					reindex = 1;
@@ -924,104 +924,104 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					break;
 
 				case LEVELEXACT:
-					if(gCBoptions.exact==TRUE)
-						gCBoptions.exact=FALSE;
-					else gCBoptions.exact=TRUE;
-					if(gCBoptions.exact==TRUE)
+					if(cboptions.exact==TRUE)
+						cboptions.exact=FALSE;
+					else cboptions.exact=TRUE;
+					if(cboptions.exact==TRUE)
 						CheckMenuItem(hmenu,LEVELEXACT,MF_CHECKED);
 					else
 						CheckMenuItem(hmenu,LEVELEXACT,MF_UNCHECKED);
 					break;
 				case LEVELINSTANT:
 					maxtime=0.01;
-					gCBoptions.level=1;
-					checklevelmenu(hmenu,LEVELINSTANT, &gCBoptions);
+					cboptions.level=1;
+					checklevelmenu(hmenu,LEVELINSTANT, &cboptions);
 					break;
 				case LEVEL01S:
 					maxtime = 0.1;
-					gCBoptions.level = 2;
-					checklevelmenu(hmenu, LEVEL01S, &gCBoptions);
+					cboptions.level = 2;
+					checklevelmenu(hmenu, LEVEL01S, &cboptions);
 					break;
 				case LEVEL02S:
 					maxtime = 0.2;
-					gCBoptions.level = 3;
-					checklevelmenu(hmenu, LEVEL02S, &gCBoptions);
+					cboptions.level = 3;
+					checklevelmenu(hmenu, LEVEL02S, &cboptions);
 					break;
 				case LEVEL05S:
 					maxtime = 0.5;
-					gCBoptions.level = 4;
-					checklevelmenu(hmenu, LEVEL05S, &gCBoptions);
+					cboptions.level = 4;
+					checklevelmenu(hmenu, LEVEL05S, &cboptions);
 					break;
 				case LEVEL1S:
 					maxtime = 1;
-					gCBoptions.level = 5;
-					checklevelmenu(hmenu, LEVEL1S, &gCBoptions);
+					cboptions.level = 5;
+					checklevelmenu(hmenu, LEVEL1S, &cboptions);
 					break;
 				case LEVEL2S:
 					maxtime=2;
-					gCBoptions.level=6;
-					checklevelmenu(hmenu,LEVEL2S, &gCBoptions);
+					cboptions.level=6;
+					checklevelmenu(hmenu,LEVEL2S, &cboptions);
 					break;
 				case LEVEL5S:
 					maxtime=5;
-					gCBoptions.level=7;
-					checklevelmenu(hmenu,LEVEL5S, &gCBoptions);
+					cboptions.level=7;
+					checklevelmenu(hmenu,LEVEL5S, &cboptions);
 					break;
 				case LEVEL10S:
 					maxtime=10;
-					gCBoptions.level=8;
-					checklevelmenu(hmenu,LEVEL10S, &gCBoptions);
+					cboptions.level=8;
+					checklevelmenu(hmenu,LEVEL10S, &cboptions);
 					break;
 				case LEVEL15S:
 					maxtime=15;
-					gCBoptions.level=9;
-					checklevelmenu(hmenu,LEVEL15S, &gCBoptions);
+					cboptions.level=9;
+					checklevelmenu(hmenu,LEVEL15S, &cboptions);
 					break;
 				case LEVEL30S:
 					maxtime=30;
-					gCBoptions.level=10;
-					checklevelmenu(hmenu,LEVEL30S, &gCBoptions);
+					cboptions.level=10;
+					checklevelmenu(hmenu,LEVEL30S, &cboptions);
 					break;
 				case LEVEL1M:
 					maxtime=60;
-					gCBoptions.level=11;
-					checklevelmenu(hmenu,LEVEL1M, &gCBoptions);
+					cboptions.level=11;
+					checklevelmenu(hmenu,LEVEL1M, &cboptions);
 					break;
 				case LEVEL2M:
 					maxtime=120;
-					gCBoptions.level=12;
-					checklevelmenu(hmenu,LEVEL2M, &gCBoptions);
+					cboptions.level=12;
+					checklevelmenu(hmenu,LEVEL2M, &cboptions);
 					break;
 				case LEVEL5M:
 					maxtime=300;
-					gCBoptions.level=13;
-					checklevelmenu(hmenu,LEVEL5M, &gCBoptions);
+					cboptions.level=13;
+					checklevelmenu(hmenu,LEVEL5M, &cboptions);
 					break;
 				case LEVEL15M:
 					maxtime=900;
-					gCBoptions.level=14;
-					checklevelmenu(hmenu,LEVEL15M, &gCBoptions);
+					cboptions.level=14;
+					checklevelmenu(hmenu,LEVEL15M, &cboptions);
 					break;
 				case LEVEL30M:
 					maxtime=1800;
-					gCBoptions.level=15;
-					checklevelmenu(hmenu,LEVEL30M, &gCBoptions);
+					cboptions.level=15;
+					checklevelmenu(hmenu,LEVEL30M, &cboptions);
 					break;
 				case LEVELINFINITE:
 					maxtime=8600000;
-					gCBoptions.level=16;
-					checklevelmenu(hmenu,LEVELINFINITE, &gCBoptions);
+					cboptions.level=16;
+					checklevelmenu(hmenu,LEVELINFINITE, &cboptions);
 					break;
 				case LEVELINCREMENT:
 					// set clock to two minutes
 					maxtime=initialtime;
-					gCBoptions.level=17;
-					checklevelmenu(hmenu,LEVELINCREMENT, &gCBoptions);
+					cboptions.level=17;
+					checklevelmenu(hmenu,LEVELINCREMENT, &cboptions);
 					sprintf(statusbar_txt,"increment level set: initial time %.0f, increment time %.0f (seconds)",initialtime,incrementtime);
 					break;
 				case LEVELADDTIME:
 					// add  seconds when '+' is pressed
-					if(gCBoptions.level == 17)
+					if(cboptions.level == 17)
 						{
 						maxtime+=1.0;
 						sprintf(statusbar_txt,"remaining time: %.1f",maxtime);
@@ -1032,7 +1032,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 
 				case LEVELSUBTRACTTIME:
 					// subtract 1 seconds when '-' is pressed
-					if(gCBoptions.level==17)
+					if(cboptions.level==17)
 						{
 						maxtime-=1.0;
 						sprintf(statusbar_txt,"remaining time: %.1f",maxtime);
@@ -1058,11 +1058,11 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 				case PIECESET+13:
 				case PIECESET+14:
 				case PIECESET+15:
-					gCBoptions.piecesetindex = LOWORD(wParam)-PIECESET;
-					sprintf(statusbar_txt,"piece set %i: %s", gCBoptions.piecesetindex, piecesetname[gCBoptions.piecesetindex]);
+					cboptions.piecesetindex = LOWORD(wParam)-PIECESET;
+					sprintf(statusbar_txt,"piece set %i: %s", cboptions.piecesetindex, piecesetname[cboptions.piecesetindex]);
 					SetCurrentDirectory(CBdirectory);
 					SetCurrentDirectory("bmp");
-					initbmp(hwnd,piecesetname[gCBoptions.piecesetindex]);
+					initbmp(hwnd,piecesetname[cboptions.piecesetindex]);
 					resizegraphics(hwnd);
 					updateboardgraphics(hwnd);
 					InvalidateRect(hwnd, NULL, 1);
@@ -1075,7 +1075,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					initcolorstruct(hwnd, &ccs, 0);
 					if(ChooseColor(&ccs))
 						{
-						gCBoptions.colors[0]=(COLORREF) ccs.rgbResult;
+						cboptions.colors[0]=(COLORREF) ccs.rgbResult;
 						sprintf(statusbar_txt,"new highlighting color");
 						}
 					else
@@ -1088,7 +1088,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					initcolorstruct(hwnd, &ccs,1);
 					if(ChooseColor(&ccs))
 						{
-						gCBoptions.colors[1]=(COLORREF) ccs.rgbResult;
+						cboptions.colors[1]=(COLORREF) ccs.rgbResult;
 						sprintf(statusbar_txt,"new board number color");
 						}
 					else
@@ -1105,8 +1105,8 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					break;
 
 				case OPTIONSUSERBOOK:
-					toggle(&(gCBoptions.userbook));
-					setmenuchecks(&gCBoptions, hmenu);
+					toggle(&(cboptions.userbook));
+					setmenuchecks(&cboptions, hmenu);
 					break;
 
 				case OPTIONSLANGUAGEENGLISH:
@@ -1130,29 +1130,29 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					break;
 
 				case OPTIONSPRIORITY:
-					toggle(&(gCBoptions.priority));
-					if(gCBoptions.priority) // low priority mode
+					toggle(&(cboptions.priority));
+					if(cboptions.priority) // low priority mode
 						usersetpriority=THREAD_PRIORITY_BELOW_NORMAL;
 					else
 						usersetpriority=THREAD_PRIORITY_NORMAL;
-					setmenuchecks(&gCBoptions, hmenu);
+					setmenuchecks(&cboptions, hmenu);
 					break;
 
 				case OPTIONSHIGHLIGHT:
-					if(gCBoptions.highlight==TRUE) 
-						gCBoptions.highlight=FALSE;
+					if(cboptions.highlight==TRUE) 
+						cboptions.highlight=FALSE;
 					else 
-						gCBoptions.highlight=TRUE;
-					if(gCBoptions.highlight==TRUE)
+						cboptions.highlight=TRUE;
+					if(cboptions.highlight==TRUE)
 						CheckMenuItem(hmenu,OPTIONSHIGHLIGHT,MF_CHECKED);
 					else
 						CheckMenuItem(hmenu,OPTIONSHIGHLIGHT,MF_UNCHECKED);
 					break;
 
 				case OPTIONSSOUND:
-					if(gCBoptions.sound==TRUE) gCBoptions.sound=FALSE;
-					else gCBoptions.sound=TRUE;
-					if(gCBoptions.sound==TRUE)
+					if(cboptions.sound==TRUE) cboptions.sound=FALSE;
+					else cboptions.sound=TRUE;
+					if(cboptions.sound==TRUE)
 						CheckMenuItem(hmenu,OPTIONSSOUND,MF_CHECKED);
 					else
 						CheckMenuItem(hmenu,OPTIONSSOUND,MF_UNCHECKED);
@@ -1333,8 +1333,8 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 
 				case DISPLAYINVERT:		
 					// toggle: invert the board yes/no
-					toggle(&(gCBoptions.invert));
-					if(gCBoptions.invert) 
+					toggle(&(cboptions.invert));
+					if(cboptions.invert) 
 						CheckMenuItem(hmenu,DISPLAYINVERT,MF_CHECKED);
 					else 
 						CheckMenuItem(hmenu,DISPLAYINVERT,MF_UNCHECKED);
@@ -1344,8 +1344,8 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 				case DISPLAYMIRROR:		
 					// toggle: mirror the board yes/no
 					// this is a trick to make checkers variants like italian display properly.
-					toggle(&(gCBoptions.mirror));
-					if(gCBoptions.mirror) 
+					toggle(&(cboptions.mirror));
+					if(cboptions.mirror) 
 						CheckMenuItem(hmenu,DISPLAYMIRROR,MF_CHECKED);
 					else 
 						CheckMenuItem(hmenu,DISPLAYMIRROR,MF_UNCHECKED);
@@ -1354,8 +1354,8 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 
 				case DISPLAYNUMBERS:   
 					// toggle display numbers on / off 
-					toggle(&(gCBoptions.numbers));
-					if(gCBoptions.numbers) CheckMenuItem(hmenu,DISPLAYNUMBERS,MF_CHECKED);
+					toggle(&(cboptions.numbers));
+					if(cboptions.numbers) CheckMenuItem(hmenu,DISPLAYNUMBERS,MF_CHECKED);
 					else CheckMenuItem(hmenu,DISPLAYNUMBERS,MF_UNCHECKED);
 					updateboardgraphics(hwnd);
 					break;
@@ -1437,7 +1437,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 				case HELPHELP:      
 					// open the help.htm file with default .htm viewer 
 					SetCurrentDirectory(CBdirectory);
-					switch(gCBoptions.language)
+					switch(cboptions.language)
 						{
 						case ESPANOL:
 							showfile("helpspanish.htm");
@@ -1513,13 +1513,13 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 			// terminate the program 
 			// save window size:
 			GetWindowRect(hwnd,&windowrect);
-			gCBoptions.window_x = windowrect.left;
-			gCBoptions.window_y = windowrect.top;
-			gCBoptions.window_width = windowrect.right - windowrect.left;
-			gCBoptions.window_height = windowrect.bottom - windowrect.top;
+			cboptions.window_x = windowrect.left;
+			cboptions.window_y = windowrect.top;
+			cboptions.window_width = windowrect.right - windowrect.left;
+			cboptions.window_height = windowrect.bottom - windowrect.top;
 
 			// save settings 
-			savesettings(&gCBoptions);
+			savesettings(&cboptions);
 
 			//Shell_NotifyIcon(NIM_DELETE,&pnid); // remove tray icon 
 		
@@ -1567,31 +1567,31 @@ int SetMenuLanguage(int language)
 		case ENGLISH:
 		case OPTIONSLANGUAGEENGLISH:
 			hmenu = LoadMenu(g_hInst, "MENUENGLISH");
-			gCBoptions.language = ENGLISH;
+			cboptions.language = ENGLISH;
 			SetMenu(hwnd, hmenu);
 			break;
 		case DEUTSCH:
 		case OPTIONSLANGUAGEDEUTSCH:
 			hmenu = LoadMenu(g_hInst, "MENUDEUTSCH");
-			gCBoptions.language = DEUTSCH;
+			cboptions.language = DEUTSCH;
 			SetMenu(hwnd, hmenu);
 			break;
 		case ESPANOL:
 		case OPTIONSLANGUAGEESPANOL:
 			hmenu = LoadMenu(g_hInst, "MENUESPANOL");
-			gCBoptions.language = ESPANOL;
+			cboptions.language = ESPANOL;
 			SetMenu(hwnd, hmenu);
 			break;
 		case ITALIANO:
 		case OPTIONSLANGUAGEITALIANO:
 			hmenu = LoadMenu(g_hInst, "MENUITALIANO");
-			gCBoptions.language = ITALIANO;
+			cboptions.language = ITALIANO;
 			SetMenu(hwnd, hmenu);
 			break;
 		case FRANCAIS:
 		case OPTIONSLANGUAGEFRANCAIS:
 			hmenu = LoadMenu(g_hInst, "MENUFRANCAIS");
-			gCBoptions.language = FRANCAIS;
+			cboptions.language = FRANCAIS;
 			SetMenu(hwnd, hmenu);
 			break;
 		}
@@ -1650,7 +1650,7 @@ int handlesetupcc(int *color)
 	*color = CB_CHANGECOLOR(*color);
 
 	reset_game(cbgame);
-	gCBoptions.mirror = is_mirror_gametype(cbgame.gametype);
+	cboptions.mirror = is_mirror_gametype(cbgame.gametype);
 
 	// and the setup codes 
 	sprintf(cbgame.setup,"1");
@@ -1663,7 +1663,7 @@ int handle_rbuttondown(int x, int y)
 	{
 	if(setup)
 		{
-		coorstocoors(&x,&y, gCBoptions.invert, gCBoptions.mirror);
+		coorstocoors(&x,&y, cboptions.invert, cboptions.mirror);
 		if( (x+y+1)%2)
 			{
 			switch(gui_board8[x][y])
@@ -1692,7 +1692,7 @@ int handle_lbuttondown(int x, int y)
 	// if we are in setup mode, add a black piece.
 	if(setup)
 		{
-		coorstocoors(&x,&y,gCBoptions.invert, gCBoptions.mirror);
+		coorstocoors(&x,&y,cboptions.invert, cboptions.mirror);
 		if ((x+y+1)%2)
 			{
 			switch(gui_board8[x][y])
@@ -1721,7 +1721,7 @@ int handle_lbuttondown(int x, int y)
 		{
 		x1 = x;
 		y1_ = y;
-		coorstocoors(&x1,&y1_,gCBoptions.invert, gCBoptions.mirror);
+		coorstocoors(&x1,&y1_,cboptions.invert, cboptions.mirror);
 
 		// if there is only one move with this piece, then do it!
 		if(islegal != NULL)
@@ -1807,7 +1807,7 @@ int handle_lbuttondown(int x, int y)
 		{
 		x2 = x;
 		y2 = y;
-		coorstocoors(&x2,&y2,gCBoptions.invert, gCBoptions.mirror);
+		coorstocoors(&x2,&y2,cboptions.invert, cboptions.mirror);
 		if(! ((x2+y2+1)%2))
 			return 0;
 
@@ -2384,14 +2384,14 @@ int selectgame(int how)
 		}
 
 		// set directory to games directory
-		SetCurrentDirectory(gCBoptions.userdirectory);
+		SetCurrentDirectory(cboptions.userdirectory);
 
 		// get a valid database filename. if we already have one, we reuse it,
 		// else we prompt the user to select a PDN database
 		if (strcmp(database, "") == 0) {
 			// no valid database name
 			// display a dialog box with the available databases
-			sprintf(database, "%s", gCBoptions.userdirectory);
+			sprintf(database, "%s", cboptions.userdirectory);
 			result = getfilename(database,OF_LOADGAME); // 1 on ok, 0 on cancel
 			if (!result)
 				sprintf(database, "");
@@ -2743,16 +2743,16 @@ int createcheckerboard(HWND hwnd)
 	if (g_app_instance > 0)
 		sprintf(g_app_instance_suffix, "[%d]", g_app_instance);
 
-	// load settings from registry: &gCBoptions is one key, CBdirectory another.
-	loadsettings(&gCBoptions, CBdirectory);
-	SetMenuLanguage(gCBoptions.language);
+	// load settings from registry: &cboptions is one key, CBdirectory another.
+	loadsettings(&cboptions, CBdirectory);
+	SetMenuLanguage(cboptions.language);
 
 	// set appropriate pieceset - load bitmaps for the board
-	SendMessage(hwnd,WM_COMMAND,PIECESET+gCBoptions.piecesetindex,0);
+	SendMessage(hwnd,WM_COMMAND,PIECESET+cboptions.piecesetindex,0);
 
 	// resize window to last window size:
-	if(gCBoptions.window_x !=0) // check if we have stored something
-		MoveWindow(hwnd,gCBoptions.window_x,gCBoptions.window_y, gCBoptions.window_width, gCBoptions.window_height,1);
+	if(cboptions.window_x !=0) // check if we have stored something
+		MoveWindow(hwnd,cboptions.window_x,cboptions.window_y, cboptions.window_width, cboptions.window_height,1);
 	GetClientRect(hwnd, &rect);
 	PostMessage(hwnd, WM_SIZE, 0, MAKELPARAM(rect.right-rect.left, rect.bottom-rect.top));
 
@@ -2782,10 +2782,10 @@ int createcheckerboard(HWND hwnd)
 		fclose(fp);
 		}
 
-	setmenuchecks(&gCBoptions, hmenu);
+	setmenuchecks(&cboptions, hmenu);
 	// set the level 
 	// which has been retrieved by loadsettings 
-	switch(gCBoptions.level)
+	switch(cboptions.level)
 		{
 		case 1:
 			PostMessage(hwnd,WM_COMMAND,LEVELINSTANT,0);
@@ -3072,7 +3072,7 @@ DWORD ThreadFunc(LPVOID param)
 	}
 
 	// check if this position is in the userbook
-	if (gCBoptions.userbook) {
+	if (cboptions.userbook) {
 		boardtobitboard(gui_board8, &userbookpos);
 		for (i = 0; i < userbooknum; i++) {
 			if (userbookpos.bm == userbook[i].position.bm &&
@@ -3113,9 +3113,9 @@ DWORD ThreadFunc(LPVOID param)
 
 			// if in engine match handicap mode, give primary engine half the time of secondary engine.
 			if (CBstate == ENGINEMATCH && handicap && currentengine == 1)
-				result = (getmove)(originalcopy, gui_color, maxtime / 2, statusbar_txt, &playnow, reset + 2 * gCBoptions.exact + 4 * increment, 0, &LCBmove);
+				result = (getmove)(originalcopy, gui_color, maxtime / 2, statusbar_txt, &playnow, reset + 2 * cboptions.exact + 4 * increment, 0, &LCBmove);
 			else
-				result = (getmove)(originalcopy, gui_color, maxtime, statusbar_txt, &playnow, reset + 2 * gCBoptions.exact + 4 * increment, 0, &LCBmove);
+				result = (getmove)(originalcopy, gui_color, maxtime, statusbar_txt, &playnow, reset + 2 * cboptions.exact + 4 * increment, 0, &LCBmove);
 
 			/* Display the Play! bitmap with black foreground when the engine is not searching. */
 			PostMessage(tbwnd, TB_CHANGEBITMAP, (WPARAM)MOVESPLAY, MAKELPARAM(2, 0));
@@ -3197,7 +3197,7 @@ DWORD ThreadFunc(LPVOID param)
 	if ((CBstate != OBSERVEGAME) && (CBstate != ANALYZEGAME) && (CBstate != ANALYZEPDN) && found && !abortcalculation) {
 		appendmovetolist(move);
 		// if sound is on we make a beep 
-		if (gCBoptions.sound) 
+		if (cboptions.sound) 
 			Beep(440, 5);
 		CloseHandle(hAniThread);
 		setanimationbusy(TRUE);  // this was missing in CB 1.65 which was the reason for the bug...
@@ -3222,7 +3222,7 @@ DWORD ThreadFunc(LPVOID param)
 		{
 			filename[MAX_PATH];
 
-			sprintf(filename, "%s\\matchlog%s.txt", gCBoptions.matchdirectory, g_app_instance_suffix);
+			sprintf(filename, "%s\\matchlog%s.txt", cboptions.matchdirectory, g_app_instance_suffix);
 			Lfp = fopen(filename, "a");
 			enginename(Lstr);
 			if (Lfp != NULL) {
@@ -3588,7 +3588,7 @@ DWORD AutoThreadFunc(LPVOID param)
 					blackwins=0;
 					blacklosses=0;
 					// check to see if a stats.txt file is here, and if yes, continue the match 
-					sprintf(statsfilename, "%s\\stats%s.txt", gCBoptions.matchdirectory, g_app_instance_suffix);
+					sprintf(statsfilename, "%s\\stats%s.txt", cboptions.matchdirectory, g_app_instance_suffix);
 					Lfp = fopen(statsfilename,"r");
 					if(Lfp != NULL)
 						{
@@ -3602,7 +3602,7 @@ DWORD AutoThreadFunc(LPVOID param)
 						fclose(Lfp);
 
 						// read match-progress file 	// TODO: this should be superfluous, write directly to file...
-						sprintf(statsfilename, "%s\\match_progress%s.txt", gCBoptions.matchdirectory, g_app_instance_suffix);
+						sprintf(statsfilename, "%s\\match_progress%s.txt", cboptions.matchdirectory, g_app_instance_suffix);
 						Lfp = fopen(statsfilename,"r");
 						if(Lfp!=NULL)
 							{
@@ -3679,7 +3679,7 @@ DWORD AutoThreadFunc(LPVOID param)
 							strcat(matchlogstring,"  ");
 
 						// write match statistics 
-						sprintf(statsfilename, "%s\\stats%s.txt", gCBoptions.matchdirectory, g_app_instance_suffix);
+						sprintf(statsfilename, "%s\\stats%s.txt", cboptions.matchdirectory, g_app_instance_suffix);
 						Lfp = fopen(statsfilename,"w");
 						if(Lfp != NULL)
 							{
@@ -3690,7 +3690,7 @@ DWORD AutoThreadFunc(LPVOID param)
 							}
 
 						// write match_progress.txt file
-						sprintf(statsfilename, "%s\\match_progress%s.txt", gCBoptions.matchdirectory, g_app_instance_suffix);
+						sprintf(statsfilename, "%s\\match_progress%s.txt", cboptions.matchdirectory, g_app_instance_suffix);
 						logtofile(statsfilename, matchlogstring, "w");
 
 						// save the game
@@ -3700,7 +3700,7 @@ DWORD AutoThreadFunc(LPVOID param)
 							sprintf(cbgame.event,"ACF #%i",op+1);
 
 						// dosave expects a fully initialized cbgame structure
-						sprintf(filename, "%s\\match%s.pdn", gCBoptions.matchdirectory, g_app_instance_suffix);
+						sprintf(filename, "%s\\match%s.pdn", cboptions.matchdirectory, g_app_instance_suffix);
 						SendMessage(hwnd,WM_COMMAND,DOSAVE,0);
 
 						Sleep(SLEEPTIME);
@@ -3714,7 +3714,7 @@ DWORD AutoThreadFunc(LPVOID param)
 						matchcontinues = start11man(gamenumber/2);	
 					else
 						{
-						op = getthreeopening(gamenumber, &gCBoptions);
+						op = getthreeopening(gamenumber, &cboptions);
 						if(op == -1)
 							matchcontinues = 0;
 						else
@@ -3918,7 +3918,7 @@ int makeanalysisfile(char *filename)
 
 	CPUinfo(CPUinfostring);
 	
-	fprintf(fp, "\nAnalysis by %s at %is/move on %s", s, leveltime[gCBoptions.level], CPUinfostring);
+	fprintf(fp, "\nAnalysis by %s at %is/move on %s", s, leveltime[cboptions.level], CPUinfostring);
 	fprintf(fp, "\n<BR>\ngenerated with <A HREF=\"http://www.fierz.ch/checkers.htm\">CheckerBoard %s</A><P>", VERSION);
 
 	// print PDN and analysis
@@ -4260,7 +4260,7 @@ int getfilename(char filename[255], int what)
 	(of).nMaxFile = MAX_PATH;
 	(of).lpstrFileTitle = NULL;
 	(of).nMaxFileTitle = 0;
-	(of).lpstrInitialDir = gCBoptions.userdirectory;
+	(of).lpstrInitialDir = cboptions.userdirectory;
 	(of).lpstrTitle = NULL;
 	(of).Flags = OFN_HIDEREADONLY|OFN_PATHMUSTEXIST;
 	(of).nFileOffset = 0;
@@ -4385,10 +4385,10 @@ void newgame(void)
 	reset_game(cbgame);
 	newposition = TRUE;
 	reset = 1;
-	gCBoptions.mirror = is_mirror_gametype(cbgame.gametype);
+	cboptions.mirror = is_mirror_gametype(cbgame.gametype);
 	gui_color = get_startcolor(cbgame.gametype);
 	
-	if(gCBoptions.level==17)
+	if(cboptions.level==17)
 		maxtime=initialtime;	
 	
 	updateboardgraphics(hwnd);
@@ -4458,7 +4458,7 @@ void doload(PDNgame *game, char *gamestring, int *color, int board8[8][8])
 
 	/* set defaults */
 	*color = get_startcolor(game->gametype);
-	gCBoptions.mirror = is_mirror_gametype(game->gametype);
+	cboptions.mirror = is_mirror_gametype(game->gametype);
 
 	InitCheckerBoard(board8);
 
@@ -4681,27 +4681,27 @@ void loadengines(char *pri_fname, char *sec_fname)
 	 * if the requested new engine filename is different from the one presently loaded (this happens
 	 * if the presently loaded primary engine handle is same as the secondary engine handle).
 	 */
-	if (!hinstLib1 || strcmp(pri_fname, gCBoptions.primaryenginestring)) {
+	if (!hinstLib1 || strcmp(pri_fname, cboptions.primaryenginestring)) {
 		status = load_engine(&hinstLib1, pri_fname, &enginecommand1, &enginename1, &getmove1, &islegal1, "primary");
 		if (!status)
-			strcpy(gCBoptions.primaryenginestring, pri_fname);		/* Success. */
+			strcpy(cboptions.primaryenginestring, pri_fname);		/* Success. */
 		else {
-			if (strcmp(pri_fname, gCBoptions.primaryenginestring)) {
-				status = load_engine(&hinstLib1, gCBoptions.primaryenginestring, &enginecommand1, &enginename1, &getmove1, &islegal1, "primary");
+			if (strcmp(pri_fname, cboptions.primaryenginestring)) {
+				status = load_engine(&hinstLib1, cboptions.primaryenginestring, &enginecommand1, &enginename1, &getmove1, &islegal1, "primary");
 				if (status)
-					gCBoptions.primaryenginestring[0] = 0;
+					cboptions.primaryenginestring[0] = 0;
 			}
 		}
 	}
-	if (!hinstLib2 || strcmp(sec_fname, gCBoptions.secondaryenginestring)) {
+	if (!hinstLib2 || strcmp(sec_fname, cboptions.secondaryenginestring)) {
 		status = load_engine(&hinstLib2, sec_fname, &enginecommand2, &enginename2, &getmove2, &islegal2, "secondary");
 		if (!status)
-			strcpy(gCBoptions.secondaryenginestring, sec_fname);	/* Success. */
+			strcpy(cboptions.secondaryenginestring, sec_fname);	/* Success. */
 		else {
-			if (strcmp(sec_fname, gCBoptions.secondaryenginestring)) {
-				status = load_engine(&hinstLib2, gCBoptions.secondaryenginestring, &enginecommand2, &enginename2, &getmove2, &islegal2, "secondary");
+			if (strcmp(sec_fname, cboptions.secondaryenginestring)) {
+				status = load_engine(&hinstLib2, cboptions.secondaryenginestring, &enginecommand2, &enginename2, &getmove2, &islegal2, "secondary");
 				if (status)
-					gCBoptions.secondaryenginestring[0] = 0;
+					cboptions.secondaryenginestring[0] = 0;
 			}
 		}
 	}
@@ -4722,7 +4722,7 @@ void loadengines(char *pri_fname, char *sec_fname)
 
 void initengines(void)
 {
-	loadengines(gCBoptions.primaryenginestring, gCBoptions.secondaryenginestring);
+	loadengines(cboptions.primaryenginestring, cboptions.secondaryenginestring);
 }
 
 

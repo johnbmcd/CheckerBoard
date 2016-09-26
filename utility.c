@@ -55,7 +55,7 @@ extern char g_app_instance_suffix[10];
 int initcolorstruct(HWND hwnd, CHOOSECOLOR *ccs, int index)
 	{
 	COLORREF dCustomColors[16];
-	extern struct CBoptions gCBoptions;
+	extern struct CBoptions cboptions;
 	ccs->lStructSize = (DWORD) sizeof(CHOOSECOLOR);
 	ccs->hwndOwner = (HWND) hwnd;
 	ccs->hInstance = (HWND) NULL;
@@ -64,7 +64,7 @@ int initcolorstruct(HWND hwnd, CHOOSECOLOR *ccs, int index)
 	ccs->lCustData = 0L;
 	ccs->lpfnHook = NULL;
 	ccs->lpTemplateName = (LPSTR) NULL;
-	ccs->rgbResult = gCBoptions.colors[index];
+	ccs->rgbResult = cboptions.colors[index];
 	return 1;
 	}
 

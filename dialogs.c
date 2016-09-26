@@ -31,7 +31,7 @@
 #endif
 #endif
 
-extern struct CBoptions gCBoptions;
+extern struct CBoptions cboptions;
 extern char str[1024];
 extern HINSTANCE g_hInst;
 extern HWND hwnd;
@@ -136,9 +136,9 @@ BOOL CALLBACK ThreeMoveDialogFunc(HWND hdwnd, UINT message, WPARAM wParam, LPARA
 			// center dialog box on CB window:
 			CenterDialog(hdwnd);
 			// initialize checkboxes:
-			SendDlgItemMessage(hdwnd, IDC_BOARD, BM_SETCHECK, gCBoptions.op_crossboard,0);
-			SendDlgItemMessage(hdwnd, IDC_MAILPLAY, BM_SETCHECK, gCBoptions.op_mailplay,0);
-			SendDlgItemMessage(hdwnd, IDC_BARRED, BM_SETCHECK, gCBoptions.op_barred,0);
+			SendDlgItemMessage(hdwnd, IDC_BOARD, BM_SETCHECK, cboptions.op_crossboard,0);
+			SendDlgItemMessage(hdwnd, IDC_MAILPLAY, BM_SETCHECK, cboptions.op_mailplay,0);
+			SendDlgItemMessage(hdwnd, IDC_BARRED, BM_SETCHECK, cboptions.op_barred,0);
 			// localization example
 			//LoadString(g_hInst,101, buffer, 1024);
 			///SendDlgItemMessage(hdwnd, 65535, WM_SETTEXT, 0, buffer);
@@ -152,9 +152,9 @@ BOOL CALLBACK ThreeMoveDialogFunc(HWND hdwnd, UINT message, WPARAM wParam, LPARA
 					EndDialog(hdwnd,0);
 					return 1;
 				case IDC_OK:
-					gCBoptions.op_crossboard = (int)SendDlgItemMessage(hdwnd,IDC_BOARD,BM_GETCHECK,0,0);
-					gCBoptions.op_mailplay = (int)SendDlgItemMessage(hdwnd,IDC_MAILPLAY,BM_GETCHECK,0,0);
-					gCBoptions.op_barred = (int)SendDlgItemMessage(hdwnd,IDC_BARRED,BM_GETCHECK,0,0);
+					cboptions.op_crossboard = (int)SendDlgItemMessage(hdwnd,IDC_BOARD,BM_GETCHECK,0,0);
+					cboptions.op_mailplay = (int)SendDlgItemMessage(hdwnd,IDC_MAILPLAY,BM_GETCHECK,0,0);
+					cboptions.op_barred = (int)SendDlgItemMessage(hdwnd,IDC_BARRED,BM_GETCHECK,0,0);
 					EndDialog(hdwnd,0);
 					return 1;
 				}
@@ -576,8 +576,8 @@ BOOL CALLBACK DirectoryDialogFunc(HWND hdwnd, UINT message, WPARAM wParam, LPARA
 		case WM_INITDIALOG:
 			// center dialog box on CB window
 			CenterDialog(hdwnd);
-			SetDlgItemText(hdwnd, IDC_USER, gCBoptions.userdirectory);
-			SetDlgItemText(hdwnd, IDC_MATCH, gCBoptions.matchdirectory);
+			SetDlgItemText(hdwnd, IDC_USER, cboptions.userdirectory);
+			SetDlgItemText(hdwnd, IDC_MATCH, cboptions.matchdirectory);
 			return 1;
 			break;
 		case WM_COMMAND:
@@ -587,8 +587,8 @@ BOOL CALLBACK DirectoryDialogFunc(HWND hdwnd, UINT message, WPARAM wParam, LPARA
 					EndDialog(hdwnd,0);
 					return 1;
 				case IDC_OK:
-					GetDlgItemText(hdwnd,IDC_USER,gCBoptions.userdirectory,255);
-					GetDlgItemText(hdwnd,IDC_MATCH,gCBoptions.matchdirectory,255);
+					GetDlgItemText(hdwnd,IDC_USER,cboptions.userdirectory,255);
+					GetDlgItemText(hdwnd,IDC_MATCH,cboptions.matchdirectory,255);
 					EndDialog(hdwnd,0);
 					return 1;
 				}
@@ -637,7 +637,7 @@ BOOL CALLBACK DialogFuncMoreOptions(HWND hwnd, UINT msg, UINT wparam, LONG lpara
 			return(1);
 
 		case IDC_BOOKFILE_BROWSE_BUTTON:
-			SetCurrentDirectory(gCBoptions.userdirectory);
+			SetCurrentDirectory(cboptions.userdirectory);
 			SendDlgItemMessage(hwnd, IDC_BOOKFILE_EDIT, WM_GETTEXT, sizeof(new_options.book_filename), (LPARAM)new_options.book_filename);
 			if (getfilename(buf, OF_BOOKFILE)) {
 				extract_filename(buf, new_options.book_filename);
@@ -1309,7 +1309,7 @@ BOOL CALLBACK EngineDialogFunc(HWND hdwnd, UINT message, WPARAM wParam, LPARAM l
 	
 	char pri_fname[256], sec_fname[256];
 	extern char CBdirectory[256];
-	extern struct CBoptions gCBoptions;
+	extern struct CBoptions cboptions;
 	
 	switch(message)
 		{
@@ -1324,8 +1324,8 @@ BOOL CALLBACK EngineDialogFunc(HWND hdwnd, UINT message, WPARAM wParam, LPARAM l
 			// initialize the comboboxes 
 			SendDlgItemMessage(hdwnd,IDC_PRIMARY,LB_DIR,0,(LPARAM)"*.dll");
 			SendDlgItemMessage(hdwnd,IDC_SECONDARY,LB_DIR,0,(LPARAM)"*.dll");
-			SendDlgItemMessage(hdwnd,IDC_PRIMARY,LB_SELECTSTRING,-1,(LPARAM)gCBoptions.primaryenginestring);
-			SendDlgItemMessage(hdwnd,IDC_SECONDARY,LB_SELECTSTRING,-1,(LPARAM)gCBoptions.secondaryenginestring);
+			SendDlgItemMessage(hdwnd,IDC_PRIMARY,LB_SELECTSTRING,-1,(LPARAM)cboptions.primaryenginestring);
+			SendDlgItemMessage(hdwnd,IDC_SECONDARY,LB_SELECTSTRING,-1,(LPARAM)cboptions.secondaryenginestring);
 			return 1;
 		
 		case WM_COMMAND:
@@ -1353,7 +1353,7 @@ BOOL CALLBACK EngineDialogFunc(HWND hdwnd, UINT message, WPARAM wParam, LPARAM l
 						sec_fname[0] = 0;
 					
 					// if we have a new engine, call loadengines.
-					if (strcmp(gCBoptions.primaryenginestring, pri_fname) != 0 || strcmp(gCBoptions.secondaryenginestring, sec_fname) != 0)
+					if (strcmp(cboptions.primaryenginestring, pri_fname) != 0 || strcmp(cboptions.secondaryenginestring, sec_fname) != 0)
 						loadengines(pri_fname, sec_fname);
 					SetCurrentDirectory(CBdirectory);
 	

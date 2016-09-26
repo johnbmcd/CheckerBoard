@@ -26,7 +26,7 @@
 
 // lots of external variables from checkerboard.c - very ugly
 extern struct CBmove move;
-extern struct CBoptions gCBoptions;
+extern struct CBoptions cboptions;
 extern int gui_board8[8][8];
 extern int gui_color;
 extern struct PDNgame cbgame;
@@ -150,7 +150,7 @@ int resizegraphics(HWND hwnd)
 	if(bmp_dark == NULL)
 		CBlog("bmp dark is null");
 
-	if(gCBoptions.mirror)
+	if(cboptions.mirror)
 		{
 		// make a single dark square:
 		x0 = 0; 
@@ -364,8 +364,8 @@ DWORD AnimationThreadFunc(HWND hwnd)
 		printboard(hwnd, bgdc, bmpdc, stretchdc, gui_board8);
 #endif
 
-	coorstocoors(&x,&y, gCBoptions.invert, gCBoptions.mirror);
-	coorstocoors(&x2,&y2, gCBoptions.invert, gCBoptions.mirror);
+	coorstocoors(&x,&y, cboptions.invert, cboptions.mirror);
+	coorstocoors(&x2,&y2, cboptions.invert, cboptions.mirror);
 	/* print the board without the stone which moves into bgdc */
 
 	/* find the number of jumps to do */
@@ -441,12 +441,12 @@ DWORD AnimationThreadFunc(HWND hwnd)
 			// a jumping move 
 			x = move.from.x;
 			y = move.from.y;
-			coorstocoors(&x,&y,gCBoptions.invert, gCBoptions.mirror);
+			coorstocoors(&x,&y,cboptions.invert, cboptions.mirror);
 			for(j=0;j<jumps;j++)
 				{
 				x2 = move.path[j+1].x;
 				y2 = move.path[j+1].y;
-				coorstocoors(&x2,&y2,gCBoptions.invert, gCBoptions.mirror);
+				coorstocoors(&x2,&y2,cboptions.invert, cboptions.mirror);
 				// now animate the part-move:
 				for(i=0;i<=2*STEPS;i++)
 					{
@@ -512,17 +512,17 @@ DWORD AnimationThreadFunc(HWND hwnd)
 
 	// if move highlighting is on, we do it! 
 	// this should go in a separate function!
-	if(gCBoptions.highlight)
+	if(cboptions.highlight)
 		{
 		// create a pen:
-		hPen = CreatePen(PS_SOLID, 1, gCBoptions.colors[0]);	
+		hPen = CreatePen(PS_SOLID, 1, cboptions.colors[0]);	
 
 		x=move.from.x;
 		y=move.from.y;
 		x2=move.to.x;
 		y2=move.to.y;
-		coorstocoors(&x,&y,gCBoptions.invert, gCBoptions.mirror);
-		coorstocoors(&x2,&y2,gCBoptions.invert, gCBoptions.mirror);
+		coorstocoors(&x,&y,cboptions.invert, cboptions.mirror);
+		coorstocoors(&x2,&y2,cboptions.invert, cboptions.mirror);
 		hOldPen = (HPEN) SelectObject(memdc,hPen);
 
 		MoveToEx(memdc,(int)(size*x + xoffset),(int)(size*(7-y)+upperoffset + yoffset),NULL);
@@ -673,7 +673,7 @@ int printboard(HWND hwnd, HDC hdc, HDC bmpdc, HDC stretchdc, int b[8][8])
 			{
 			x=i;
 			y=j;
-			coorstocoors(&x,&y, gCBoptions.invert, gCBoptions.mirror);
+			coorstocoors(&x,&y, cboptions.invert, cboptions.mirror);
 			if(b[x][y]==0)
 				continue;
 
@@ -709,7 +709,7 @@ int printboard(HWND hwnd, HDC hdc, HDC bmpdc, HDC stretchdc, int b[8][8])
 		for (j = 0; j < 8; j++) {
 			x = i;
 			y = j;
-			coorstocoors(&x, &y, gCBoptions.invert, gCBoptions.mirror);
+			coorstocoors(&x, &y, cboptions.invert, cboptions.mirror);
 			if ((x + y) % 2)
 				SelectObject(hdc, GetStockObject(WHITE_BRUSH));
 			else
@@ -738,10 +738,10 @@ int printboard(HWND hwnd, HDC hdc, HDC bmpdc, HDC stretchdc, int b[8][8])
 	}*/
 
 	// add board numbers 
-	if(gCBoptions.numbers)
+	if(cboptions.numbers)
 		{
 		oldfont = (HFONT) SelectObject(hdc,myfont);
-		SetTextColor(hdc,gCBoptions.colors[1]);
+		SetTextColor(hdc,cboptions.colors[1]);
 		SetBkMode(hdc,TRANSPARENT);
 		for(i=0;i<=7;i++)
 			{
@@ -749,7 +749,7 @@ int printboard(HWND hwnd, HDC hdc, HDC bmpdc, HDC stretchdc, int b[8][8])
 				{
 				x=i;
 				y=j;
-				coorstocoors(&x,&y,gCBoptions.invert, gCBoptions.mirror);
+				coorstocoors(&x,&y,cboptions.invert, cboptions.mirror);
 				if(!((x+y)%2))
 					{
 					sprintf(s,"%i",coorstonumber(x,y, cbgame.gametype));
@@ -840,10 +840,10 @@ void selectstone(int x, int y, HWND hwnd, int board[8][8])
 	HPEN hOldPen, hPen;
 	double xmetric, ymetric;
 
-	hPen = CreatePen(PS_SOLID, 1, gCBoptions.colors[0]);
+	hPen = CreatePen(PS_SOLID, 1, cboptions.colors[0]);
 	if(board[x][y]!=0)
 		{
-		coorstocoors(&x,&y,gCBoptions.invert, gCBoptions.mirror);
+		coorstocoors(&x,&y,cboptions.invert, cboptions.mirror);
 		getxymetrics(&xmetric, &ymetric, hwnd);
 
 		hOldPen = (HPEN) SelectObject(memdc,hPen);
