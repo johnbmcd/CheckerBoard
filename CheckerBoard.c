@@ -86,7 +86,6 @@
 // globals - should be identified in code by g_varname but aren't all...
 
 PDNgame cbgame;
-CBmove GCBmove;
 
 // all checkerboard options are collected in CBoptions; like this, they can be saved 
 // as one struct in the registry, instead of using lots of commands.
@@ -178,7 +177,6 @@ char string[256];
 HMENU hmenu;								// menu handle 
 double o,xmetric,ymetric;					//gives the size of the board8: one square is xmetric*ymetric 
 int dummy,x1=-1,x2=-1,y1_=-1,y2=-1;
-struct CBmove m[28]; 						// movelist 
 double maxtime, incrementtime=60.0, initialtime=1200.0;				//time limit - is set by setlevel() 
 char reply[ENGINECOMMAND_REPLY_SIZE];		// holds reply of engine to command requests 
 char CBdirectory[256]="";			// holds the directory from where CB is started:
@@ -186,7 +184,7 @@ char CBdocuments[MAX_PATH];			// CheckerBoard directory under My Documents
 char database[256]="";				// current PDN database 
 char userbookname[256];	// current userbook
 
-struct CBmove move;
+CBmove cbmove;
 char filename[255]="";
 char engine1[255]="";
 char engine2[255]="";
@@ -1689,6 +1687,8 @@ int handle_lbuttondown(int x, int y)
 	{
 	int i, legal, legalmovenumber;
 	int from, to; 
+	CBmove localmove;
+
 	// if we are in setup mode, add a black piece.
 	if(setup)
 		{
@@ -1730,7 +1730,7 @@ int handle_lbuttondown(int x, int y)
 			legalmovenumber = 0;
 			for(i=1; i<=32; i++) {
 				from = coorstonumber(x1,y1_,cbgame.gametype);
-				if(islegal(gui_board8, gui_color, from, i, &GCBmove) != 0)
+				if(islegal(gui_board8, gui_color, from, i, &localmove) != 0)
 					{
 					legal++;
 					legalmovenumber = i;
@@ -1742,7 +1742,7 @@ int handle_lbuttondown(int x, int y)
 			if(legal == 0) {
 				for(i=1; i<=32; i++)
 				{
-				if(islegal(gui_board8, gui_color, i, coorstonumber(x1,y1_,cbgame.gametype), &GCBmove) != 0)
+				if(islegal(gui_board8, gui_color, i, coorstonumber(x1,y1_,cbgame.gametype), &localmove) != 0)
 					{
 					legal++;
 					legalmovenumber = i;
@@ -1761,18 +1761,18 @@ int handle_lbuttondown(int x, int y)
 				// is it the only legal move?
 				// if yes, do it! 
 				// if we are in user book mode, add it to user book!
-				//if(islegal((int *)board8,color,coorstonumber(x1,y1,cbgame.gametype),legalmovenumber,&GCBmove)!=0)
-				if(islegal(gui_board8,gui_color,from,to,&GCBmove)!=0)
+				//if(islegal((int *)board8,color,coorstonumber(x1,y1,cbgame.gametype),legalmovenumber,&localmove)!=0)
+				if(islegal(gui_board8,gui_color,from,to,&localmove)!=0)
 					// a legal move!
 					{
 					// insert move in the linked list 
-					appendmovetolist(GCBmove);
+					appendmovetolist(localmove);
 					// animate the move: 
-					move = GCBmove;
+					cbmove = localmove;
 					
 					// if we are in userbook mode, we save the move
 					if(CBstate == BOOKADD)
-						addmovetouserbook(gui_board8, &GCBmove);
+						addmovetouserbook(gui_board8, &localmove);
 
 					// call animation function which will also execute the move
 					CloseHandle(hAniThread);
@@ -1837,7 +1837,7 @@ int handle_lbuttondown(int x, int y)
 				legalmovenumber = 0;
 				for(i=1; i<=32; i++)
 					{
-					if(islegal(gui_board8, gui_color, coorstonumber(x1,y1_,cbgame.gametype), i, &GCBmove)!=0)
+					if(islegal(gui_board8, gui_color, coorstonumber(x1,y1_,cbgame.gametype), i, &localmove)!=0)
 						{
 						legal++;
 						legalmovenumber = i;
@@ -1847,18 +1847,18 @@ int handle_lbuttondown(int x, int y)
 			sprintf(statusbar_txt,"");
 			if(legal == 1) // only one legal move
 				{
-				if(islegal(gui_board8,gui_color,coorstonumber(x1,y1_,cbgame.gametype),legalmovenumber,&GCBmove)!=0)
+				if(islegal(gui_board8,gui_color,coorstonumber(x1,y1_,cbgame.gametype),legalmovenumber,&localmove)!=0)
 					// a legal move!
 					{
 					// insert move in the linked list 
-					appendmovetolist(GCBmove);
+					appendmovetolist(localmove);
 					// animate the move: 
-					move = GCBmove;
+					cbmove = localmove;
 					CloseHandle(hAniThread);
 
 					// if we are in userbook mode, we save the move
 					if(CBstate == BOOKADD)
-						addmovetouserbook(gui_board8, &GCBmove);
+						addmovetouserbook(gui_board8, &localmove);
 
 					// call animation function which will also execute the move
 					setanimationbusy(TRUE);
@@ -1883,18 +1883,18 @@ int handle_lbuttondown(int x, int y)
 		// check move and if ok
 		if(islegal!=NULL)
 			{
-			if(islegal(gui_board8,gui_color,coorstonumber(x1,y1_,cbgame.gametype),coorstonumber(x2,y2, cbgame.gametype),&GCBmove)!=0)
+			if(islegal(gui_board8,gui_color,coorstonumber(x1,y1_,cbgame.gametype),coorstonumber(x2,y2, cbgame.gametype),&localmove)!=0)
 				// a legal move!
 				{
 				// insert move in the linked list 
-				appendmovetolist(GCBmove);
+				appendmovetolist(localmove);
 				// animate the move: 
-				move=GCBmove;
+				cbmove=localmove;
 				CloseHandle(hAniThread);
 
 				// if we are in userbook mode, we save the move
 				if(CBstate == BOOKADD)
-					addmovetouserbook(gui_board8, &GCBmove);
+					addmovetouserbook(gui_board8, &localmove);
 
 				// call animation function which will also execute the move
 				setanimationbusy(TRUE);
@@ -2985,6 +2985,7 @@ int start3move(void)
 	// this function executes the 3 first moves of 3moveopening #(op), op
 	// is a global which is set by random if the user chooses
 	// 3-move, or it can be set controlled by engine match 
+	CBmove movelist[28];
 
 	extern int three[174][4]; // describes 3-move-openings
 
@@ -2993,19 +2994,19 @@ int start3move(void)
 	gui_color = CB_BLACK;
 	cbgame.moves.clear();
 
-	getmovelist(1, m, gui_board8, &dummy);
-	domove(m[three[op][0]], gui_board8);
-	appendmovetolist(m[three[op][0]]);
+	getmovelist(1, movelist, gui_board8, &dummy);
+	domove(movelist[three[op][0]], gui_board8);
+	appendmovetolist(movelist[three[op][0]]);
 
 	gui_color = CB_CHANGECOLOR(gui_color);
-	getmovelist(-1, m,gui_board8, &dummy);
-	domove(m[three[op][1]], gui_board8);
-	appendmovetolist(m[three[op][1]]);
+	getmovelist(-1, movelist,gui_board8, &dummy);
+	domove(movelist[three[op][1]], gui_board8);
+	appendmovetolist(movelist[three[op][1]]);
 
 	gui_color = CB_CHANGECOLOR(gui_color);
-	getmovelist(1, m,gui_board8 ,&dummy);
-	domove(m[three[op][2]], gui_board8);
-	appendmovetolist(m[three[op][2]]);
+	getmovelist(1, movelist,gui_board8 ,&dummy);
+	domove(movelist[three[op][2]], gui_board8);
+	appendmovetolist(movelist[three[op][2]]);
 
 	gui_color = CB_CHANGECOLOR(gui_color);
 
@@ -3035,15 +3036,15 @@ DWORD ThreadFunc(LPVOID param)
 	{
 	size_t i, nmoves;
 	int original8board[8][8],b8copy[8][8],originalcopy[8][8];
-	struct CBmove m[MAXMOVES];
-
+	CBmove m[MAXMOVES];
+	CBmove localmove;
 	char PDN[40];
 	int found=0;
 	int c;
 	int dummy;
 	FILE *Lfp;
 	char Lstr[1024];
-	struct CBmove LCBmove;
+
 	struct pos userbookpos;
 	int founduserbookmove = 0;
 
@@ -3080,7 +3081,7 @@ DWORD ThreadFunc(LPVOID param)
 						userbookpos.wm == userbook[i].position.wm &&
 						userbookpos.wk == userbook[i].position.wk) {
 				// we have this position in the userbook!
-				move = userbook[i].move;
+				cbmove = userbook[i].move;
 				founduserbookmove = 1;
 				found = 1;
 				sprintf(statusbar_txt, "found move in user book");
@@ -3113,9 +3114,9 @@ DWORD ThreadFunc(LPVOID param)
 
 			// if in engine match handicap mode, give primary engine half the time of secondary engine.
 			if (CBstate == ENGINEMATCH && handicap && currentengine == 1)
-				result = (getmove)(originalcopy, gui_color, maxtime / 2, statusbar_txt, &playnow, reset + 2 * cboptions.exact + 4 * increment, 0, &LCBmove);
+				result = (getmove)(originalcopy, gui_color, maxtime / 2, statusbar_txt, &playnow, reset + 2 * cboptions.exact + 4 * increment, 0, &localmove);
 			else
-				result = (getmove)(originalcopy, gui_color, maxtime, statusbar_txt, &playnow, reset + 2 * cboptions.exact + 4 * increment, 0, &LCBmove);
+				result = (getmove)(originalcopy, gui_color, maxtime, statusbar_txt, &playnow, reset + 2 * cboptions.exact + 4 * increment, 0, &localmove);
 
 			/* Display the Play! bitmap with black foreground when the engine is not searching. */
 			PostMessage(tbwnd, TB_CHANGEBITMAP, (WPARAM)MOVESPLAY, MAKELPARAM(2, 0));
@@ -3161,20 +3162,20 @@ DWORD ThreadFunc(LPVOID param)
 		// got board8 & a copy before move was made
 		if (CBstate != OBSERVEGAME && CBstate != ANALYZEGAME && CBstate != ANALYZEPDN && !abortcalculation) {
 			// determine the move that was made: we only do this if gametype is GT_ENGLISH,
-			//	else the engine must return the appropriate information in LCBmove
+			//	else the engine must return the appropriate information in localmove
 			if (gametype() == GT_ENGLISH) {
 				if (gui_color == CB_BLACK)
 					nmoves = getmovelist(1, m, b8copy, &dummy);
 				else
 					nmoves = getmovelist(-1, m, b8copy, &dummy);
-				move = m[0];
+				cbmove = m[0];
 				for (i = 0; i < nmoves; i++) {
 					//put original board8 in b8copy, execute move and compare with returned board8...
 					memcpy(b8copy, original8board, sizeof(b8copy));
 					domove(m[i], b8copy);
 					if (memcmp(gui_board8, b8copy, sizeof(gui_board8)) == 0) {
 						move4tonotation(m[i], PDN);
-						move = m[i];
+						cbmove = m[i];
 						found = 1;
 						break;
 					}
@@ -3184,8 +3185,8 @@ DWORD ThreadFunc(LPVOID param)
 					memcpy(gui_board8, original8board, sizeof(gui_board8));
 			}
 			else {			// gametype not GT_ENGLISH, not regular checkers, use the move of the engine 
-				move = LCBmove;
-				move4tonotation(LCBmove, PDN);
+				cbmove = localmove;
+				move4tonotation(localmove, PDN);
 				memcpy(gui_board8, original8board, sizeof(gui_board8));
 				found = 1;
 			}
@@ -3195,7 +3196,7 @@ DWORD ThreadFunc(LPVOID param)
 	// now we execute the move, but only if we are not in the mode
 	// ANALYZEGAME or OBSERVEGAME 
 	if ((CBstate != OBSERVEGAME) && (CBstate != ANALYZEGAME) && (CBstate != ANALYZEPDN) && found && !abortcalculation) {
-		appendmovetolist(move);
+		appendmovetolist(cbmove);
 		// if sound is on we make a beep 
 		if (cboptions.sound) 
 			Beep(440, 5);
@@ -4349,25 +4350,26 @@ int builtinislegal(int board8[8][8], int color, int from, int to, struct CBmove 
 	struct coor c;
 	int Lfrom, Lto;
 	int isjump;
+	CBmove movelist[28];
 
 	/* This color translation does not seem to agree with code in getmovelist (but it also seems to work!) */
 	if(color==CB_BLACK)
-		n=getmovelist(1,m,board8,&isjump);
+		n=getmovelist(1,movelist,board8,&isjump);
 	else
-		n=getmovelist(-1,m,board8,&isjump);
+		n=getmovelist(-1,movelist,board8,&isjump);
 	for(i=0;i<n;i++)
 		{
-		c.x = m[i].from.x;
-		c.y = m[i].from.y;
+		c.x = movelist[i].from.x;
+		c.y = movelist[i].from.y;
 		Lfrom = coortonumber(c,cbgame.gametype);
-		c.x = m[i].to.x;
-		c.y = m[i].to.y;
+		c.x = movelist[i].to.x;
+		c.y = movelist[i].to.y;
 		Lto = coortonumber(c,cbgame.gametype);
 		if(Lfrom == from && Lto == to)
 			{
 			// we have found a legal move 
 			// todo: continue to see whether this move is ambiguous!
-			*move = m[i];
+			*move = movelist[i];
 			return 1;
 			}
 		}

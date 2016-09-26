@@ -25,7 +25,7 @@
 
 
 // lots of external variables from checkerboard.c - very ugly
-extern struct CBmove move;
+extern CBmove cbmove;
 extern struct CBoptions cboptions;
 extern int gui_board8[8][8];
 extern int gui_color;
@@ -337,23 +337,23 @@ DWORD AnimationThreadFunc(HWND hwnd)
 	getxymetrics(&xmetric, &ymetric, hwnd);
 	size = xmetric;
 
-	x = move.from.x;
-	y = move.from.y;
+	x = cbmove.from.x;
+	y = cbmove.from.y;
 
-	if(move.oldpiece==(CB_BLACK|CB_KING)) 
+	if(cbmove.oldpiece==(CB_BLACK|CB_KING)) 
 		blackking=1;
-	if(move.oldpiece==(CB_WHITE|CB_MAN))  
+	if(cbmove.oldpiece==(CB_WHITE|CB_MAN))  
 		whiteman=1;
-	if(move.oldpiece==(CB_WHITE|CB_KING)) 
+	if(cbmove.oldpiece==(CB_WHITE|CB_KING)) 
 		whiteking=1;
-	if(move.oldpiece==(CB_BLACK|CB_MAN)) 
+	if(cbmove.oldpiece==(CB_BLACK|CB_MAN)) 
 		blackman = 1;
 
 	// remove pieces on from and to square, which 
 	// would disturb animation
 	gui_board8[x][y]=0;
-	x2=move.to.x;
-	y2=move.to.y;
+	x2=cbmove.to.x;
+	y2=cbmove.to.y;
 	gui_board8[x2][y2]=0;
 
 	// create a background image for the animation
@@ -369,7 +369,7 @@ DWORD AnimationThreadFunc(HWND hwnd)
 	/* print the board without the stone which moves into bgdc */
 
 	/* find the number of jumps to do */
-	jumps = move.jumps;
+	jumps = cbmove.jumps;
 
 #ifdef ANIMATION
 	if (animation_state) {
@@ -439,13 +439,13 @@ DWORD AnimationThreadFunc(HWND hwnd)
 		else
 			{
 			// a jumping move 
-			x = move.from.x;
-			y = move.from.y;
+			x = cbmove.from.x;
+			y = cbmove.from.y;
 			coorstocoors(&x,&y,cboptions.invert, cboptions.mirror);
 			for(j=0;j<jumps;j++)
 				{
-				x2 = move.path[j+1].x;
-				y2 = move.path[j+1].y;
+				x2 = cbmove.path[j+1].x;
+				y2 = cbmove.path[j+1].y;
 				coorstocoors(&x2,&y2,cboptions.invert, cboptions.mirror);
 				// now animate the part-move:
 				for(i=0;i<=2*STEPS;i++)
@@ -507,7 +507,7 @@ DWORD AnimationThreadFunc(HWND hwnd)
 
 	// make a clean image now
 	// TODO: don't mix up game play with animation!
-	domove(move, gui_board8);
+	domove(cbmove, gui_board8);
 	printboard(hwnd, memdc, bmpdc, stretchdc, gui_board8);
 
 	// if move highlighting is on, we do it! 
@@ -517,10 +517,10 @@ DWORD AnimationThreadFunc(HWND hwnd)
 		// create a pen:
 		hPen = CreatePen(PS_SOLID, 1, cboptions.colors[0]);	
 
-		x=move.from.x;
-		y=move.from.y;
-		x2=move.to.x;
-		y2=move.to.y;
+		x=cbmove.from.x;
+		y=cbmove.from.y;
+		x2=cbmove.to.x;
+		y2=cbmove.to.y;
 		coorstocoors(&x,&y,cboptions.invert, cboptions.mirror);
 		coorstocoors(&x2,&y2,cboptions.invert, cboptions.mirror);
 		hOldPen = (HPEN) SelectObject(memdc,hPen);
