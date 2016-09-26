@@ -29,7 +29,7 @@ extern struct CBmove move;
 extern struct CBoptions gCBoptions;
 extern int gui_board8[8][8];
 extern int gui_color;
-extern struct PDNgame GPDNgame;
+extern struct PDNgame cbgame;
 
 
 // disable double-to-int warning in this file to avoid getting dozens of warnings
@@ -752,7 +752,7 @@ int printboard(HWND hwnd, HDC hdc, HDC bmpdc, HDC stretchdc, int b[8][8])
 				coorstocoors(&x,&y,gCBoptions.invert, gCBoptions.mirror);
 				if(!((x+y)%2))
 					{
-					sprintf(s,"%i",coorstonumber(x,y, GPDNgame.gametype));
+					sprintf(s,"%i",coorstonumber(x,y, cbgame.gametype));
 					TextOut(hdc,(int)(size*(i)+1+xoffset),(int)(size*(7-j)+upperoffset+yoffset),s,(int)strlen(s));
 					}
 				}

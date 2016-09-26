@@ -85,7 +85,7 @@
 //---------------------------------------------------------------------
 // globals - should be identified in code by g_varname but aren't all...
 
-PDNgame GPDNgame;
+PDNgame cbgame;
 CBmove GCBmove;
 
 // all checkerboard options are collected in CBoptions; like this, they can be saved 
@@ -558,14 +558,14 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					// show save game dialog. if OK is selected, call 'savehtml' to do the work 
 					if (DialogBox(g_hInst, "IDD_SAVEGAME", hwnd, (DLGPROC)DialogFuncSavegame)) {
 						if (getfilename(filename, OF_SAVEASHTML)) {
-							saveashtml(filename, &GPDNgame);
+							saveashtml(filename, &cbgame);
 							sprintf(statusbar_txt, "game saved as HTML!");
 						}
 					}
 					break;
 
 				case DOSAVE:
-					// saves the game stored in GPDNgame 
+					// saves the game stored in cbgame 
 					fp = fopen(filename, "at+");
 					// file with filename opened	- we append to that file
 					// filename was set by save game 
@@ -573,7 +573,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						{
 						gamestring = (char *)malloc(GAMEBUFSIZE);	
 						if(gamestring!=NULL) {
-							PDNgametoPDNstring(GPDNgame, gamestring, "\n");
+							PDNgametoPDNstring(cbgame, gamestring, "\n");
 							fprintf(fp,"%s",gamestring);
 							free(gamestring);
 							}
@@ -616,7 +616,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 				case GAMEINFO:
 					// display a box with information on the game
 					//cpuid(str);
-					sprintf(str1024,"Black: %s\nWhite: %s\nEvent: %s\nResult: %s",GPDNgame.black,GPDNgame.white,GPDNgame.event,GPDNgame.resultstring);
+					sprintf(str1024,"Black: %s\nWhite: %s\nEvent: %s\nResult: %s",cbgame.black,cbgame.white,cbgame.event,cbgame.resultstring);
 					MessageBox(hwnd,str1024,"Game information",MB_OK);
 					sprintf(statusbar_txt,"");
 					break;
@@ -681,7 +681,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					if(setup)
 						MessageBox(hwnd, "Cannot copy position in setup mode.\nLeave the setup mode first if you\nwant to copy this position.","Error", MB_OK);
 					else
-						FENtoclipboard(hwnd, gui_board8, gui_color, GPDNgame.gametype);
+						FENtoclipboard(hwnd, gui_board8, gui_color, cbgame.gametype);
 					break;
 
 				case GAME_FENFROMCLIPBOARD:
@@ -692,15 +692,15 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						{
 						PostMessage(hwnd, WM_COMMAND, ABORTENGINE, 0);
 
-						if(FENtoboard8(gui_board8, gamestring, &gui_color, GPDNgame.gametype))
+						if(FENtoboard8(gui_board8, gamestring, &gui_color, cbgame.gametype))
 							{
 							updateboardgraphics(hwnd);
 							reset = 1;
 							newposition = TRUE;
 							sprintf(statusbar_txt,"position copied");
 							PostMessage(hwnd,WM_COMMAND,GAMEINFO,0);
-							sprintf(GPDNgame.setup,"1");
-							sprintf(GPDNgame.FEN,gamestring);
+							sprintf(cbgame.setup,"1");
+							sprintf(cbgame.FEN,gamestring);
 							}
 						else
 							sprintf(statusbar_txt,"no valid FEN position in clipboard!");
@@ -712,7 +712,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					if(setup)
 						MessageBox(hwnd, "Cannot copy game in setup mode.\nLeave the setup mode first if you\nwant to copy this game.","Error", MB_OK);
 					else
-						PDNtoclipboard(hwnd, GPDNgame);
+						PDNtoclipboard(hwnd, cbgame);
 					break;
 
 				case GAMEPASTE:
@@ -725,17 +725,17 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 
 						/* Detect fen or game, load it in either case. */
 						if (is_fen(gamestring)) {
-							if (!FENtoboard8(gui_board8, gamestring, &gui_color, GPDNgame.gametype)) {
-								doload(&GPDNgame, gamestring, &gui_color, gui_board8);
+							if (!FENtoboard8(gui_board8, gamestring, &gui_color, cbgame.gametype)) {
+								doload(&cbgame, gamestring, &gui_color, gui_board8);
 								sprintf(statusbar_txt,"game copied");
 							}
 							else {
-								reset_game(GPDNgame);
+								reset_game(cbgame);
 								sprintf(statusbar_txt,"position copied");
 							}
 						}
 						else {
-							doload(&GPDNgame, gamestring, &gui_color, gui_board8);
+							doload(&cbgame, gamestring, &gui_color, gui_board8);
 							sprintf(statusbar_txt,"position copied");
 						}
 						free(gamestring);
@@ -789,7 +789,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						if(userbookcur>0)
 							userbookcur--;
 						userbookcur %= userbooknum;
-						sprintf(statusbar_txt,"position %zi of %zi: %i-%i", userbookcur+1,userbooknum,coortonumber(userbook[userbookcur].move.from, GPDNgame.gametype), coortonumber(userbook[userbookcur].move.to,GPDNgame.gametype));
+						sprintf(statusbar_txt,"position %zi of %zi: %i-%i", userbookcur+1,userbooknum,coortonumber(userbook[userbookcur].move.from, cbgame.gametype), coortonumber(userbook[userbookcur].move.to,cbgame.gametype));
 
 						// set up position
 						if(userbookcur < userbooknum) // only if there are any positions
@@ -800,12 +800,12 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						break;
 						}
 
-					if (GPDNgame.movesindex == 0 && (CBstate == ANALYZEGAME || CBstate == ANALYZEPDN) )
+					if (cbgame.movesindex == 0 && (CBstate == ANALYZEGAME || CBstate == ANALYZEPDN) )
 						gameover = TRUE;
 
-					if (GPDNgame.movesindex > 0) {
-						--GPDNgame.movesindex;
-						gamebody_entry *tbmove = &GPDNgame.moves[GPDNgame.movesindex];
+					if (cbgame.movesindex > 0) {
+						--cbgame.movesindex;
+						gamebody_entry *tbmove = &cbgame.moves[cbgame.movesindex];
 						undomove(tbmove->move, gui_board8);
 						updateboardgraphics(hwnd);
 						// shouldnt this color thing be handled in undomove?
@@ -813,10 +813,10 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						sprintf(statusbar_txt, "takeback: ");
 						// and print move number and move into the status bar
 						// get move number:
-						if (is_second_player(GPDNgame, GPDNgame.movesindex))
-							sprintf(Lstr,"%i... %s", moveindex2movenum(GPDNgame, GPDNgame.movesindex), tbmove->PDN);
+						if (is_second_player(cbgame, cbgame.movesindex))
+							sprintf(Lstr,"%i... %s", moveindex2movenum(cbgame, cbgame.movesindex), tbmove->PDN);
 						else
-							sprintf(Lstr,"%i. %s", moveindex2movenum(GPDNgame, GPDNgame.movesindex), tbmove->PDN);
+							sprintf(Lstr,"%i. %s", moveindex2movenum(cbgame, cbgame.movesindex), tbmove->PDN);
 						strcat(statusbar_txt,Lstr);
 
 						if (strcmp(tbmove->comment, "") != 0) {
@@ -846,7 +846,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						if(userbookcur<userbooknum-1)
 							userbookcur++;
 						userbookcur %= userbooknum;
-						sprintf(statusbar_txt,"position %zi of %zi: %i-%i", userbookcur+1,userbooknum,coortonumber(userbook[userbookcur].move.from,GPDNgame.gametype), coortonumber(userbook[userbookcur].move.to,GPDNgame.gametype));
+						sprintf(statusbar_txt,"position %zi of %zi: %i-%i", userbookcur+1,userbooknum,coortonumber(userbook[userbookcur].move.from,cbgame.gametype), coortonumber(userbook[userbookcur].move.to,cbgame.gametype));
 						// set up position
 						if(userbookcur < userbooknum) // only if there are any positions
 							{
@@ -857,25 +857,25 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						}
 
 					// normal case - move forward one move
-					if (GPDNgame.movesindex < GPDNgame.moves.size()) {
-						gamebody_entry *pmove = &GPDNgame.moves[GPDNgame.movesindex];
+					if (cbgame.movesindex < cbgame.moves.size()) {
+						gamebody_entry *pmove = &cbgame.moves[cbgame.movesindex];
 						domove(pmove->move, gui_board8);
 						updateboardgraphics(hwnd);
 						gui_color = CB_CHANGECOLOR(gui_color);
 						// get move number:
 
 						// and print move number and move into the status bar
-						if (is_second_player(GPDNgame, GPDNgame.movesindex))
-							sprintf(Lstr, "%i... %s", moveindex2movenum(GPDNgame, GPDNgame.movesindex), pmove->PDN);
+						if (is_second_player(cbgame, cbgame.movesindex))
+							sprintf(Lstr, "%i... %s", moveindex2movenum(cbgame, cbgame.movesindex), pmove->PDN);
 						else
-							sprintf(Lstr, "%i. %s", moveindex2movenum(GPDNgame, GPDNgame.movesindex), pmove->PDN);
+							sprintf(Lstr, "%i. %s", moveindex2movenum(cbgame, cbgame.movesindex), pmove->PDN);
 						sprintf(statusbar_txt, "%s ", Lstr);
 
 						if (strcmp(pmove->comment, "") != 0) {
 							sprintf(Lstr, "%s", pmove->comment);
 							strcat(statusbar_txt, Lstr);
 						}
-						++GPDNgame.movesindex;
+						++cbgame.movesindex;
 
 						if (CBstate == OBSERVEGAME)
 							PostMessage(hwnd, WM_COMMAND, INTERRUPTENGINE, 0);
@@ -891,9 +891,9 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					if (CBstate == BOOKVIEW || CBstate == BOOKADD)
 						break;
 					PostMessage(hwnd, WM_COMMAND, ABORTENGINE, 0);
-					while (GPDNgame.movesindex > 0) {
-						--GPDNgame.movesindex;
-						undomove(GPDNgame.moves[GPDNgame.movesindex].move, gui_board8);
+					while (cbgame.movesindex > 0) {
+						--cbgame.movesindex;
+						undomove(cbgame.moves[cbgame.movesindex].move, gui_board8);
 						gui_color = CB_CHANGECOLOR(gui_color);
 					}
 					if (CBstate == OBSERVEGAME)
@@ -1173,7 +1173,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						changeCBstate(CBstate,BOOKVIEW);
 						// now display the first user book position
 						userbookcur = 0;
-						sprintf(statusbar_txt,"position %zi of %zi: %i-%i", userbookcur+1,userbooknum,coortonumber(userbook[userbookcur].move.from,GPDNgame.gametype), coortonumber(userbook[userbookcur].move.to,GPDNgame.gametype));
+						sprintf(statusbar_txt,"position %zi of %zi: %i-%i", userbookcur+1,userbooknum,coortonumber(userbook[userbookcur].move.from,cbgame.gametype), coortonumber(userbook[userbookcur].move.to,cbgame.gametype));
 						// set up position
 						if(userbookcur < userbooknum) // only if there are any positions
 							{
@@ -1203,7 +1203,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						if(userbookcur==userbooknum)
 							userbookcur--;
 						// display what position we have:
-						sprintf(statusbar_txt,"position %zi of %zi: %i-%i", userbookcur+1,userbooknum,coortonumber(userbook[userbookcur].move.from,GPDNgame.gametype), coortonumber(userbook[userbookcur].move.to,GPDNgame.gametype));
+						sprintf(statusbar_txt,"position %zi of %zi: %i-%i", userbookcur+1,userbooknum,coortonumber(userbook[userbookcur].move.from,cbgame.gametype), coortonumber(userbook[userbookcur].move.to,cbgame.gametype));
 						if(userbooknum==0)
 							sprintf(statusbar_txt,"no moves in user book");
 						// set up position
@@ -1299,7 +1299,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 
 				case ENGINEEVAL:
 					// static eval of the current positions
-					board8toFEN(gui_board8,str2,gui_color,GPDNgame.gametype);
+					board8toFEN(gui_board8,str2,gui_color,cbgame.gametype);
 					sprintf(Lstr,"staticevaluation %s",str2);
 					if(enginecommand(Lstr,reply))
 						MessageBox(hwnd,reply,"Static Evaluation",MB_OK);
@@ -1382,9 +1382,9 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						{
 						sprintf(statusbar_txt, "Setup done");
 						// get FEN string
-						reset_game(GPDNgame);
-						board8toFEN(gui_board8, GPDNgame.FEN, gui_color, GPDNgame.gametype);
-						sprintf(GPDNgame.setup, "1");
+						reset_game(cbgame);
+						board8toFEN(gui_board8, cbgame.FEN, gui_color, cbgame.gametype);
+						sprintf(cbgame.setup, "1");
 						}
 					break;
 
@@ -1424,7 +1424,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					setcurrentengine(toggleengine);
 
 					// reset game if an engine of different game type was selected!
-					if (gametype() != GPDNgame.gametype) {
+					if (gametype() != cbgame.gametype) {
 						PostMessage(hwnd, (UINT)WM_COMMAND, (WPARAM)GAMENEW, (LPARAM)0);
 						PostMessage(hwnd, (UINT)WM_SIZE, (WPARAM)0, (LPARAM)0);
 					}
@@ -1649,13 +1649,13 @@ int handlesetupcc(int *color)
 
 	*color = CB_CHANGECOLOR(*color);
 
-	reset_game(GPDNgame);
-	gCBoptions.mirror = is_mirror_gametype(GPDNgame.gametype);
+	reset_game(cbgame);
+	gCBoptions.mirror = is_mirror_gametype(cbgame.gametype);
 
 	// and the setup codes 
-	sprintf(GPDNgame.setup,"1");
-	board8toFEN(gui_board8,str2,*color,GPDNgame.gametype);
-	sprintf(GPDNgame.FEN,str2);
+	sprintf(cbgame.setup,"1");
+	board8toFEN(gui_board8,str2,*color,cbgame.gametype);
+	sprintf(cbgame.FEN,str2);
 	return 1;
 	}
 
@@ -1729,7 +1729,7 @@ int handle_lbuttondown(int x, int y)
 			legal = 0;
 			legalmovenumber = 0;
 			for(i=1; i<=32; i++) {
-				from = coorstonumber(x1,y1_,GPDNgame.gametype);
+				from = coorstonumber(x1,y1_,cbgame.gametype);
 				if(islegal(gui_board8, gui_color, from, i, &GCBmove) != 0)
 					{
 					legal++;
@@ -1742,12 +1742,12 @@ int handle_lbuttondown(int x, int y)
 			if(legal == 0) {
 				for(i=1; i<=32; i++)
 				{
-				if(islegal(gui_board8, gui_color, i, coorstonumber(x1,y1_,GPDNgame.gametype), &GCBmove) != 0)
+				if(islegal(gui_board8, gui_color, i, coorstonumber(x1,y1_,cbgame.gametype), &GCBmove) != 0)
 					{
 					legal++;
 					legalmovenumber = i;
 					from = i; 
-					to = coorstonumber(x1,y1_,GPDNgame.gametype); 
+					to = coorstonumber(x1,y1_,cbgame.gametype); 
 					}
 				}
 				if(legal != 1)
@@ -1761,7 +1761,7 @@ int handle_lbuttondown(int x, int y)
 				// is it the only legal move?
 				// if yes, do it! 
 				// if we are in user book mode, add it to user book!
-				//if(islegal((int *)board8,color,coorstonumber(x1,y1,GPDNgame.gametype),legalmovenumber,&GCBmove)!=0)
+				//if(islegal((int *)board8,color,coorstonumber(x1,y1,cbgame.gametype),legalmovenumber,&GCBmove)!=0)
 				if(islegal(gui_board8,gui_color,from,to,&GCBmove)!=0)
 					// a legal move!
 					{
@@ -1837,7 +1837,7 @@ int handle_lbuttondown(int x, int y)
 				legalmovenumber = 0;
 				for(i=1; i<=32; i++)
 					{
-					if(islegal(gui_board8, gui_color, coorstonumber(x1,y1_,GPDNgame.gametype), i, &GCBmove)!=0)
+					if(islegal(gui_board8, gui_color, coorstonumber(x1,y1_,cbgame.gametype), i, &GCBmove)!=0)
 						{
 						legal++;
 						legalmovenumber = i;
@@ -1847,7 +1847,7 @@ int handle_lbuttondown(int x, int y)
 			sprintf(statusbar_txt,"");
 			if(legal == 1) // only one legal move
 				{
-				if(islegal(gui_board8,gui_color,coorstonumber(x1,y1_,GPDNgame.gametype),legalmovenumber,&GCBmove)!=0)
+				if(islegal(gui_board8,gui_color,coorstonumber(x1,y1_,cbgame.gametype),legalmovenumber,&GCBmove)!=0)
 					// a legal move!
 					{
 					// insert move in the linked list 
@@ -1883,7 +1883,7 @@ int handle_lbuttondown(int x, int y)
 		// check move and if ok
 		if(islegal!=NULL)
 			{
-			if(islegal(gui_board8,gui_color,coorstonumber(x1,y1_,GPDNgame.gametype),coorstonumber(x2,y2, GPDNgame.gametype),&GCBmove)!=0)
+			if(islegal(gui_board8,gui_color,coorstonumber(x1,y1_,cbgame.gametype),coorstonumber(x2,y2, cbgame.gametype),&GCBmove)!=0)
 				// a legal move!
 				{
 				// insert move in the linked list 
@@ -2123,7 +2123,7 @@ int handlegamereplace(int replaceindex, char *databasename)
 		PDNparseGetnextgame(&p,gamestring);
 
 		// write replaced game 
-		PDNgametoPDNstring(GPDNgame, gamestring, "\n");
+		PDNgametoPDNstring(cbgame, gamestring, "\n");
 		if(gameindex!=0)
 			fprintf(fp,"\n\n\n\n%s",gamestring);
 		else
@@ -2416,7 +2416,7 @@ int selectgame(int how)
 					sprintf(statusbar_txt, "indexing database...");
 					SendMessage(hStatusWnd, SB_SETTEXT, (WPARAM)0, (LPARAM)statusbar_txt);
 					// index database with pdnopen; fills pdn_positions[].
-					pdnopen(database, GPDNgame.gametype);
+					pdnopen(database, cbgame.gametype);
 					reindex = 0;
 				}
 
@@ -2615,8 +2615,8 @@ int loadgamefromPDNstring(int gameindex, char *dbstring)
 		i--;
 		}
 	// now the game is in gamestring. use pdnparser routines to convert
-	//	it into a GPDNgame
-	doload(&GPDNgame, gamestring, &gui_color, gui_board8);
+	//	it into a cbgame
+	doload(&cbgame, gamestring, &gui_color, gui_board8);
 	free(gamestring);
 
 	// game is fully loaded, clean up 
@@ -2759,7 +2759,7 @@ int createcheckerboard(HWND hwnd)
 	initgraphics(hwnd);
 	
 	//initialize global that stores the game
-	reset_game(GPDNgame);
+	reset_game(cbgame);
 
 	// initialize colors 
 	ccs.lStructSize=(DWORD) sizeof(CHOOSECOLOR);
@@ -2934,11 +2934,11 @@ int start11man(int number)
 	// now we have the right FEN in str
 	FENtoboard8(gui_board8, str, &gui_color, GT_ENGLISH);
 
-	GPDNgame.moves.clear();
+	cbgame.moves.clear();
 	board8toFEN(gui_board8, str, gui_color, GT_ENGLISH);
-	sprintf(GPDNgame.FEN, "%s", str);
-	sprintf(GPDNgame.event, "11-man #%i", number + 1);
-	sprintf(GPDNgame.setup, "1");
+	sprintf(cbgame.FEN, "%s", str);
+	sprintf(cbgame.event, "11-man #%i", number + 1);
+	sprintf(cbgame.setup, "1");
 
 	updateboardgraphics(hwnd);
 	InvalidateRect(hwnd, NULL, 0);
@@ -2959,8 +2959,8 @@ void game_to_colors_reversed_pdn(char *pdn)
 	int from, to;
 
 	pdn[0] = 0;
-	for (gindex = 0; gindex < GPDNgame.movesindex; ++gindex) {
-		PDNparseTokentonumbers(GPDNgame.moves[gindex].PDN, &from, &to);
+	for (gindex = 0; gindex < cbgame.movesindex; ++gindex) {
+		PDNparseTokentonumbers(cbgame.moves[gindex].PDN, &from, &to);
 		sprintf(pdn + strlen(pdn), "%d-%d ", 33 - from, 33 - to);
 	}
 }
@@ -2971,10 +2971,10 @@ void game_to_colors_reversed_pdn(char *pdn)
  */
 void forward_to_game_end(void)
 {
-	while (GPDNgame.movesindex < GPDNgame.moves.size()) {
-		domove(GPDNgame.moves[GPDNgame.movesindex].move, gui_board8);
+	while (cbgame.movesindex < cbgame.moves.size()) {
+		domove(cbgame.moves[cbgame.movesindex].move, gui_board8);
 		gui_color = CB_CHANGECOLOR(gui_color);
-		++GPDNgame.movesindex;
+		++cbgame.movesindex;
 	}
 }
 
@@ -2991,7 +2991,7 @@ int start3move(void)
 	InitCheckerBoard(gui_board8);
 	InvalidateRect(hwnd, NULL, 0);
 	gui_color = CB_BLACK;
-	GPDNgame.moves.clear();
+	cbgame.moves.clear();
 
 	getmovelist(1, m, gui_board8, &dummy);
 	domove(m[three[op][0]], gui_board8);
@@ -3013,7 +3013,7 @@ int start3move(void)
 		char pdn[80];
 
 		game_to_colors_reversed_pdn(pdn);
-		doload(&GPDNgame, pdn, &gui_color, gui_board8);
+		doload(&cbgame, pdn, &gui_color, gui_board8);
 		forward_to_game_end();
 	}
 
@@ -3136,8 +3136,8 @@ DWORD ThreadFunc(LPVOID param)
 		// save engine string as comment if it's an engine match 
 		// actually, always save if add comment is on
 		if (addcomment) {
-			if (GPDNgame.movesindex > 0) {
-				gamebody_entry *pgame = &GPDNgame.moves[GPDNgame.movesindex - 1];
+			if (cbgame.movesindex > 0) {
+				gamebody_entry *pgame = &cbgame.moves[cbgame.movesindex - 1];
 				if (strlen(statusbar_txt) < COMMENTLENGTH)
 					sprintf(pgame->comment, "%s", statusbar_txt);
 				else
@@ -3153,8 +3153,8 @@ DWORD ThreadFunc(LPVOID param)
 		// if we are in engine match mode and one of the engines claims a win
 		// or a loss or a draw we stop 
 		if (result != CB_UNKNOWN && (CBstate == ENGINEMATCH)) {
-			if (GPDNgame.movesindex > 0)
-				sprintf(GPDNgame.moves[GPDNgame.movesindex - 1].comment, "%s : gameover claimed", statusbar_txt);
+			if (cbgame.movesindex > 0)
+				sprintf(cbgame.moves[cbgame.movesindex - 1].comment, "%s : gameover claimed", statusbar_txt);
 			gameover = TRUE;
 		}
 		
@@ -3214,8 +3214,8 @@ DWORD ThreadFunc(LPVOID param)
 		if (nmoves == 1)
 			break;
 
-		if (GPDNgame.movesindex < GPDNgame.moves.size())
-			sprintf(GPDNgame.moves[GPDNgame.movesindex].analysis, "%s", statusbar_txt);
+		if (cbgame.movesindex < cbgame.moves.size())
+			sprintf(cbgame.moves[cbgame.movesindex].analysis, "%s", statusbar_txt);
 		break;
 
 	case ENGINEMATCH:
@@ -3404,7 +3404,7 @@ DWORD AutoThreadFunc(LPVOID param)
 				logtofile(testlogname, statusbar_txt, "a");
 
 				// convert position to internal board
-				FENtoboard8(gui_board8, FEN, &gui_color,GPDNgame.gametype);
+				FENtoboard8(gui_board8, FEN, &gui_color,cbgame.gametype);
 				updateboardgraphics(hwnd);
 				reset = 1;
 				newposition = TRUE;
@@ -3481,7 +3481,7 @@ DWORD AutoThreadFunc(LPVOID param)
 				PathAppend(analysisfilename, "analysis.txt");
 				Lfp = fopen(analysisfilename, "w");
 				fclose(Lfp);
-				sprintf(statusbar_txt, "played in game: 1. %s", GPDNgame.moves[GPDNgame.movesindex - 1].PDN);
+				sprintf(statusbar_txt, "played in game: 1. %s", cbgame.moves[cbgame.movesindex - 1].PDN);
 				logtofile(analysisfilename, statusbar_txt, "a");
 
 				PostMessage(hwnd, WM_COMMAND, MOVESPLAY, 0);
@@ -3644,15 +3644,15 @@ DWORD AutoThreadFunc(LPVOID param)
 						// set white and black players 
 						if(gamenumber % 2)
 							{
-							sprintf(GPDNgame.black,"%s",engine1);
-							sprintf(GPDNgame.white,"%s",engine2);
+							sprintf(cbgame.black,"%s",engine1);
+							sprintf(cbgame.white,"%s",engine2);
 							}
 						else
 							{
-							sprintf(GPDNgame.black,"%s",engine2);
-							sprintf(GPDNgame.white,"%s",engine1);
+							sprintf(cbgame.black,"%s",engine2);
+							sprintf(cbgame.white,"%s",engine1);
 							}
-						sprintf(GPDNgame.resultstring,"?");
+						sprintf(cbgame.resultstring,"?");
 						if(!((gamenumber-1) % 20))
 							{
 							if(gamenumber != 1)
@@ -3695,11 +3695,11 @@ DWORD AutoThreadFunc(LPVOID param)
 
 						// save the game
 						if(iselevenman == 1)
-							sprintf(GPDNgame.event,"11-man #%i",(gamenumber-1)/2+1);
+							sprintf(cbgame.event,"11-man #%i",(gamenumber-1)/2+1);
 						else
-							sprintf(GPDNgame.event,"ACF #%i",op+1);
+							sprintf(cbgame.event,"ACF #%i",op+1);
 
-						// dosave expects a fully initialized GPDNgame structure
+						// dosave expects a fully initialized cbgame structure
 						sprintf(filename, "%s\\match%s.pdn", gCBoptions.matchdirectory, g_app_instance_suffix);
 						SendMessage(hwnd,WM_COMMAND,DOSAVE,0);
 
@@ -3785,7 +3785,7 @@ int dostats(int result, int movecount, int gamenumber, int *wins, int *draws, in
 	if(movecount>maxmovecount)
 		{
 		(*unknowns)++;
-		sprintf(GPDNgame.resultstring,"*");									
+		sprintf(cbgame.resultstring,"*");									
 		strcat(matchlogstring,"?");
 		}
 	else
@@ -3800,10 +3800,10 @@ int dostats(int result, int movecount, int gamenumber, int *wins, int *draws, in
 					if(gamenumber % 2) 
 						{
 						(*blackwins)++;
-						sprintf(GPDNgame.resultstring,"1-0");
+						sprintf(cbgame.resultstring,"1-0");
 						}
 					else
-						sprintf(GPDNgame.resultstring,"0-1");
+						sprintf(cbgame.resultstring,"0-1");
 					}
 				else 
 					{
@@ -3812,17 +3812,17 @@ int dostats(int result, int movecount, int gamenumber, int *wins, int *draws, in
 					if(gamenumber % 2) 
 						{
 						(*blacklosses)++;
-						sprintf(GPDNgame.resultstring,"0-1");
+						sprintf(cbgame.resultstring,"0-1");
 						}
 					else
-						sprintf(GPDNgame.resultstring,"1-0");
+						sprintf(cbgame.resultstring,"1-0");
 					}
 				break;
 
 			case CB_DRAW:
 				strcat(matchlogstring,"=");
 				(*draws)++;
-				sprintf(GPDNgame.resultstring,"1/2-1/2");
+				sprintf(cbgame.resultstring,"1/2-1/2");
 				break;
 
 			case CB_LOSS:
@@ -3833,10 +3833,10 @@ int dostats(int result, int movecount, int gamenumber, int *wins, int *draws, in
 					if(gamenumber % 2) 
 						{
 						(*blacklosses)++;
-						sprintf(GPDNgame.resultstring,"0-1");
+						sprintf(cbgame.resultstring,"0-1");
 						}
 					else
-						sprintf(GPDNgame.resultstring,"1-0");
+						sprintf(cbgame.resultstring,"1-0");
 					}
 				else 
 					{
@@ -3845,17 +3845,17 @@ int dostats(int result, int movecount, int gamenumber, int *wins, int *draws, in
 					if(gamenumber%2) 
 						{
 						(*blackwins)++;
-						sprintf(GPDNgame.resultstring,"1-0");
+						sprintf(cbgame.resultstring,"1-0");
 						}
 					else
-						sprintf(GPDNgame.resultstring,"0-1");
+						sprintf(cbgame.resultstring,"0-1");
 					}
 				break;
 
 			case CB_UNKNOWN:
 				(*unknowns)++;
 				strcat(matchlogstring,"?");
-				sprintf(GPDNgame.resultstring,"*");
+				sprintf(cbgame.resultstring,"*");
 				break;
 			}
 		}
@@ -3901,17 +3901,17 @@ int makeanalysisfile(char *filename)
 	}
 
 	// print game info
-	sprintf(titlestring,"%s - %s",GPDNgame.black, GPDNgame.white);
+	sprintf(titlestring,"%s - %s",cbgame.black, cbgame.white);
 
 	// print HTML head
 	fprintf(fp, "<HTML>\n<HEAD>\n<META name=\"GENERATOR\" content=\"CheckerBoard %s\">\n<TITLE>%s</TITLE></HEAD>", VERSION, titlestring);
 
 	// print HTML body
 	fprintf(fp, "<BODY><H3>");
-	fprintf(fp, "%s - %s", GPDNgame.black, GPDNgame.white);
+	fprintf(fp, "%s - %s", cbgame.black, cbgame.white);
 	fprintf(fp, "</H3>");
-	fprintf(fp, "\n%s<BR>%s<BR>", GPDNgame.date, GPDNgame.event);
-	fprintf(fp, "\nResult: %s<P>", GPDNgame.resultstring);
+	fprintf(fp, "\n%s<BR>%s<BR>", cbgame.date, cbgame.event);
+	fprintf(fp, "\nResult: %s<P>", cbgame.resultstring);
 
 	// print hardware and level info
 	enginename(s);
@@ -3923,19 +3923,19 @@ int makeanalysisfile(char *filename)
 
 	// print PDN and analysis
 	fprintf(fp, "\n<TABLE cellspacing=\"0\" cellpadding=\"3\">");
-	for (i = 0; i < GPDNgame.moves.size(); ++i) {
+	for (i = 0; i < cbgame.moves.size(); ++i) {
 		fprintf(fp,"<TR>\n");
-		if (strcmp(GPDNgame.moves[i].analysis, "") == 0) {
-			if (is_second_player(GPDNgame, i))
-				fprintf(fp, "<TD></TD><TD bgcolor=\"%s\"></TD><TD>%s</TD><TD bgcolor=\"%s\"></TD>\n", c1, GPDNgame.moves[i].PDN, c2);
+		if (strcmp(cbgame.moves[i].analysis, "") == 0) {
+			if (is_second_player(cbgame, i))
+				fprintf(fp, "<TD></TD><TD bgcolor=\"%s\"></TD><TD>%s</TD><TD bgcolor=\"%s\"></TD>\n", c1, cbgame.moves[i].PDN, c2);
 			else
-				fprintf(fp, "<TD>%2i.</TD><TD bgcolor=\"%s\">%s</TD><TD></TD><TD bgcolor=\"%s\"></TD>\n", moveindex2movenum(GPDNgame, i), c1, GPDNgame.moves[i].PDN, c2);
+				fprintf(fp, "<TD>%2i.</TD><TD bgcolor=\"%s\">%s</TD><TD></TD><TD bgcolor=\"%s\"></TD>\n", moveindex2movenum(cbgame, i), c1, cbgame.moves[i].PDN, c2);
 		}
 		else {
-			if (is_second_player(GPDNgame, i))
-				fprintf(fp, "<TD></TD><TD bgcolor=\"%s\"></TD><TD>%s</TD><TD bgcolor=\"%s\">%s</TD>\n", c1, GPDNgame.moves[i].PDN, c2, GPDNgame.moves[i].analysis);
+			if (is_second_player(cbgame, i))
+				fprintf(fp, "<TD></TD><TD bgcolor=\"%s\"></TD><TD>%s</TD><TD bgcolor=\"%s\">%s</TD>\n", c1, cbgame.moves[i].PDN, c2, cbgame.moves[i].analysis);
 			else
-				fprintf(fp, "<TD>%2i.</TD><TD bgcolor=\"%s\">%s</TD><TD></TD><TD bgcolor=\"%s\">%s</TD>\n", moveindex2movenum(GPDNgame, i), c1, GPDNgame.moves[i].PDN, c2, GPDNgame.moves[i].analysis);
+				fprintf(fp, "<TD>%2i.</TD><TD bgcolor=\"%s\">%s</TD><TD></TD><TD bgcolor=\"%s\">%s</TD>\n", moveindex2movenum(cbgame, i), c1, cbgame.moves[i].PDN, c2, cbgame.moves[i].analysis);
 		}
 		fprintf(fp, "</TR>\n");
 		// add a delimiter line between moves
@@ -4110,8 +4110,8 @@ void move4tonotation(struct CBmove m,char s[80])
 
 	if(m.jumps) c='x';
 	// for all versions of checkers
-	from = coorstonumber(x1,y1, GPDNgame.gametype);
-	to = coorstonumber(x2,y2, GPDNgame.gametype);
+	from = coorstonumber(x1,y1, cbgame.gametype);
+	to = coorstonumber(x2,y2, cbgame.gametype);
 
 	sprintf(s,"%i",from);
 	sprintf(Lstr,"%c",c);
@@ -4211,9 +4211,9 @@ void PDNgametoPDNstring(PDNgame &game, char *pdnstring, char *lf)
 
 
 /*
- * Adds a move to the GPDNgame.moves vector, and fills in the PDN field.
+ * Adds a move to the cbgame.moves vector, and fills in the PDN field.
  * Initializes the analysis and comment fields to an empty string.
- * The move is added after the current position into the moves list, GPDNgame.movesindex.
+ * The move is added after the current position into the moves list, cbgame.movesindex.
  * If this is not the end of moves[], delete all the entries starting at movesindex.
  */
 void appendmovetolist(CBmove &move)
@@ -4221,25 +4221,25 @@ void appendmovetolist(CBmove &move)
 	int i;
 	gamebody_entry entry;
 
-	/* Delete entries in GPDNgames.moves[] from end back to movesindex. Do it in reverse order
+	/* Delete entries in cbgames.moves[] from end back to movesindex. Do it in reverse order
 	 * because it's more efficient to delete vector entries from the end than in the middle.
 	 */
-	for (i = (int)GPDNgame.moves.size() - 1; i >= GPDNgame.movesindex; --i)
-		GPDNgame.moves.erase(GPDNgame.moves.begin() + i);
+	for (i = (int)cbgame.moves.size() - 1; i >= cbgame.movesindex; --i)
+		cbgame.moves.erase(cbgame.moves.begin() + i);
 
 	entry.analysis[0] = 0;
 	entry.comment[0] = 0;
 	entry.move = move;
 	move4tonotation(move, entry.PDN);
 	try {
-		GPDNgame.moves.push_back(entry);
+		cbgame.moves.push_back(entry);
 	}
 	catch (...) {
 		char *msg = "could not allocate memory for CB movelist";
 		CBlog("could not allocate memory for CB movelist");
 		strcpy(statusbar_txt, msg);
 	}
-	GPDNgame.movesindex = (int)GPDNgame.moves.size();
+	cbgame.movesindex = (int)cbgame.moves.size();
 }
 
 
@@ -4319,7 +4319,7 @@ int getfilename(char filename[255], int what)
 void pdntogame(int startposition[8][8], int startcolor)
 	{
 	/* pdntogame takes a starting position, a side to move next as parameters. 
-	it uses GPDNgame, which has to be initialized with pdn-text to generate the CBmoves. */
+	it uses cbgame, which has to be initialized with pdn-text to generate the CBmoves. */
 
 	/* called by loadgame and gamepaste */
 
@@ -4331,10 +4331,10 @@ void pdntogame(int startposition[8][8], int startcolor)
 	/* set the starting values */
 	color = startcolor;
 	memcpy(b8, startposition, sizeof(b8));
-	for (i = 0; i < GPDNgame.moves.size(); ++i) {
-		PDNparseTokentonumbers(GPDNgame.moves[i].PDN, &from, &to);
+	for (i = 0; i < cbgame.moves.size(); ++i) {
+		PDNparseTokentonumbers(cbgame.moves[i].PDN, &from, &to);
 		if (islegal(b8, color, from, to, &legalmove)) {
-			GPDNgame.moves[i].move = legalmove;
+			cbgame.moves[i].move = legalmove;
 			color = CB_CHANGECOLOR(color);
 			domove(legalmove, b8);
 		}
@@ -4359,10 +4359,10 @@ int builtinislegal(int board8[8][8], int color, int from, int to, struct CBmove 
 		{
 		c.x = m[i].from.x;
 		c.y = m[i].from.y;
-		Lfrom = coortonumber(c,GPDNgame.gametype);
+		Lfrom = coortonumber(c,cbgame.gametype);
 		c.x = m[i].to.x;
 		c.y = m[i].to.y;
-		Lto = coortonumber(c,GPDNgame.gametype);
+		Lto = coortonumber(c,cbgame.gametype);
 		if(Lfrom == from && Lto == to)
 			{
 			// we have found a legal move 
@@ -4382,11 +4382,11 @@ int builtinislegal(int board8[8][8], int color, int from, int to, struct CBmove 
 void newgame(void)
 	{
 	InitCheckerBoard(gui_board8);
-	reset_game(GPDNgame);
+	reset_game(cbgame);
 	newposition = TRUE;
 	reset = 1;
-	gCBoptions.mirror = is_mirror_gametype(GPDNgame.gametype);
-	gui_color = get_startcolor(GPDNgame.gametype);
+	gCBoptions.mirror = is_mirror_gametype(cbgame.gametype);
+	gui_color = get_startcolor(cbgame.gametype);
 	
 	if(gCBoptions.level==17)
 		maxtime=initialtime;	
@@ -4710,7 +4710,7 @@ void loadengines(char *pri_fname, char *sec_fname)
 	setcurrentengine(1);
 
 	// reset game if an engine of different game type was selected!
-	if (gametype() != GPDNgame.gametype) {
+	if (gametype() != cbgame.gametype) {
 		PostMessage(hwnd, (UINT)WM_COMMAND, (WPARAM)GAMENEW, (LPARAM)0);
 		PostMessage(hwnd, (UINT)WM_SIZE, (WPARAM) 0, (LPARAM) 0);
 	}

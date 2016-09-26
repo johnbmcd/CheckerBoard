@@ -35,7 +35,7 @@ extern struct CBoptions gCBoptions;
 extern char str[1024];
 extern HINSTANCE g_hInst;
 extern HWND hwnd;
-extern struct PDNgame GPDNgame;
+extern struct PDNgame cbgame;
 
 int selected_game;		/* game selected by DialogFuncSelectgame(). */
 int HeaderHeight;
@@ -173,7 +173,7 @@ BOOL CALLBACK DialogFuncSavegame(HWND hdwnd, UINT message, WPARAM wParam, LPARAM
 			// center dialog box on CB window
 			CenterDialog(hdwnd);
 			/* initialize the comboboxes */
-			switch(GPDNgame.result)
+			switch(cbgame.result)
 				{
 				case CB_WIN:
 					SendDlgItemMessage(hdwnd,IDC_BLACKWINS,BM_SETCHECK,BST_CHECKED,0);
@@ -189,10 +189,10 @@ BOOL CALLBACK DialogFuncSavegame(HWND hdwnd, UINT message, WPARAM wParam, LPARAM
 					break;
 				}
 			
-			SetDlgItemText(hdwnd, IDC_BLACKNAME, GPDNgame.black);
-			SetDlgItemText(hdwnd, IDC_WHITENAME, GPDNgame.white);
-			SetDlgItemText(hdwnd, IDC_EVENT, GPDNgame.event);
-			SetDlgItemText(hdwnd, IDC_DATE, GPDNgame.date);
+			SetDlgItemText(hdwnd, IDC_BLACKNAME, cbgame.black);
+			SetDlgItemText(hdwnd, IDC_WHITENAME, cbgame.white);
+			SetDlgItemText(hdwnd, IDC_EVENT, cbgame.event);
+			SetDlgItemText(hdwnd, IDC_DATE, cbgame.date);
 			
 			return 1;
 			break;
@@ -202,21 +202,21 @@ BOOL CALLBACK DialogFuncSavegame(HWND hdwnd, UINT message, WPARAM wParam, LPARAM
 				case IDC_OK:
 					// save the results 
 					if(SendDlgItemMessage(hdwnd,IDC_UNKNOWN,BM_GETCHECK,0,0))
-						sprintf(GPDNgame.resultstring,"*");
+						sprintf(cbgame.resultstring,"*");
 					if(SendDlgItemMessage(hdwnd,IDC_DRAW,BM_GETCHECK,0,0))
-						sprintf(GPDNgame.resultstring,"1/2-1/2");
+						sprintf(cbgame.resultstring,"1/2-1/2");
 					if(SendDlgItemMessage(hdwnd,IDC_BLACKWINS,BM_GETCHECK,0,0))
-						sprintf(GPDNgame.resultstring,"1-0");
+						sprintf(cbgame.resultstring,"1-0");
 					if(SendDlgItemMessage(hdwnd,IDC_WHITEWINS,BM_GETCHECK,0,0))
-						sprintf(GPDNgame.resultstring,"0-1");
+						sprintf(cbgame.resultstring,"0-1");
 					GetDlgItemText(hdwnd,IDC_BLACKNAME,Lstr,255);
-					sprintf(GPDNgame.black,"%s",Lstr);
+					sprintf(cbgame.black,"%s",Lstr);
 					GetDlgItemText(hdwnd,IDC_WHITENAME,Lstr,255);
-					sprintf(GPDNgame.white,"%s",Lstr);
+					sprintf(cbgame.white,"%s",Lstr);
 					GetDlgItemText(hdwnd,IDC_EVENT,Lstr,255);
-					sprintf(GPDNgame.event,"%s",Lstr);
+					sprintf(cbgame.event,"%s",Lstr);
 					GetDlgItemText(hdwnd, IDC_DATE, Lstr, 255);
-					sprintf(GPDNgame.date,"%s",Lstr);
+					sprintf(cbgame.date,"%s",Lstr);
 					EndDialog(hdwnd,1); 
 					return 1;
 				case IDC_CANCEL:
@@ -433,8 +433,8 @@ BOOL CALLBACK DialogFuncAddcomment(HWND hdwnd, UINT message, WPARAM wParam, LPAR
 			CenterDialog(hdwnd);
 						
 			SetDlgItemText(hdwnd, IDC_COMMENT, "");
-			if (GPDNgame.movesindex > 0)
-				SetDlgItemText(hdwnd, IDC_COMMENT, GPDNgame.moves[GPDNgame.movesindex - 1].comment);
+			if (cbgame.movesindex > 0)
+				SetDlgItemText(hdwnd, IDC_COMMENT, cbgame.moves[cbgame.movesindex - 1].comment);
 			
 			// set keyboard focus to IDC_COMMENT?!
 			if (GetDlgCtrlID((HWND) wParam) != IDC_COMMENT) 
@@ -453,8 +453,8 @@ BOOL CALLBACK DialogFuncAddcomment(HWND hdwnd, UINT message, WPARAM wParam, LPAR
 					return 1;
 				case IDC_OK:
 					GetDlgItemText(hdwnd,IDC_COMMENT,comment,-1);
-					if (GPDNgame.movesindex > 0)
-						sprintf(GPDNgame.moves[GPDNgame.movesindex - 1].comment, "%s", comment);
+					if (cbgame.movesindex > 0)
+						sprintf(cbgame.moves[cbgame.movesindex - 1].comment, "%s", comment);
 		
 					EndDialog(hdwnd,0);
 					return 1;
