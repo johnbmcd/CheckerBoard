@@ -270,7 +270,12 @@
     <ClCompile Include="dialogs.c" />
     <ClCompile Include="fen.c" />
     <ClCompile Include="graphics.c" />
-    <ClCompile Include="min_movegen.c" />
+    <ClCompile Include="min_movegen.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="PDNfind.c" />
     <ClCompile Include="PDNparser.c" />
     <ClCompile Include="registry.c" />

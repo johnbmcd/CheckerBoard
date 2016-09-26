@@ -36,7 +36,6 @@ extern char str[1024];
 extern HINSTANCE g_hInst;
 extern HWND hwnd;
 extern struct PDNgame GPDNgame;
-extern struct listentry *current, *head, *tail;
 
 int selected_game;		/* game selected by DialogFuncSelectgame(). */
 int HeaderHeight;
@@ -434,8 +433,8 @@ BOOL CALLBACK DialogFuncAddcomment(HWND hdwnd, UINT message, WPARAM wParam, LPAR
 			CenterDialog(hdwnd);
 						
 			SetDlgItemText(hdwnd, IDC_COMMENT, "");
-			if(current->last != NULL)
-				SetDlgItemText(hdwnd, IDC_COMMENT, current->last->comment);
+			if (GPDNgame.movesindex > 0)
+				SetDlgItemText(hdwnd, IDC_COMMENT, GPDNgame.moves[GPDNgame.movesindex - 1].comment);
 			
 			// set keyboard focus to IDC_COMMENT?!
 			if (GetDlgCtrlID((HWND) wParam) != IDC_COMMENT) 
@@ -454,8 +453,8 @@ BOOL CALLBACK DialogFuncAddcomment(HWND hdwnd, UINT message, WPARAM wParam, LPAR
 					return 1;
 				case IDC_OK:
 					GetDlgItemText(hdwnd,IDC_COMMENT,comment,-1);
-					if(current != head)
-						sprintf(current->last->comment,"%s",comment);
+					if (GPDNgame.movesindex > 0)
+						sprintf(GPDNgame.moves[GPDNgame.movesindex - 1].comment, "%s", comment);
 		
 					EndDialog(hdwnd,0);
 					return 1;

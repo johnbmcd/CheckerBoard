@@ -81,19 +81,19 @@ int FENtoclipboard(HWND hwnd, int board8[8][8], int color, int gametype)
 	return 1;
 	}
 
-int PDNtoclipboard(HWND hwnd, struct PDNgame *game)
-	{
+int PDNtoclipboard(HWND hwnd, PDNgame &game)
+{
 	char *gamestring;
 
 	// allocate memory for game, print game to memory, call texttoclipboard to 
 	// place it on clipboard.
-	gamestring = (char *) malloc(GAMEBUFSIZE);
-	PDNgametoPDNstring(game,gamestring, "\r\n");
-	MessageBox(hwnd,gamestring,"printout is",MB_OK);
+	gamestring = (char *)malloc(GAMEBUFSIZE);
+	PDNgametoPDNstring(game, gamestring, "\r\n");
+	MessageBox(hwnd,gamestring, "printout is", MB_OK);
 	texttoclipboard(gamestring);
 	free(gamestring);
 	return 1;
-	}
+}
 
 
 int logtofile(char *filename, char *str, char *mode)

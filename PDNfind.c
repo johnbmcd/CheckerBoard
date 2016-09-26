@@ -237,7 +237,7 @@ int pdnopen(char filename[256], int gametype)
 	// Reserve space for database positions. 
 	// Not a hard limit. It just makes it more efficient to build the list.
 	// hans' 22'000 game archive has about 1.2 million positions, avg 54 pos/game.
-	maxpos = 54 * games_in_pdn;
+	maxpos = 100 + 54 * games_in_pdn;
 	try {
 		pdn_positions.clear();
 		pdn_positions.reserve(maxpos);

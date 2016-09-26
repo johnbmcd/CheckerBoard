@@ -25,12 +25,12 @@ static void blackcapture(int board[12][12],struct CBmove movelist[MAXMOVES],stru
 static void whitekingcapture(int board[12][12],struct CBmove movelist[MAXMOVES],struct CBmove m,int x,int y,int d);
 static void blackkingcapture(int board[12][12],struct CBmove movelist[MAXMOVES],struct CBmove m,int x,int y,int d);
 
-//number of moves - ugly!
-int n;
+static int n;
 
 int getmovelist(int color,struct CBmove m[MAXMOVES], int b[8][8], int *isjump)
 	{
 	int i,j;
+	int n;
 	int board12[12][12];
 
 	board8toboard12(b,board12);
@@ -149,7 +149,6 @@ int makemovelist(int color,struct CBmove movelist[MAXMOVES],int board[12][12], i
 	int x,y;
 	struct CBmove m;
 	*isjump=0;
-
 
 	for(i=0;i<MAXMOVES;i++)
 		movelist[i].jumps=0;
@@ -559,7 +558,6 @@ void whitecapture(int board[12][12],struct CBmove movelist[MAXMOVES],struct CBmo
 	int b[12][12];
 	struct CBmove mm;
 	int end=1;
-
 
 	mm=m;
 	if(y<8)

@@ -14,12 +14,6 @@
 #define NEMESIS // enables detection of comments in round braces ( ) 
 
 
-typedef enum {
-	PDN_IDLE, PDN_READING_FROM, PDN_WAITING_SEP, PDN_WAITING_TO, PDN_READING_TO, PDN_WAITING_OPTIONAL_TO,
-	PDN_WAITING_OPTIONAL_SEP, PDN_CURLY_COMMENT, PDN_NEMESIS_COMMENT, PDN_FLUFF, PDN_QUOTED_VALUE, PDN_DONE
-} PDN_PARSE_STATE;
-
-
 size_t getfilesize(char *filename)
 	{
 	// returns the file size, in bytes, of a file with name file, rounded up to the

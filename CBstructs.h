@@ -1,3 +1,8 @@
+#pragma once
+#include <vector>
+#include "cb_interface.h"
+#include "min_movegen.h"
+
 #define COMMENTLENGTH 1024
 
 struct CBoptions
@@ -41,19 +46,15 @@ typedef struct
 	} RESULT;
 
 
-struct listentry			/* doubly linked list which holds the game */
-	{
-	struct CBmove move;					// move
-	struct listentry *next;				// pointer to next in list
-	struct listentry *alternatenext;	// pointer to alternate next -> variations
-	struct listentry *last;				// pointer to previous in list
+/* A game move with associated move text, comments, and analysis text. */
+struct gamebody_entry {
+	CBmove move;						// move
 	char PDN[64];						// PDN of move, e.g. 8-11 or 8x15
 	char comment[COMMENTLENGTH];		// user comment
 	char analysis[COMMENTLENGTH];		// engine analysis comment - separate from above so they can coexist
-	};
+};
 
-struct PDNgame
-	{
+struct PDNgame {
 	// structure for a PDN game
 	// standard 7-tag-roster
 	char event[256];
@@ -63,15 +64,13 @@ struct PDNgame
 	char black[256];
 	char white[256];
 	char resultstring[256];
-	/* support 2 more tags for setup */
-	char setup[256];
+	char setup[256];						/* support 2 more tags for setup */
 	char FEN[256];
-	/* internal conversion to integers */
-	int result;
+	int result;								/* internal conversion to integers */
 	int gametype;
-	/* head of the linked list */
-	struct listentry *head;
-	};
+	int movesindex;							/* Current index in moves[]. */
+	std::vector<gamebody_entry> moves;		/* Moves and comments in the game body. */
+};
 
 /*
 struct package

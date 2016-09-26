@@ -23,7 +23,6 @@
 #include "utility.h"
 #include "bmp.h"
 
-//enum state {NORMAL, AUTOPLAY, ENGINEMATCH, ENGINEGAME, ANALYZEGAME, OBSERVEGAME, ENTERGAME, BOOKVIEW, BOOKADD, RUNTESTSET};
 
 // lots of external variables from checkerboard.c - very ugly
 extern struct CBmove move;

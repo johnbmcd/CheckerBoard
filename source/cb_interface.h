@@ -1,3 +1,5 @@
+#pragma once
+
 /* Definitions shared between CheckerBoard and an engine.
  * Include this file in a program that interfaces
  * to CheckerBoard or a compatible engine.

@@ -1,6 +1,7 @@
 #pragma once
 #include <Windows.h>
 #include <cstdarg>
+#include "CBstructs.h"
 #include "min_movegen.h"
 
 void log_fen(char *msg, int board[8][8], int color);
@@ -18,7 +19,7 @@ int		getopening(struct CBoptions *CBoptions);
 int		getthreeopening(int n, struct CBoptions *CBoptions);
 int		initcolorstruct(HWND hwnd, CHOOSECOLOR *ccs, int index);
 int		logtofile(char *filename, char *str, char *mode);
-int		PDNtoclipboard(HWND hwnd, struct PDNgame *game);
+int		PDNtoclipboard(HWND hwnd, PDNgame &game);
 void	setmenuchecks(struct CBoptions *CBoptions, HMENU hmenu);
 char	*textfromclipboard(HWND hwnd, char *str);
 int		texttoclipboard(char *text);
