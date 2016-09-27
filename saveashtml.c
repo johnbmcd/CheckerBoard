@@ -44,7 +44,7 @@ int saveashtml(char *filename, struct PDNgame *PDNgame)
 	for (i = 0; i < MAXHTML; i++)
 		changes[i] = 0;
 
-	for (movei = 0; movei < PDNgame->moves.size(); ++movei) {
+	for (movei = 0; movei < (int)PDNgame->moves.size(); ++movei) {
 		// number of changes
 		changes[movenumber] = PDNgame->moves[movei].move.jumps + 2;
 		// squares the changes occur on
@@ -75,21 +75,21 @@ int saveashtml(char *filename, struct PDNgame *PDNgame)
 
 	// create comment array
 	fprintf(fp, "comment = new Array(%i);", maxhtml);
-	for (movei = 0; movei < PDNgame->moves.size(); ++movei) {
+	for (movei = 0; movei < (int)PDNgame->moves.size(); ++movei) {
 		sprintf(stripped, "");
 		stripquotes(PDNgame->moves[movei].comment, stripped);
 		fprintf(fp, "\ncomment[%i]=\"%s\";", movei, stripped);
 	}
 	
-	for (movei = 0; movei < PDNgame->moves.size(); ++movei)
+	for (movei = 0; movei < (int)PDNgame->moves.size(); ++movei)
 		fprintf(fp, "\nchanges[%i]=%i;", movei, changes[movei]);
 
-	for (movei = 0; movei < PDNgame->moves.size(); ++movei) {
+	for (movei = 0; movei < (int)PDNgame->moves.size(); ++movei) {
 		for (j = 0; j < changes[movei]; j++)
 			fprintf(fp, "\nchangeto[%i][%i]=%i;", movei, j, changeto[movei][j]);
 	}
 
-	for (movei = 0; movei < PDNgame->moves.size(); ++movei) {
+	for (movei = 0; movei < (int)PDNgame->moves.size(); ++movei) {
 		for (j = 0; j < changes[movei]; j++)
 			fprintf(fp,"\nsquare[%i][%i]=%i;", movei, j, square[movei][j]);
 	}
@@ -404,7 +404,7 @@ void PDNgametoPDNHTMLstring(PDNgame *game, char *pdnstring)
 	/* warning! \n is no good for printf, it s acutually \r\n*/
 	char s[256];
 	int counter,i;
-	int movei;
+	size_t movei;
 	/* I: print headers */
 	sprintf(pdnstring,"");
 	sprintf(s,"[Event \"%s\"]<BR>",game->event);

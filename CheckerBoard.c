@@ -131,7 +131,6 @@ static int addcomment = 0;
 int handicap = 0;
 int testset_number = 0;
 int playnow = 0; 						/* playnow is passed to the checkers engines, it is set to nonzero if the user chooses 'play' */
-int analyze = 0;						/* is set to 1 if the computer is analyzing the game - obsolete?*/
 int reset = 0;
 int gameindex = 0;						/* game to load/replace from/in a database*/
 
@@ -857,7 +856,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						}
 
 					// normal case - move forward one move
-					if (cbgame.movesindex < cbgame.moves.size()) {
+					if (cbgame.movesindex < (int)cbgame.moves.size()) {
 						gamebody_entry *pmove = &cbgame.moves[cbgame.movesindex];
 						domove(pmove->move, cbboard8);
 						updateboardgraphics(hwnd);
@@ -2859,7 +2858,7 @@ void game_to_colors_reversed_pdn(char *pdn)
  */
 void forward_to_game_end(void)
 {
-	while (cbgame.movesindex < cbgame.moves.size()) {
+	while (cbgame.movesindex < (int)cbgame.moves.size()) {
 		domove(cbgame.moves[cbgame.movesindex].move, cbboard8);
 		cbcolor = CB_CHANGECOLOR(cbcolor);
 		++cbgame.movesindex;
@@ -3103,7 +3102,7 @@ DWORD ThreadFunc(LPVOID param)
 		if (nmoves == 1)
 			break;
 
-		if (cbgame.movesindex < cbgame.moves.size())
+		if (cbgame.movesindex < (int)cbgame.moves.size())
 			sprintf(cbgame.moves[cbgame.movesindex].analysis, "%s", statusbar_txt);
 		break;
 
@@ -3811,7 +3810,7 @@ int makeanalysisfile(char *filename)
 
 	// print PDN and analysis
 	fprintf(fp, "\n<TABLE cellspacing=\"0\" cellpadding=\"3\">");
-	for (i = 0; i < cbgame.moves.size(); ++i) {
+	for (i = 0; i < (int)cbgame.moves.size(); ++i) {
 		fprintf(fp,"<TR>\n");
 		if (strcmp(cbgame.moves[i].analysis, "") == 0) {
 			if (is_second_player(cbgame, i))
@@ -4052,7 +4051,7 @@ void PDNgametoPDNstring(PDNgame &game, char *pdnstring, char *lf)
 	}
 	// print PDN 
 	counter=0;
-	for (i = 0; i < game.moves.size(); ++i) {
+	for (i = 0; i < (int)game.moves.size(); ++i) {
 		move4tonotation(game.moves[i].move, game.moves[i].PDN);
 		// print the move number 
 		if (!is_second_player(game, i)) {
@@ -4219,7 +4218,7 @@ void pdntogame(int startposition[8][8], int startcolor)
 	/* set the starting values */
 	color = startcolor;
 	memcpy(b8, startposition, sizeof(b8));
-	for (i = 0; i < cbgame.moves.size(); ++i) {
+	for (i = 0; i < (int)cbgame.moves.size(); ++i) {
 		PDNparseTokentonumbers(cbgame.moves[i].PDN, &from, &to);
 		if (islegal(b8, color, from, to, &legalmove)) {
 			cbgame.moves[i].move = legalmove;
