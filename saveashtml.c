@@ -21,7 +21,7 @@
 #define MAXHTML 400
 
 
-int saveashtml(char *filename, struct PDNgame *PDNgame)
+int saveashtml(char *filename, PDNgame *game)
 {
 	// produces a html file with javascript replay of the current game
 	
@@ -39,23 +39,23 @@ int saveashtml(char *filename, struct PDNgame *PDNgame)
 	char stripped[1024];
 	
 	// get starting position into our array:
-	PDNgametostartposition(PDNgame, b);
+	PDNgametostartposition(game, b);
 
 	for (i = 0; i < MAXHTML; i++)
 		changes[i] = 0;
 
-	for (movei = 0; movei < (int)PDNgame->moves.size(); ++movei) {
+	for (movei = 0; movei < (int)game->moves.size(); ++movei) {
 		// number of changes
-		changes[movenumber] = PDNgame->moves[movei].move.jumps + 2;
+		changes[movenumber] = game->moves[movei].move.jumps + 2;
 		// squares the changes occur on
-		square[movenumber][0] = coortohtml(PDNgame->moves[movei].move.from, PDNgame->gametype);
-		square[movenumber][1] = coortohtml(PDNgame->moves[movei].move.to, PDNgame->gametype);
+		square[movenumber][0] = coortohtml(game->moves[movei].move.from, game->gametype);
+		square[movenumber][1] = coortohtml(game->moves[movei].move.to, game->gametype);
 		for (i = 2; i < changes[movenumber]; i++)
-			square[movenumber][i] = coortohtml(PDNgame->moves[movei].move.del[i - 2], PDNgame->gametype);
+			square[movenumber][i] = coortohtml(game->moves[movei].move.del[i - 2], game->gametype);
 
 		// pieces to put on these squares
 		changeto[movenumber][0] = 0;
-		changeto[movenumber][1]= PDNgame->moves[movei].move.newpiece;
+		changeto[movenumber][1]= game->moves[movei].move.newpiece;
 		for (i = 2; i < changes[movenumber]; i++)
 			changeto[movenumber][i] = 0;
 		
@@ -69,27 +69,27 @@ int saveashtml(char *filename, struct PDNgame *PDNgame)
 	fp = fopen(filename, "w");
 
 	fprintf(fp,"<HTML>\n<HEAD>\n<META name=\"GENERATOR\" content=\"CheckerBoard %s\">\n<TITLE>\n", VERSION);
-	fprintf(fp,"%s - %s\n</TITLE>\n", PDNgame->black, PDNgame->white);
+	fprintf(fp,"%s - %s\n</TITLE>\n", game->black, game->white);
 	fprintf(fp,"<STYLE TYPE='text/css'>\n<!--\n.move {font-weight: bold; text-decoration: none}\na.move {color:black}\n//-->\n</STYLE>");
 	fprintf(fp,"<SCRIPT language=\"JavaScript\">\n<!-- hide script\n\nvar movenumber = 0;\nchanges = new Array(%i);\nfor(i=0;i<%i;i++)\n changes[i]=0;\nsquare = new Array(%i);\nfor (i=0; i < %i; i++) {\n   square[i] = new Array(10);\n   }\n\nchangeto = new Array(%i);\nfor (i=0; i < %i; i++) {\n   changeto[i] = new Array(10);\n   }\n",maxhtml,maxhtml,maxhtml,maxhtml,maxhtml,maxhtml);
 
 	// create comment array
 	fprintf(fp, "comment = new Array(%i);", maxhtml);
-	for (movei = 0; movei < (int)PDNgame->moves.size(); ++movei) {
+	for (movei = 0; movei < (int)game->moves.size(); ++movei) {
 		sprintf(stripped, "");
-		stripquotes(PDNgame->moves[movei].comment, stripped);
+		stripquotes(game->moves[movei].comment, stripped);
 		fprintf(fp, "\ncomment[%i]=\"%s\";", movei, stripped);
 	}
 	
-	for (movei = 0; movei < (int)PDNgame->moves.size(); ++movei)
+	for (movei = 0; movei < (int)game->moves.size(); ++movei)
 		fprintf(fp, "\nchanges[%i]=%i;", movei, changes[movei]);
 
-	for (movei = 0; movei < (int)PDNgame->moves.size(); ++movei) {
+	for (movei = 0; movei < (int)game->moves.size(); ++movei) {
 		for (j = 0; j < changes[movei]; j++)
 			fprintf(fp, "\nchangeto[%i][%i]=%i;", movei, j, changeto[movei][j]);
 	}
 
-	for (movei = 0; movei < (int)PDNgame->moves.size(); ++movei) {
+	for (movei = 0; movei < (int)game->moves.size(); ++movei) {
 		for (j = 0; j < changes[movei]; j++)
 			fprintf(fp,"\nsquare[%i][%i]=%i;", movei, j, square[movei][j]);
 	}
@@ -118,7 +118,7 @@ int saveashtml(char *filename, struct PDNgame *PDNgame)
 			fprintf(fp, "window.document.images[%i].src='gif/lightwk.gif';\n", i);
 			break;
 		default:
-			if (PDNgame->gametype == GT_ITALIAN) {
+			if (game->gametype == GT_ITALIAN) {
 				if ((i + i / 8) % 2)
 					fprintf(fp, "window.document.images[%i].src='gif/dark.gif';\n", i);
 				else
@@ -164,7 +164,7 @@ int saveashtml(char *filename, struct PDNgame *PDNgame)
 
 	fprintf(fp, "<table border=\"1\" cellspacing=\"0\" cellpadding=\"0\"><tr><td>");
 
-	if (strcmp(PDNgame->setup, "") != 0) {
+	if (strcmp(game->setup, "") != 0) {
 		// setup
 		for (i = 0; i < 64; i++) {
 			if (i % 8 == 0 && i != 0)
@@ -184,7 +184,7 @@ int saveashtml(char *filename, struct PDNgame *PDNgame)
 				fprintf(fp, "<img src=\"gif/lightwk.gif\">");
 				break;
 			default:
-				if (PDNgame->gametype == GT_ITALIAN) {
+				if (game->gametype == GT_ITALIAN) {
 					if ((i + i / 8) % 2)
 						fprintf(fp, "<img src=\"gif/dark.gif\">");
 					else
@@ -202,7 +202,7 @@ int saveashtml(char *filename, struct PDNgame *PDNgame)
 	}
 	else {
 		// no setup
-		if (PDNgame->gametype == GT_ITALIAN) {
+		if (game->gametype == GT_ITALIAN) {
 			fprintf(fp, "<img src=\"gif/lightbm.gif\"><img src=\"gif/dark.gif\">");
 			fprintf(fp, "<img src=\"gif/lightbm.gif\"><img src=\"gif/dark.gif\"><img src=\"gif/lightbm.gif\">");
 			fprintf(fp, "<img src=\"gif/dark.gif\"><img src=\"gif/lightbm.gif\"><img src=\"gif/dark.gif\"><br>");
@@ -262,12 +262,12 @@ int saveashtml(char *filename, struct PDNgame *PDNgame)
 	fprintf(fp, "</FORM>\n");
 	fprintf(fp, "<form name=\"comment\">\n<textarea name=\"pdncomment\" rows=6 cols=46>\n</textarea>\n");
 	fprintf(fp, "</CENTER></TD><TD valign=\"top\">");
-	fprintf(fp,"<H3>%s - %s</H3>\n",PDNgame->black, PDNgame->white);
+	fprintf(fp,"<H3>%s - %s</H3>\n",game->black, game->white);
 	// print moves
 	
 	gamestring = (char *)malloc(GAMEBUFSIZE);
 	if (gamestring != NULL) {
-		PDNgametoPDNHTMLstring(PDNgame, gamestring);
+		PDNgametoPDNHTMLstring(game, gamestring);
 		fprintf(fp,"%s", gamestring);
 		free(gamestring);
 	}
@@ -301,7 +301,7 @@ int stripquotes(char *str, char *stripped)
 	}
 
 
-int PDNgametostartposition(struct PDNgame *game, int b[64])
+int PDNgametostartposition(PDNgame *game, int b[64])
 	{
 	// fills the array b with the pieces in the starting position of a PDN game
 	// needs to check whether it's a setup or not.
