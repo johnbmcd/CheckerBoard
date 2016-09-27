@@ -222,8 +222,10 @@ void forward_to_game_end(void);
 //	analyzegame: checkerboard moves through a game and comments on every move
 //	entergame: checkerboard does nothing while the user enters a game
 //	observegame: checkerboard calculates while the user enters a game
-enum state {NORMAL, AUTOPLAY, ENGINEMATCH, ENGINEGAME, ANALYZEGAME, OBSERVEGAME, 
-ENTERGAME, BOOKVIEW, BOOKADD, RUNTESTSET, ANALYZEPDN} CBstate=NORMAL;
+enum state {
+	NORMAL, AUTOPLAY, ENGINEMATCH, ENGINEGAME, ANALYZEGAME, OBSERVEGAME, 
+	ENTERGAME, BOOKVIEW, BOOKADD, RUNTESTSET, ANALYZEPDN
+} CBstate = NORMAL;
 
 
 int WINAPI WinMain(HINSTANCE hThisInst, HINSTANCE hPrevInst,LPSTR lpszArgs, int nWinMode)
@@ -931,95 +933,34 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						CheckMenuItem(hmenu,LEVELEXACT,MF_UNCHECKED);
 					break;
 				case LEVELINSTANT:
-					maxtime=0.01;
-					cboptions.level=1;
-					checklevelmenu(hmenu,LEVELINSTANT, &cboptions);
-					break;
 				case LEVEL01S:
-					maxtime = 0.1;
-					cboptions.level = 2;
-					checklevelmenu(hmenu, LEVEL01S, &cboptions);
-					break;
 				case LEVEL02S:
-					maxtime = 0.2;
-					cboptions.level = 3;
-					checklevelmenu(hmenu, LEVEL02S, &cboptions);
-					break;
 				case LEVEL05S:
-					maxtime = 0.5;
-					cboptions.level = 4;
-					checklevelmenu(hmenu, LEVEL05S, &cboptions);
-					break;
 				case LEVEL1S:
-					maxtime = 1;
-					cboptions.level = 5;
-					checklevelmenu(hmenu, LEVEL1S, &cboptions);
-					break;
 				case LEVEL2S:
-					maxtime=2;
-					cboptions.level=6;
-					checklevelmenu(hmenu,LEVEL2S, &cboptions);
-					break;
 				case LEVEL5S:
-					maxtime=5;
-					cboptions.level=7;
-					checklevelmenu(hmenu,LEVEL5S, &cboptions);
-					break;
 				case LEVEL10S:
-					maxtime=10;
-					cboptions.level=8;
-					checklevelmenu(hmenu,LEVEL10S, &cboptions);
-					break;
 				case LEVEL15S:
-					maxtime=15;
-					cboptions.level=9;
-					checklevelmenu(hmenu,LEVEL15S, &cboptions);
-					break;
 				case LEVEL30S:
-					maxtime=30;
-					cboptions.level=10;
-					checklevelmenu(hmenu,LEVEL30S, &cboptions);
-					break;
 				case LEVEL1M:
-					maxtime=60;
-					cboptions.level=11;
-					checklevelmenu(hmenu,LEVEL1M, &cboptions);
-					break;
 				case LEVEL2M:
-					maxtime=120;
-					cboptions.level=12;
-					checklevelmenu(hmenu,LEVEL2M, &cboptions);
-					break;
 				case LEVEL5M:
-					maxtime=300;
-					cboptions.level=13;
-					checklevelmenu(hmenu,LEVEL5M, &cboptions);
-					break;
 				case LEVEL15M:
-					maxtime=900;
-					cboptions.level=14;
-					checklevelmenu(hmenu,LEVEL15M, &cboptions);
-					break;
 				case LEVEL30M:
-					maxtime=1800;
-					cboptions.level=15;
-					checklevelmenu(hmenu,LEVEL30M, &cboptions);
-					break;
 				case LEVELINFINITE:
-					maxtime=8600000;
-					cboptions.level=16;
-					checklevelmenu(hmenu,LEVELINFINITE, &cboptions);
-					break;
 				case LEVELINCREMENT:
-					// set clock to two minutes
-					maxtime=initialtime;
-					cboptions.level=17;
-					checklevelmenu(hmenu,LEVELINCREMENT, &cboptions);
-					sprintf(statusbar_txt,"increment level set: initial time %.0f, increment time %.0f (seconds)",initialtime,incrementtime);
+					maxtime = timetoken_to_time(LOWORD(wParam));
+					cboptions.level = timetoken_to_level(LOWORD(wParam));
+					checklevelmenu(hmenu, LOWORD(wParam));
+					if (LOWORD(wParam) == LEVELINCREMENT) {
+						// set clock to two minutes
+						maxtime = initialtime;
+						sprintf(statusbar_txt, "increment level set: initial time %.0f, increment time %.0f (seconds)", initialtime, incrementtime);
+					}
 					break;
 				case LEVELADDTIME:
 					// add  seconds when '+' is pressed
-					if(cboptions.level == 17)
+					if (cboptions.level == timetoken_to_level(LEVELINCREMENT))
 						{
 						maxtime+=1.0;
 						sprintf(statusbar_txt,"remaining time: %.1f",maxtime);
@@ -1030,7 +971,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 
 				case LEVELSUBTRACTTIME:
 					// subtract 1 seconds when '-' is pressed
-					if(cboptions.level==17)
+					if (cboptions.level == timetoken_to_level(LEVELINCREMENT))
 						{
 						maxtime-=1.0;
 						sprintf(statusbar_txt,"remaining time: %.1f",maxtime);
@@ -2784,64 +2725,11 @@ int createcheckerboard(HWND hwnd)
 
 	setmenuchecks(&cboptions, hmenu);
 	// set the level 
-	// which has been retrieved by loadsettings 
-	switch(cboptions.level)
-		{
-		case 1:
-			PostMessage(hwnd,WM_COMMAND,LEVELINSTANT,0);
-			break;
-		case 2:
-			PostMessage(hwnd, WM_COMMAND, LEVEL01S, 0);
-			break;
-		case 3:
-			PostMessage(hwnd, WM_COMMAND, LEVEL02S, 0);
-			break;
-		case 4:
-			PostMessage(hwnd, WM_COMMAND, LEVEL05S, 0);
-			break;
-		case 5:
-			PostMessage(hwnd,WM_COMMAND,LEVEL1S,0);
-			break;
-		case 6:
-			PostMessage(hwnd,WM_COMMAND,LEVEL2S,0);
-			break;
-		case 7:
-			PostMessage(hwnd,WM_COMMAND,LEVEL5S,0);
-			break;
-		case 8: 
-			PostMessage(hwnd,WM_COMMAND,LEVEL10S,0);
-			break;
-		case 9:
-			PostMessage(hwnd,WM_COMMAND,LEVEL15S,0);
-			break;
-		case 10:
-			PostMessage(hwnd,WM_COMMAND,LEVEL30S,0);
-			break;
-		case 11:
-			PostMessage(hwnd,WM_COMMAND,LEVEL1M,0);
-			break;
-		case 12:
-			PostMessage(hwnd,WM_COMMAND,LEVEL2M,0);
-			break;
-		case 13:
-			PostMessage(hwnd,WM_COMMAND,LEVEL5M,0);
-			break;
-		case 14:
-			PostMessage(hwnd,WM_COMMAND,LEVEL15M,0);
-			break;
-		case 15:
-			PostMessage(hwnd,WM_COMMAND,LEVEL30M,0);
-			break;
-		case 16:
-			PostMessage(hwnd,WM_COMMAND,LEVELINFINITE,0);
-			break;
-		case 17:
-			PostMessage(hwnd,WM_COMMAND,LEVELINCREMENT,0);
-			break;
-
-		default:
-			PostMessage(hwnd,WM_COMMAND,LEVEL1S,0);
-		}
+	// which has been retrieved by loadsettings
+	if (cboptions.level >= timetoken_to_level(LEVELINSTANT) && cboptions.level <= timetoken_to_level(LEVELINCREMENT))
+		PostMessage(hwnd, WM_COMMAND, timelevel_to_token(cboptions.level), 0);
+	else
+		PostMessage(hwnd, WM_COMMAND, LEVEL1S, 0);
 
 	// in case of shell double click 
 	if(strcmp(filename,"")!=0)
@@ -3891,7 +3779,6 @@ int makeanalysisfile(char *filename)
 	char c1[256]="D84020";
 	char c2[256]="A0C0C0";
 	char c3[256]="444444";
-	int leveltime[16] = {0,0,1,2,5,10,15,30,60,120,300,900,1800,0,0};
 	FILE *fp;
 	char CPUinfostring[64];
 	
@@ -3919,7 +3806,7 @@ int makeanalysisfile(char *filename)
 
 	CPUinfo(CPUinfostring);
 	
-	fprintf(fp, "\nAnalysis by %s at %is/move on %s", s, leveltime[cboptions.level], CPUinfostring);
+	fprintf(fp, "\nAnalysis by %s at %.1fs/move on %s", s, timelevel_to_time(cboptions.level), CPUinfostring);
 	fprintf(fp, "\n<BR>\ngenerated with <A HREF=\"http://www.fierz.ch/checkers.htm\">CheckerBoard %s</A><P>", VERSION);
 
 	// print PDN and analysis

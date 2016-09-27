@@ -103,3 +103,10 @@ struct userbookentry {
 	struct CBmove move;
 	};
 
+/* A mapping between different time constants. */
+struct timemap {
+	int level;		/* cboptions setting. */
+	int token;		/* resource token of Windows control. */
+	double time;	/* search time. */
+};
+

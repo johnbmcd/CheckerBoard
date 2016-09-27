@@ -10,7 +10,7 @@ void	builddb(char *str);
 int		builtingametype(void);
 void	CBlog(char *text);
 void cblog(const char *fmt, ...);
-int		checklevelmenu(HMENU hmenu,int item, struct CBoptions *CBoptions);
+void checklevelmenu(HMENU hmenu, int item);
 int		errorlog(char *str);
 int extract_path(char *name, char *path);
 int		FENtoclipboard(HWND hwnd, int board8[8][8], int color, int gametype);
@@ -23,6 +23,10 @@ int		PDNtoclipboard(HWND hwnd, PDNgame &game);
 void	setmenuchecks(struct CBoptions *CBoptions, HMENU hmenu);
 char	*textfromclipboard(HWND hwnd, char *str);
 int		texttoclipboard(char *text);
+double timelevel_to_time(int level);
+int timelevel_to_token(int level);
+int timetoken_to_level(int token);
+double timetoken_to_time(int token);
 void	toggle(int *x);
 
 

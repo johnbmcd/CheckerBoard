@@ -48,6 +48,26 @@ int three[174][4]=
 	{6,6,4,3},{6,6,0,3},{6,6,1,0},{6,4,0,0},{6,4,1,0},{6,5,0,3},{6,5,1,3},{6,2,4,2},{6,2,0,3},{6,2,1,0},
 	{6,3,0,2},{6,0,0,0},{6,1,1,0},{6,1,5,1}};
 
+timemap time_table[] = {
+	{1, LEVELINSTANT, 0.01},
+	{2, LEVEL01S, 0.1},
+	{3, LEVEL02S, 0.2},
+	{4, LEVEL05S, 0.5},
+	{5, LEVEL1S, 1},
+	{6, LEVEL2S, 2},
+	{7, LEVEL5S, 5},
+	{8, LEVEL10S, 10},
+	{9, LEVEL15S, 15},
+	{10, LEVEL30S, 30},
+	{11, LEVEL1M, 60},
+	{12, LEVEL2M, 120},
+	{13, LEVEL5M, 300},
+	{14, LEVEL15M, 900},
+	{15, LEVEL30M, 1800},
+	{16, LEVELINFINITE, 8600000},
+	{17, LEVELINCREMENT, 0}
+};
+
 
 extern char g_app_instance_suffix[10];
 
@@ -214,36 +234,75 @@ int fileispresent(char *filename)
 		return 0;
 	}
 
-int checklevelmenu(HMENU hmenu,int item, struct CBoptions *CBoptions)
-	{
-	int increment;
 
-	CheckMenuItem(hmenu,LEVELINSTANT,MF_UNCHECKED);
-	CheckMenuItem(hmenu, LEVEL01S, MF_UNCHECKED);
-	CheckMenuItem(hmenu, LEVEL02S, MF_UNCHECKED);
-	CheckMenuItem(hmenu, LEVEL05S, MF_UNCHECKED);
-	CheckMenuItem(hmenu,LEVEL1S,MF_UNCHECKED);
-	CheckMenuItem(hmenu,LEVEL2S,MF_UNCHECKED);
-	CheckMenuItem(hmenu,LEVEL5S,MF_UNCHECKED);
-	CheckMenuItem(hmenu,LEVEL10S,MF_UNCHECKED);
-	CheckMenuItem(hmenu,LEVEL15S,MF_UNCHECKED);
-	CheckMenuItem(hmenu,LEVEL30S,MF_UNCHECKED);
-	CheckMenuItem(hmenu,LEVEL1M,MF_UNCHECKED);
-	CheckMenuItem(hmenu,LEVEL2M,MF_UNCHECKED);
-	CheckMenuItem(hmenu,LEVEL5M,MF_UNCHECKED);
-	CheckMenuItem(hmenu,LEVEL15M,MF_UNCHECKED);
-	CheckMenuItem(hmenu,LEVEL30M,MF_UNCHECKED);
-	CheckMenuItem(hmenu,LEVELINFINITE,MF_UNCHECKED);
-	CheckMenuItem(hmenu,LEVELINCREMENT,MF_UNCHECKED);
-	CheckMenuItem(hmenu,item,MF_CHECKED);
-	
-	if(CBoptions->level==14) 
-		increment=1;
-	else 
-		increment=0;
-	
-	return increment;
-	}
+double timelevel_to_time(int level)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(time_table); ++i)
+		if (time_table[i].level == level)
+			return(time_table[i].time);
+
+	/* Shouldn't get here. */
+	assert(0);
+	return(1.0);
+}
+
+
+int timelevel_to_token(int level)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(time_table); ++i)
+		if (time_table[i].level == level)
+			return(time_table[i].token);
+
+	/* Shouldn't get here. */
+	assert(0);
+	return(LEVEL1S);
+}
+
+
+int timetoken_to_level(int token)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(time_table); ++i)
+		if (time_table[i].token == token)
+			return(time_table[i].level);
+
+	/* Shouldn't get here. */
+	assert(0);
+	return(5);
+}
+
+
+double timetoken_to_time(int token)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(time_table); ++i)
+		if (time_table[i].token == token)
+			return(time_table[i].time);
+
+	/* Shouldn't get here. */
+	assert(0);
+	return(1.0);
+}
+
+
+void checklevelmenu(HMENU hmenu, int item)
+{
+	int i;
+
+	/* Uncheck everything first. */
+	for (i = 0; i < ARRAY_SIZE(time_table); ++i)
+		CheckMenuItem(hmenu, time_table[i].token, MF_UNCHECKED);
+
+	/* Check the selected item. */
+	CheckMenuItem(hmenu, item, MF_CHECKED);
+}
+
 
 void setmenuchecks(struct CBoptions *CBoptions, HMENU hmenu)
 	{
