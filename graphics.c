@@ -27,8 +27,8 @@
 // lots of external variables from checkerboard.c - very ugly
 extern CBmove cbmove;
 extern struct CBoptions cboptions;
-extern int gui_board8[8][8];
-extern int gui_color;
+extern int cbboard8[8][8];
+extern int cbcolor;
 extern struct PDNgame cbgame;
 
 
@@ -201,14 +201,14 @@ int resizegraphics(HWND hwnd)
 int updateboardgraphics(HWND hwnd)
 	{
 	// is called whenever the board has to be redrawn
-	printboard(hwnd, memdc, bmpdc, stretchdc, gui_board8);
+	printboard(hwnd, memdc, bmpdc, stretchdc, cbboard8);
 			
 	return 1;
 	}
 			
 int boardtoHDC(HWND hwnd, HDC hdc)
 	{
-	printboard(hwnd, hdc, bmpdc, stretchdc, gui_board8);
+	printboard(hwnd, hdc, bmpdc, stretchdc, cbboard8);
 	return 1;
 	}
 
@@ -227,7 +227,7 @@ int diagramtoclipboard(HWND hwnd)
 	// select bitmap in animation device context
 	SelectObject(bgdc, clipbitmap);
 	// print board in mem dc
-	printboard(hwnd, memdc, bmpdc, stretchdc, gui_board8);
+	printboard(hwnd, memdc, bmpdc, stretchdc, cbboard8);
 	// and copy it shifted into the ani dc, which means that the
 	// bitmap now has the board!
 	BitBlt(bgdc,0,0,cxClient,cyClient-offset,memdc,0,upperoffset,BLACKNESS);
@@ -281,7 +281,7 @@ int samplediagramtoclipboard(HWND hwnd)
 	DeleteObject(clipbitmap);
 
 	// restore old board, else the sample bitmap is shown in CB
-	printboard(hwnd, memdc, bmpdc, stretchdc, gui_board8);
+	printboard(hwnd, memdc, bmpdc, stretchdc, cbboard8);
 
 	return 1;
 	}
@@ -351,17 +351,17 @@ DWORD AnimationThreadFunc(HWND hwnd)
 
 	// remove pieces on from and to square, which 
 	// would disturb animation
-	gui_board8[x][y]=0;
+	cbboard8[x][y]=0;
 	x2=cbmove.to.x;
 	y2=cbmove.to.y;
-	gui_board8[x2][y2]=0;
+	cbboard8[x2][y2]=0;
 
 	// create a background image for the animation
 
 	// PUT THIS BACK IN FOR ANIMATION!!
 #ifdef ANIMATION
 	if (animation_state)
-		printboard(hwnd, bgdc, bmpdc, stretchdc, gui_board8);
+		printboard(hwnd, bgdc, bmpdc, stretchdc, cbboard8);
 #endif
 
 	coorstocoors(&x,&y, cboptions.invert, cboptions.mirror);
@@ -507,8 +507,8 @@ DWORD AnimationThreadFunc(HWND hwnd)
 
 	// make a clean image now
 	// TODO: don't mix up game play with animation!
-	domove(cbmove, gui_board8);
-	printboard(hwnd, memdc, bmpdc, stretchdc, gui_board8);
+	domove(cbmove, cbboard8);
+	printboard(hwnd, memdc, bmpdc, stretchdc, cbboard8);
 
 	// if move highlighting is on, we do it! 
 	// this should go in a separate function!
@@ -551,7 +551,7 @@ DWORD AnimationThreadFunc(HWND hwnd)
 	InvalidateRect(hwnd,&r,0);
 
 	// TODO: should not mix game state stuff with animation!
-	gui_color = CB_CHANGECOLOR(gui_color);
+	cbcolor = CB_CHANGECOLOR(cbcolor);
 
 	setanimationbusy(FALSE);
 	setenginestarting(FALSE);
