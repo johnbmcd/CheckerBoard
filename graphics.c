@@ -760,6 +760,28 @@ int printboard(HWND hwnd, HDC hdc, HDC bmpdc, HDC stretchdc, int b[8][8])
 		SelectObject(hdc,oldfont);
 		}
 
+	/* Fill the clock background region. */
+//	hbrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
+	hbrush = CreateSolidBrush(PALETTERGB(235, 235, 235));
+	r.left = xoffset;
+	r.right = r.left + 8 * size;
+	r.top = upperoffset - CLOCKHEIGHT;
+	r.bottom = upperoffset;
+	FillRect(hdc, &r, hbrush);
+
+	/* Draw a 2-pixel separator line between the top of the board and the clock area. */
+	HBRUSH linebrush = (HBRUSH)GetStockObject(DKGRAY_BRUSH);
+	r.left = xoffset;
+	r.right = r.left + 8 * size;
+	r.top = upperoffset - 1;
+	r.bottom = upperoffset;
+	FillRect(hdc, &r, linebrush);
+
+	/* Write the clock text. */
+	char *text = "    Black 0:12.3         White 0:09.7";	// demo
+	SetTextColor(hdc, PALETTERGB(0, 0, 0));
+	TextOut(hdc, 5 + xoffset, upperoffset + yoffset - (CLOCKHEIGHT - 3), text, (int)strlen(text));
+
 	// get redrawing region
 	GetClientRect(hwnd, &WinDim);
 	r.left = xoffset;

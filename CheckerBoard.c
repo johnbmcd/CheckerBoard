@@ -294,7 +294,7 @@ int WINAPI WinMain(HINSTANCE hThisInst, HINSTANCE hPrevInst,LPSTR lpszArgs, int 
 
 	// get toolbar height
 	GetWindowRect(tbwnd, &rect);
-	toolbarheight = rect.bottom - rect.top;
+	toolbarheight = CLOCKHEIGHT + rect.bottom - rect.top;
 	
 	// initialize status bar
 	InitStatus(hwnd);

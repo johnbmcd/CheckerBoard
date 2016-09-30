@@ -1,6 +1,7 @@
 
 #define ANIMATIONSLEEPTIME 4 // 5 ms per animation step
 #define STEPS 12.0		// 12 number of animation steps to make
+#define CLOCKHEIGHT 25
 
 
 DWORD	AnimationThreadFunc(HWND hwnd);
