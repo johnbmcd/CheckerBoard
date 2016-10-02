@@ -65,7 +65,6 @@ timemap time_table[] = {
 	{14, LEVEL15M, 900},
 	{15, LEVEL30M, 1800},
 	{16, LEVELINFINITE, 8600000},
-	{17, LEVELINCREMENT, 0}
 };
 
 
@@ -291,7 +290,7 @@ double timetoken_to_time(int token)
 }
 
 
-void checklevelmenu(HMENU hmenu, int item)
+void checklevelmenu(CBoptions *options, HMENU hmenu, int resource)
 {
 	int i;
 
@@ -300,7 +299,12 @@ void checklevelmenu(HMENU hmenu, int item)
 		CheckMenuItem(hmenu, time_table[i].token, MF_UNCHECKED);
 
 	/* Check the selected item. */
-	CheckMenuItem(hmenu, item, MF_CHECKED);
+	if (options->use_incremental_time)
+		CheckMenuItem(hmenu, LEVELINCREMENT, MF_CHECKED);
+	else {
+		CheckMenuItem(hmenu, LEVELINCREMENT, MF_UNCHECKED);
+		CheckMenuItem(hmenu, resource, MF_CHECKED);
+	}
 }
 
 
@@ -332,7 +336,7 @@ void setmenuchecks(struct CBoptions *CBoptions, HMENU hmenu)
 	else
 		CheckMenuItem(hmenu,DISPLAYMIRROR,MF_UNCHECKED);
 	
-	if(CBoptions->exact)
+	if(CBoptions->exact_time)
 		CheckMenuItem(hmenu,LEVELEXACT,MF_CHECKED);
 	else
 		CheckMenuItem(hmenu,LEVELEXACT,MF_UNCHECKED);

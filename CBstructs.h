@@ -18,14 +18,17 @@ struct CBoptions
 	char secondaryenginestring[64];
 	COLORREF colors[5];
 	int userbook;
-	int exact;
 	int sound;
 	int invert;
 	int mirror;
 	int numbers;
 	int highlight;
 	int priority;
+	bool exact_time;
+	bool use_incremental_time;
 	int level;
+	double initial_time;		/* incremental time control settings. */
+	double time_increment;
 	int op_crossboard;
 	int op_mailplay;
 	int op_barred;

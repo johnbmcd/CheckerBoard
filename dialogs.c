@@ -1365,6 +1365,46 @@ BOOL CALLBACK EngineDialogFunc(HWND hdwnd, UINT message, WPARAM wParam, LPARAM l
 	return 0;
 	}
 
+
+BOOL DialogIncrementalTimesFunc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
+{
+	char buf[80];
+
+	switch (message) {
+	case WM_INITDIALOG: 
+		// center dialog box on CB window
+		CenterDialog(hwnd);
+
+		/* Init the 'Initial time (secs)' edit box. */
+		sprintf(buf, "%.1f", cboptions.initial_time);
+		SetDlgItemText(hwnd, IDC_INITIAL_TIME, buf);
+
+		/* Init the 'Increment' edit box. */
+		sprintf(buf, "%.3f", cboptions.time_increment);
+		SetDlgItemText(hwnd, IDC_TIME_INCREMENT, buf);
+		break;
+
+	case WM_COMMAND:
+		// find out which engine we are setting params for:
+		switch (LOWORD(wparam)) {
+		case ID_OK:
+			EndDialog(hwnd, TRUE);
+			GetDlgItemText(hwnd, IDC_INITIAL_TIME, buf, sizeof(buf));
+			sscanf(buf, "%lf", &cboptions.initial_time);
+			GetDlgItemText(hwnd, IDC_TIME_INCREMENT, buf, sizeof(buf));
+			sscanf(buf, "%lf", &cboptions.time_increment);
+			cboptions.use_incremental_time = true;
+			return(TRUE);
+
+		case ID_CANCEL:
+			EndDialog(hwnd, TRUE);
+			return(TRUE);
+		}
+	}
+	return(FALSE);
+}
+
+
 int CenterDialog(HWND hdwnd)
 	{
 	// centers a dialog box on the main window

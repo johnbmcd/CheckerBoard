@@ -38,7 +38,8 @@ extern struct PDNgame cbgame;
 static int g_size = 0;			// holds size of square, if it is different from previous call, we have to update stuff
 static HDC memdc,bgdc,bmpdc,stretchdc,boarddc;							// stores the virtual device handle 
 static HBITMAP hbit,bgbitmap,clipbitmap,stretchbitmap,boardbitmap;		// store the virtual bitmap 
-static HBRUSH hbrush; 													// store the brush handle 
+static HBRUSH hbrush;
+static HBRUSH linebrush;
 static int offset=0, upperoffset=0;
 static HFONT myfont;			// font for board numbers
 static bool animation_state = true;
@@ -86,6 +87,8 @@ int initgraphics(HWND hwnd)
 	hbrush = (HBRUSH) GetStockObject(WHITE_BRUSH);
 	SelectObject(memdc, hbrush);
 	
+	linebrush = (HBRUSH)GetStockObject(DKGRAY_BRUSH);
+
 	PatBlt(memdc, 0, 0, maxX, maxY, PATCOPY);
 	
 	ReleaseDC(hwnd, hdc);
@@ -761,26 +764,31 @@ int printboard(HWND hwnd, HDC hdc, HDC bmpdc, HDC stretchdc, int b[8][8])
 		}
 
 	/* Fill the clock background region. */
-//	hbrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
-	hbrush = CreateSolidBrush(PALETTERGB(235, 235, 235));
-	r.left = xoffset;
-	r.right = r.left + 8 * size;
-	r.top = upperoffset - CLOCKHEIGHT;
-	r.bottom = upperoffset;
-	FillRect(hdc, &r, hbrush);
+	if (cboptions.use_incremental_time) {
+		double black_clock, white_clock;
+		char clocktext[100];
 
-	/* Draw a 2-pixel separator line between the top of the board and the clock area. */
-	HBRUSH linebrush = (HBRUSH)GetStockObject(DKGRAY_BRUSH);
-	r.left = xoffset;
-	r.right = r.left + 8 * size;
-	r.top = upperoffset - 1;
-	r.bottom = upperoffset;
-	FillRect(hdc, &r, linebrush);
+		hbrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
+		r.left = xoffset;
+		r.right = r.left + 8 * size;
+		r.top = upperoffset - CLOCKHEIGHT;
+		r.bottom = upperoffset;
+		FillRect(hdc, &r, hbrush);
+		InvalidateRect(hwnd, &r, 0);
 
-	/* Write the clock text. */
-	char *text = "    Black 0:12.3         White 0:09.7";	// demo
-	SetTextColor(hdc, PALETTERGB(0, 0, 0));
-	TextOut(hdc, 5 + xoffset, upperoffset + yoffset - (CLOCKHEIGHT - 3), text, (int)strlen(text));
+		/* Draw a 2-pixel separator line between the top of the board and the clock area. */
+		r.left = xoffset;
+		r.right = r.left + 8 * size;
+		r.top = upperoffset - 1;
+		r.bottom = upperoffset;
+		FillRect(hdc, &r, linebrush);
+
+		/* Write the clock text. */
+		get_game_clocks(&black_clock, &white_clock);
+		sprintf(clocktext, "    Black %.2f         White %.2f", black_clock, white_clock);
+		SetTextColor(hdc, PALETTERGB(0, 0, 0));
+		TextOut(hdc, 5 + xoffset, upperoffset + yoffset - (CLOCKHEIGHT - 3), clocktext, (int)strlen(clocktext));
+	}
 
 	// get redrawing region
 	GetClientRect(hwnd, &WinDim);

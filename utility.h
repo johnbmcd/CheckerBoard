@@ -10,7 +10,7 @@ void	builddb(char *str);
 int		builtingametype(void);
 void	CBlog(char *text);
 void cblog(const char *fmt, ...);
-void checklevelmenu(HMENU hmenu, int item);
+void checklevelmenu(CBoptions *options, HMENU hmenu, int resource);
 int		errorlog(char *str);
 int extract_path(char *name, char *path);
 int		FENtoclipboard(HWND hwnd, int board8[8][8], int color, int gametype);

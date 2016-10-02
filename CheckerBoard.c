@@ -58,6 +58,7 @@
 #include <io.h>
 #include <intrin.h>
 #include <vector>
+#include <algorithm>
 
 #include "standardheader.h"
 #include "cb_interface.h"
@@ -73,6 +74,7 @@
 #include "bitboard.h"
 #include "utility.h"
 #include "fen.h"
+#include "resource.h"
 #include "saveashtml.h"
 #include "graphics.h"
 #include "registry.h"
@@ -108,12 +110,11 @@ static BOOL enginestarting = FALSE;		// true when a play command is issued to th
 										// not started yet
 BOOL gameover = FALSE; 			/* true when autoplay or engine match game is finished */
 BOOL startmatch = TRUE;			/* startmatch is only true before engine match was started */
-BOOL forceexact = FALSE;		/* forceexact is true -> CB-autothread checks time limit */
 BOOL newposition = TRUE;		/* is true when position has changed. used in analysis mode to
 								restart search and then reset */
 BOOL startengine = FALSE; 		/* is true if engine is expected to start */
 int result;
-clock_t starttime,currenttime;
+clock_t starttime;
 
 int toolbarheight = 30;			//30;
 int statusbarheight = 20;		//20;
@@ -126,13 +127,12 @@ char szWinName[] = "CheckerBoard";	/* name of window class */
 int cbboard8[8][8];				/* the board being displayed in the GUI*/
 int cbcolor = CB_BLACK;			/* color is the side to move next in the GUI */
 int setup = 0;						/* 1 if in setup mode */
-int increment = 0;					// 1 if in an incremental time level
 static int addcomment = 0;
 int handicap = 0;
 int testset_number = 0;
-int playnow = 0; 						/* playnow is passed to the checkers engines, it is set to nonzero if the user chooses 'play' */
-int reset = 0;
-int gameindex = 0;						/* game to load/replace from/in a database*/
+int playnow = 0; 					/* playnow is passed to the checkers engines, it is set to nonzero if the user chooses 'play' */
+bool reset_move_history;			/* send option to engine to reset its list of game moves. */
+int gameindex = 0;					/* game to load/replace from/in a database*/
 
 /* dll globals */
 /* CB uses function pointers to access the dll.
@@ -176,7 +176,11 @@ char string[256];
 HMENU hmenu;								// menu handle 
 double o,xmetric,ymetric;					//gives the size of the board8: one square is xmetric*ymetric 
 int dummy,x1=-1,x2=-1,y1_=-1,y2=-1;
-double maxtime, incrementtime=60.0, initialtime=1200.0;				//time limit - is set by setlevel() 
+
+/* When cboptions.use_incremental_time is true, these are game clocks for black and white. */
+double black_time_remaining;
+double white_time_remaining;
+
 char reply[ENGINECOMMAND_REPLY_SIZE];		// holds reply of engine to command requests 
 char CBdirectory[256]="";			// holds the directory from where CB is started:
 char CBdocuments[MAX_PATH];			// CheckerBoard directory under My Documents
@@ -294,7 +298,9 @@ int WINAPI WinMain(HINSTANCE hThisInst, HINSTANCE hPrevInst,LPSTR lpszArgs, int 
 
 	// get toolbar height
 	GetWindowRect(tbwnd, &rect);
-	toolbarheight = CLOCKHEIGHT + rect.bottom - rect.top;
+	toolbarheight = rect.bottom - rect.top;
+	if (cboptions.use_incremental_time)
+		toolbarheight += CLOCKHEIGHT;
 	
 	// initialize status bar
 	InitStatus(hwnd);
@@ -327,6 +333,36 @@ int WINAPI WinMain(HINSTANCE hThisInst, HINSTANCE hPrevInst,LPSTR lpszArgs, int 
 		}
 	return (int) msg.wParam; 
 	}
+
+
+void reset_game_clocks()
+{
+	if (cboptions.use_incremental_time) {
+		black_time_remaining = cboptions.initial_time;
+		white_time_remaining = cboptions.initial_time;
+	}
+}
+
+
+/*
+ * Get the instantaneous values of time left of black and white clocks.
+ * This means adding the value spent on thinking for the current side to move to
+ * the clock value that was saved at the start of that sides turn.
+ */
+void get_game_clocks(double *black_clock, double *white_clock)
+{
+	double newtime;
+
+	newtime = (clock() - starttime) / CLOCKS_PER_SEC;
+	if (cbcolor == CB_BLACK) {
+		*black_clock = black_time_remaining - newtime;
+		*white_clock = white_time_remaining;
+	}
+	else {
+		*black_clock = black_time_remaining;
+		*white_clock = white_time_remaining - newtime;
+	}
+}
 
 
 /*
@@ -694,7 +730,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						if(FENtoboard8(cbboard8, gamestring, &cbcolor, cbgame.gametype))
 							{
 							updateboardgraphics(hwnd);
-							reset = 1;
+							reset_move_history = true;
 							newposition = TRUE;
 							sprintf(statusbar_txt,"position copied");
 							PostMessage(hwnd,WM_COMMAND,GAMEINFO,0);
@@ -741,7 +777,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 
 						// game is fully loaded, clean up 
 						updateboardgraphics(hwnd);
-						reset=1;
+						reset_move_history = true;
 						newposition=TRUE;
 						PostMessage(hwnd,WM_COMMAND,GAMEINFO,0);
 					}
@@ -831,7 +867,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						sprintf(statusbar_txt,"Takeback not possible: you are at the start of the game!");
 
 					newposition = TRUE;
-					reset = 1;
+					reset_move_history = true;
 					break;
 
 				case MOVESFORWARD:	
@@ -879,7 +915,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						if (CBstate == OBSERVEGAME)
 							PostMessage(hwnd, WM_COMMAND, INTERRUPTENGINE, 0);
 						newposition = TRUE;
-						reset = 1;
+						reset_move_history = true;
 					}
 					else
 						sprintf(statusbar_txt, "Forward not possible: End of game");
@@ -900,7 +936,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					updateboardgraphics(hwnd);
 					sprintf(statusbar_txt, "you are now at the start of the game");
 					newposition = TRUE;
-					reset = 1;
+					reset_move_history = true;
 					break;
 
 				case MOVESFORWARDALL:	
@@ -914,7 +950,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					updateboardgraphics(hwnd);
 					sprintf(statusbar_txt, "you are now at the end of the game");
 					newposition = TRUE;
-					reset = 1;
+					reset_move_history = true;
 					break;
 
 				case MOVESCOMMENT: 
@@ -923,14 +959,16 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 					break;
 
 				case LEVELEXACT:
-					if(cboptions.exact==TRUE)
-						cboptions.exact=FALSE;
-					else cboptions.exact=TRUE;
-					if(cboptions.exact==TRUE)
-						CheckMenuItem(hmenu,LEVELEXACT,MF_CHECKED);
-					else
-						CheckMenuItem(hmenu,LEVELEXACT,MF_UNCHECKED);
+					if (cboptions.exact_time) {
+						cboptions.exact_time = false;
+						CheckMenuItem(hmenu, LEVELEXACT, MF_UNCHECKED);
+					}
+					else {
+						cboptions.exact_time = true;
+						CheckMenuItem(hmenu, LEVELEXACT, MF_CHECKED);
+					}
 					break;
+
 				case LEVELINSTANT:
 				case LEVEL01S:
 				case LEVEL02S:
@@ -947,36 +985,65 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 				case LEVEL15M:
 				case LEVEL30M:
 				case LEVELINFINITE:
-				case LEVELINCREMENT:
-					maxtime = timetoken_to_time(LOWORD(wParam));
+					cboptions.use_incremental_time = false;
+					RECT rect;
+					GetWindowRect(tbwnd, &rect);
+					toolbarheight = rect.bottom - rect.top;
+					PostMessage(hwnd, (UINT)WM_SIZE, (WPARAM)0, (LPARAM)0);
+
 					cboptions.level = timetoken_to_level(LOWORD(wParam));
-					checklevelmenu(hmenu, LOWORD(wParam));
-					if (LOWORD(wParam) == LEVELINCREMENT) {
-						// set clock to two minutes
-						maxtime = initialtime;
-						sprintf(statusbar_txt, "increment level set: initial time %.0f, increment time %.0f (seconds)", initialtime, incrementtime);
+					checklevelmenu(&cboptions, hmenu, LOWORD(wParam));
+					if (LOWORD(wParam) == LEVELINFINITE)
+						sprintf(statusbar_txt, "search time set to infinite");
+					else
+						sprintf(statusbar_txt, "search time set to %.1f sec/move", timelevel_to_time(cboptions.level));
+					break;
+
+				case LEVELINCREMENT:
+					DialogBox(g_hInst, MAKEINTRESOURCE(IDD_INCREMENTAL_TIMES), hwnd, (DLGPROC)DialogIncrementalTimesFunc);
+					if (cboptions.use_incremental_time) {
+						reset_game_clocks();
+						RECT rect;
+
+						GetWindowRect(tbwnd, &rect);
+						toolbarheight = CLOCKHEIGHT + rect.bottom - rect.top;
+						checklevelmenu(&cboptions, hmenu, timelevel_to_token(cboptions.level));
+						sprintf(statusbar_txt, "incremental time set: initial time %.0f sec, increment %.3f sec",
+								cboptions.initial_time, cboptions.time_increment);
+						PostMessage(hwnd, (UINT)WM_SIZE, (WPARAM)0, (LPARAM)0);
 					}
 					break;
+
 				case LEVELADDTIME:
-					// add  seconds when '+' is pressed
-					if (cboptions.level == timetoken_to_level(LEVELINCREMENT))
-						{
-						maxtime+=1.0;
-						sprintf(statusbar_txt,"remaining time: %.1f",maxtime);
+					// add 1 second when '+' is pressed
+					if (cboptions.use_incremental_time) {
+						if (cbcolor == CB_BLACK) {
+							black_time_remaining += 1.0;
+							sprintf(statusbar_txt, "black remaining time: %.1f", black_time_remaining);
 						}
+						else {
+							white_time_remaining += 1.0;
+							sprintf(statusbar_txt, "white remaining time: %.1f", white_time_remaining);
+						}
+					}
 					else
-						sprintf(statusbar_txt,"error: not in increment mode!");
+						sprintf(statusbar_txt, "not in increment mode!");
 					break;
 
 				case LEVELSUBTRACTTIME:
-					// subtract 1 seconds when '-' is pressed
-					if (cboptions.level == timetoken_to_level(LEVELINCREMENT))
-						{
-						maxtime-=1.0;
-						sprintf(statusbar_txt,"remaining time: %.1f",maxtime);
+					// subtract 1 second when '-' is pressed
+					if (cboptions.use_incremental_time) {
+						if (cbcolor == CB_BLACK) {
+							black_time_remaining -= 1.0;
+							sprintf(statusbar_txt, "black remaining time: %.1f", black_time_remaining);
 						}
+						else {
+							white_time_remaining -= 1.0;
+							sprintf(statusbar_txt, "white remaining time: %.1f", white_time_remaining);
+						}
+					}
 					else
-						sprintf(statusbar_txt,"error: not in increment mode!");
+						sprintf(statusbar_txt, "not in increment mode!");
 					break;
 
 				// piece sets 
@@ -1311,7 +1378,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message,WPARAM wParam, LPARAM lParam
 						{
 						// leaving setup mode;
 						CheckMenuItem(hmenu,SETUPMODE,MF_UNCHECKED);
-						reset=1;
+						reset_move_history = true;
 						x1=-1;
 						}
 					if(setup) 
@@ -1538,10 +1605,6 @@ int SetMenuLanguage(int language)
 	SetCurrentDirectory(CBdirectory);
 	if(fileispresent("db\\db6.cpr"))
 		DeleteMenu(hmenu, 8, MF_BYPOSITION);
-
-	DeleteMenu(hmenu,LEVELINCREMENT,MF_BYCOMMAND);
-	DeleteMenu(hmenu,LEVELADDTIME,MF_BYCOMMAND);
-	DeleteMenu(hmenu,LEVELSUBTRACTTIME,MF_BYCOMMAND);
 
 	// now insert stuff we do need: piece set choice depending on what is installed
 	add_piecesets_to_menu(hmenu);
@@ -2561,7 +2624,7 @@ int loadgamefromPDNstring(int gameindex, char *dbstring)
 
 	// game is fully loaded, clean up 
 	updateboardgraphics(hwnd);
-	reset = 1;
+	reset_move_history = true;
 	newposition = TRUE;
 	sprintf(statusbar_txt,"game loaded");
 	SetCurrentDirectory(CBdirectory);
@@ -2718,17 +2781,12 @@ int createcheckerboard(HWND hwnd)
 	fp = fopen(userbookname,"rb");
 	if(fp != 0)
 		{
-		userbooknum = fread(userbook,  sizeof(struct userbookentry),MAXUSERBOOK,fp);
+		userbooknum = fread(userbook, sizeof(struct userbookentry),MAXUSERBOOK,fp);
 		fclose(fp);
 		}
 
 	setmenuchecks(&cboptions, hmenu);
-	// set the level 
-	// which has been retrieved by loadsettings
-	if (cboptions.level >= timetoken_to_level(LEVELINSTANT) && cboptions.level <= timetoken_to_level(LEVELINCREMENT))
-		PostMessage(hwnd, WM_COMMAND, timelevel_to_token(cboptions.level), 0);
-	else
-		PostMessage(hwnd, WM_COMMAND, LEVEL1S, 0);
+	checklevelmenu(&cboptions, hmenu, timelevel_to_token(cboptions.level));
 
 	// in case of shell double click 
 	if(strcmp(filename,"")!=0)
@@ -2831,7 +2889,7 @@ int start11man(int number)
 	InvalidateRect(hwnd, NULL, 0);
 	sprintf(str, "11 man opening number %i", number + 1);
 	newposition = TRUE;
-	reset = 1;
+	reset_move_history = true;
 
 	return 1;
 	}
@@ -2910,10 +2968,42 @@ int start3move(void)
 	newposition = TRUE;
 
 	// new march 2005, jon kreuzer told me this was missing.
-	reset = 1;
+	reset_move_history = true;
 
 	return 1;
 }	
+
+
+void format_time_args(double increment, double remaining, uint32_t *info, uint32_t *moreinfo)
+{
+	int i;
+	const double limit = 65535 * 0.1;
+	uint16_t increment16, remaining16;
+	double mult[] = {
+		0.001, 0.01, 0.1
+	};
+
+	remaining = max(remaining, 0.001);		/* Dont allow negative remaining time. */
+	double largest = max(increment, remaining);
+	if (largest > limit) {
+		largest = min(largest, limit);
+		increment = min(increment, limit);
+		remaining = min(remaining, limit);
+	}
+	for (i = 0; i < ARRAY_SIZE(mult); ++i) {
+		if (largest <= 65535 * mult[i]) {
+			/* Pack the 2 times into a 32-bit int. */
+			increment16 = (uint16_t)(increment / mult[i]);
+			remaining16 = (uint16_t)(remaining / mult[i]);
+			*moreinfo = ((remaining16 << 16) & 0xffff0000) | (increment16 & 0xffff);
+
+			/* Write the multiplier into *info. */
+			*info |= (i + 1) << 2;
+			return;
+		}
+	}
+	assert(0);
+}
 
 
 DWORD ThreadFunc(LPVOID param)
@@ -2931,11 +3021,10 @@ DWORD ThreadFunc(LPVOID param)
 	int dummy;
 	FILE *Lfp;
 	char Lstr[1024];
-
 	struct pos userbookpos;
 	int founduserbookmove = 0;
+	double maxtime;
 
-	starttime=clock();
 	abortcalculation = 0;		// if this remains 0, we will execute the move - else not
 
 	// test if there is a move at all: if not, return and set state to NORMAL
@@ -2996,24 +3085,55 @@ DWORD ThreadFunc(LPVOID param)
 		//						do a search								//
 		//--------------------------------------------------------------//
 		if (getmove != NULL) {
+			uint32_t info, moreinfo;		/* arguments sent to engine. */
+
 			/* Display the Play! bitmap with red foreground when the engine is searching. */
 			PostMessage(tbwnd, TB_CHANGEBITMAP, (WPARAM)MOVESPLAY, MAKELPARAM(19, 0));
 
-			// if in engine match handicap mode, give primary engine half the time of secondary engine.
-			if (CBstate == ENGINEMATCH && handicap && currentengine == 1)
-				result = (getmove)(originalcopy, cbcolor, maxtime / 2, statusbar_txt, &playnow, reset + 2 * cboptions.exact + 4 * increment, 0, &localmove);
-			else
-				result = (getmove)(originalcopy, cbcolor, maxtime, statusbar_txt, &playnow, reset + 2 * cboptions.exact + 4 * increment, 0, &localmove);
+			info = 0;
+			moreinfo = 0;
+			if (reset_move_history)
+				info |= CB_RESET_MOVES;
+			if (cboptions.use_incremental_time) {
+				if (cbcolor == CB_BLACK) {
+					format_time_args(cboptions.time_increment, black_time_remaining, &info, &moreinfo);
+					maxtime = black_time_remaining / 4;
+				}
+				else {
+					format_time_args(cboptions.time_increment, white_time_remaining, &info, &moreinfo);
+					maxtime = white_time_remaining / 4;
+				}
+			}
+			else {
+				if (cboptions.exact_time)
+					info |= CB_EXACT_TIME;
+
+				maxtime = timelevel_to_time(cboptions.level);
+
+				// if in engine match handicap mode, give primary engine half the time of secondary engine.
+				if (CBstate == ENGINEMATCH && handicap && currentengine == 1)
+					maxtime /= 2;
+			}
+
+			starttime = clock();
+			result = (getmove)(originalcopy, cbcolor, maxtime, statusbar_txt, &playnow, info, moreinfo, &localmove);
 
 			/* Display the Play! bitmap with black foreground when the engine is not searching. */
 			PostMessage(tbwnd, TB_CHANGEBITMAP, (WPARAM)MOVESPLAY, MAKELPARAM(2, 0));
 
-			if (increment) {
-				maxtime += incrementtime;
-				maxtime -= (clock() - starttime) / (double)CLK_TCK;
-				sprintf(Lstr, " time remaining:%.1fs  ", maxtime);
-				strcat(Lstr, statusbar_txt);
-				sprintf(statusbar_txt, "%s", Lstr);
+			if (cboptions.use_incremental_time) {
+				if (cbcolor == CB_BLACK) {
+					black_time_remaining += cboptions.time_increment;
+					black_time_remaining -= (clock() - starttime) / (double)CLK_TCK;
+				}
+				else {
+					white_time_remaining += cboptions.time_increment;
+					white_time_remaining -= (clock() - starttime) / (double)CLK_TCK;
+				}
+
+				/* If not engine match, then human player's clock starts now. */
+				if (CBstate != ENGINEMATCH)
+					starttime = clock();
 			}
 		}
 		else
@@ -3122,7 +3242,7 @@ DWORD ThreadFunc(LPVOID param)
 		break;
 	}
 
-	reset = 0;
+	reset_move_history = false;
 	setenginebusy(FALSE);
 	setenginestarting(FALSE);
 	return 1;
@@ -3164,8 +3284,20 @@ int changeCBstate(int oldstate, int newstate)
 	CheckMenuItem(hmenu,BOOKMODE_ADD,MF_UNCHECKED);
 
 	/* Update animation state. */
-	if (CBstate == ENGINEMATCH && maxtime <= 1)
-		set_animation(false);
+	if (CBstate == ENGINEMATCH) {
+		if (cboptions.use_incremental_time) {
+			if (cboptions.initial_time / 30 + cboptions.time_increment <= 1.5)
+				set_animation(false);
+			else
+				set_animation(true);
+		}
+		else {
+			if (timelevel_to_time(cboptions.level) <= 1)
+				set_animation(false);
+			else
+				set_animation(true);
+		}
+	}
 	else
 		set_animation(true);
 
@@ -3294,7 +3426,7 @@ DWORD AutoThreadFunc(LPVOID param)
 				// convert position to internal board
 				FENtoboard8(cbboard8, FEN, &cbcolor,cbgame.gametype);
 				updateboardgraphics(hwnd);
-				reset = 1;
+				reset_move_history = true;
 				newposition = TRUE;
 				PostMessage(hwnd, WM_COMMAND, MOVESPLAY, 0);
 				setenginestarting(TRUE);
@@ -4272,13 +4404,9 @@ void newgame(void)
 	InitCheckerBoard(cbboard8);
 	reset_game(cbgame);
 	newposition = TRUE;
-	reset = 1;
+	reset_move_history = true;
 	cboptions.mirror = is_mirror_gametype(cbgame.gametype);
-	cbcolor = get_startcolor(cbgame.gametype);
-	
-	if(cboptions.level==17)
-		maxtime=initialtime;	
-	
+	cbcolor = get_startcolor(cbgame.gametype);	
 	updateboardgraphics(hwnd);
 	}
 
@@ -4405,7 +4533,7 @@ void doload(PDNgame *game, char *gamestring, int *color, int board8[8][8])
 
 	// fill in the move information.
 	pdntogame(board8, *color);
-	reset = 1;
+	reset_move_history = true;
 	newposition = TRUE;
 }
 

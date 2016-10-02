@@ -23,6 +23,7 @@
 /* getmove() info bitfield definitions. */
 #define CB_RESET_MOVES 1
 #define CB_EXACT_TIME 2
+#define CB_TIMEMASK (4 | 8)		/* 2 bits define the time mode and multiplier. */
 
 /* gametype definitions for response to enginecommand "get gametype". */
 #define GT_ENGLISH 21

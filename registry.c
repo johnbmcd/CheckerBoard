@@ -145,34 +145,37 @@ void loadsettings(struct CBoptions *options, char CBdirectory[256])
 		strcpy(options->matchdirectory, options->userdirectory);
 		PathAppend(options->matchdirectory, "matches");
 
-		options->colors[0]=PALETTERGB(255,255,255);	
-		options->colors[1]=PALETTERGB(255,255,255);	
-		options->colors[2]=PALETTERGB(120,208,216);	
-		options->colors[3]=PALETTERGB(0,128,192);	
-		options->colors[4]=PALETTERGB(255,0,0);	
-		sprintf(options->EGTBdirectory,"%s\\db",CBdirectory);
-		options->exact=0;	
-		options->highlight=0;
-		options->invert=0;
-		options->level=2;
-		options->mirror=0;
-		options->numbers=1;
-		options->op_barred=0;
-		options->op_crossboard=1;
-		options->op_mailplay=0;
+		options->colors[0] = PALETTERGB(255, 255, 255);	
+		options->colors[1] = PALETTERGB(255, 255, 255);	
+		options->colors[2] = PALETTERGB(120, 208, 216);	
+		options->colors[3] = PALETTERGB(0, 128, 192);	
+		options->colors[4] = PALETTERGB(255, 0, 0);	
+		sprintf(options->EGTBdirectory,"%s\\db", CBdirectory);
+		options->highlight = 0;
+		options->invert = 0;
+		options->exact_time = false;
+		options->use_incremental_time = false;
+		options->level = timetoken_to_level(LEVEL2S);
+		options->initial_time = 30;
+		options->time_increment = 5;
+		options->mirror = 0;
+		options->numbers = 1;
+		options->op_barred = 0;
+		options->op_crossboard = 1;
+		options->op_mailplay = 0;
 #ifdef _WIN64
 #pragma message("_WIN64 is defined.")
-		sprintf(options->primaryenginestring,"cake64.dll");
-		sprintf(options->secondaryenginestring,"simplech64.dll");
+		sprintf(options->primaryenginestring, "cake64.dll");
+		sprintf(options->secondaryenginestring, "simplech64.dll");
 #else
 #pragma message("_WIN64 is not defined.")
-		sprintf(options->primaryenginestring,"cake.dll");
-		sprintf(options->secondaryenginestring,"simplech.dll");
+		sprintf(options->primaryenginestring, "cake.dll");
+		sprintf(options->secondaryenginestring, "simplech.dll");
 #endif
-		options->priority=0;
-		options->sound=0;
-		options->userbook=0;
-		options->window_x=0;
+		options->priority = 0;
+		options->sound = 0;
+		options->userbook = 0;
+		options->window_x = 0;
 		options->addoffset = 0;
 		options->language = ENGLISH;
 		options->piecesetindex = 0;
