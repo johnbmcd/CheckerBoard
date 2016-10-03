@@ -1,10 +1,9 @@
-typedef struct
-	{
+typedef struct {
 	int db_MB;
 	int hash_MB;
 	int book;
 	int allscores;
-	} ENGINE_OPTIONS;
+} ENGINE_OPTIONS;
 
 typedef struct {
 	int max_dbpieces;			/* limits the maximum number of pieces to use in egdb init/lookups. */

@@ -5,11 +5,10 @@
 // this file implements load/save settings from/to registry
 // it distinguishes between 32- and 64-bit versions in the registry to enable these two versions
 // to live in parallel on a 64-bit system
-
 #include <windows.h>
 #include <stdio.h>
 #include <shlwapi.h>
-#pragma warning(disable:4091)
+#pragma warning(disable : 4091)
 #include <shlobj.h>
 #include "standardheader.h"
 #include "cb_interface.h"
@@ -21,31 +20,30 @@
 #include "CheckerBoard.h"
 #include "crc.h"
 
-
 #ifdef _WIN64
-#define CB_REGISTRY_NAME "Software\\Martin Fierz\\CheckerBoard64\\"
+#define CB_REGISTRY_NAME	"Software\\Martin Fierz\\CheckerBoard64\\"
 #else
-#define CB_REGISTRY_NAME "Software\\Martin Fierz\\CheckerBoard\\"
+#define CB_REGISTRY_NAME	"Software\\Martin Fierz\\CheckerBoard\\"
 #endif
+
 // VERSION will be appended to this name
-
-
 void savesettings(struct CBoptions *options)
-	{
+{
 	// save settings in the registry 	
 	HKEY hKey;
 	unsigned long result;
 	char subkey[256];
 
 	// create key name from CB version
-	sprintf(subkey,"%s%s", CB_REGISTRY_NAME, VERSION); 
-	// open registry key 
+	sprintf(subkey, "%s%s", CB_REGISTRY_NAME, VERSION);
+
+	// open registry key
 	RegCreateKeyEx(HKEY_CURRENT_USER, subkey, 0, "CB_Key", 0, KEY_WRITE, NULL, &hKey, &result);
 
 	// save options struct
 	options->crc = sizeof(struct CBoptions);
 	options->crc = crc_calc((char *)options, sizeof(struct CBoptions));
-	RegSetValueEx(hKey, "options structure", 0, REG_BINARY, (LPBYTE)options, sizeof(struct CBoptions));
+	RegSetValueEx(hKey, "options structure", 0, REG_BINARY, (LPBYTE) options, sizeof(struct CBoptions));
 
 	// close registry
 	RegCloseKey(hKey);
@@ -53,7 +51,7 @@ void savesettings(struct CBoptions *options)
 
 void loadsettings(struct CBoptions *options, char CBdirectory[256])
 {
-	// load settings from the registry 
+	// load settings from the registry
 	char lstr[MAX_PATH];
 	HKEY hKey;
 	unsigned long result;
@@ -64,10 +62,10 @@ void loadsettings(struct CBoptions *options, char CBdirectory[256])
 	char subkey[256];
 
 	// create key name from CB version
-	sprintf(subkey,"%s%s", CB_REGISTRY_NAME, VERSION); 
-	
+	sprintf(subkey, "%s%s", CB_REGISTRY_NAME, VERSION);
+
 	// open registry key for checkerboard,
-	// if it doesnt exist, create it 
+	// if it doesnt exist, create it
 	RegCreateKeyEx(HKEY_CURRENT_USER, subkey, 0, "CB_Key", 0, KEY_READ, NULL, &hKey, &result);
 
 	/* Initialize the CBdirectory with the location of the executable.
@@ -107,23 +105,23 @@ void loadsettings(struct CBoptions *options, char CBdirectory[256])
 		CreateDirectory(lstr, NULL);
 	}
 
-	// if no info is in the registry, we set the values to default values 
+	// if no info is in the registry, we set the values to default values
 	defaultvalues = 0;
 	if (result == REG_CREATED_NEW_KEY)
 		defaultvalues = 1;
-	
 	else if (result == REG_OPENED_EXISTING_KEY) {
-		// read values from keys 
+
+		// read values from keys
 		if (use_registry_install_path) {
 			datasize = 255;
-			result = RegQueryValueEx(hKey, "InstallPath", NULL, &datatype, (LPBYTE)CBdirectory, &datasize);
+			result = RegQueryValueEx(hKey, "InstallPath", NULL, &datatype, (LPBYTE) CBdirectory, &datasize);
 		}
-		
+
 		// get CB options struct
 		datasize = sizeof(struct CBoptions);
-		result = RegQueryValueEx(hKey, "options structure", NULL, &datatype, (LPBYTE)options, &datasize);
+		result = RegQueryValueEx(hKey, "options structure", NULL, &datatype, (LPBYTE) options, &datasize);
 		if (result != ERROR_SUCCESS)
-			defaultvalues = 1;		// could not read options - use defaults again.
+			defaultvalues = 1;	// could not read options - use defaults again.
 		else {
 
 			/* Verify the crc.
@@ -145,12 +143,12 @@ void loadsettings(struct CBoptions *options, char CBdirectory[256])
 		strcpy(options->matchdirectory, options->userdirectory);
 		PathAppend(options->matchdirectory, "matches");
 
-		options->colors[0] = PALETTERGB(255, 255, 255);	
-		options->colors[1] = PALETTERGB(255, 255, 255);	
-		options->colors[2] = PALETTERGB(120, 208, 216);	
-		options->colors[3] = PALETTERGB(0, 128, 192);	
-		options->colors[4] = PALETTERGB(255, 0, 0);	
-		sprintf(options->EGTBdirectory,"%s\\db", CBdirectory);
+		options->colors[0] = PALETTERGB(255, 255, 255);
+		options->colors[1] = PALETTERGB(255, 255, 255);
+		options->colors[2] = PALETTERGB(120, 208, 216);
+		options->colors[3] = PALETTERGB(0, 128, 192);
+		options->colors[4] = PALETTERGB(255, 0, 0);
+		sprintf(options->EGTBdirectory, "%s\\db", CBdirectory);
 		options->highlight = 0;
 		options->invert = 0;
 		options->exact_time = false;
@@ -179,20 +177,21 @@ void loadsettings(struct CBoptions *options, char CBdirectory[256])
 		options->addoffset = 0;
 		options->language = ENGLISH;
 		options->piecesetindex = 0;
-		RegSetValueEx(hKey, "options structure", 0, REG_BINARY, (LPBYTE)options, sizeof(struct CBoptions));
+		RegSetValueEx(hKey, "options structure", 0, REG_BINARY, (LPBYTE) options, sizeof(struct CBoptions));
 	}
 	else {
+
 		// if window size is too small, enlarge it
 		options->window_height = max(options->window_height, 480);
 		options->window_width = max(options->window_width, 400);
 		if (options->window_x < 0 || options->window_x > 500)
 			options->window_x = 1;
 		if (options->window_y < 0 || options->window_y > 500)
-			options->window_y = 1;	
+			options->window_y = 1;
 	}
 
 	SetCurrentDirectory(CBdirectory);
-	
+
 	sprintf(lstr, "language is %i", options->language);
 	CBlog(lstr);
 

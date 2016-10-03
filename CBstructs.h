@@ -5,8 +5,7 @@
 
 #define COMMENTLENGTH 1024
 
-struct CBoptions
-	{
+struct CBoptions {
 	// holds all options of CB.
 	// the point is that it is much easier to store one struct in the registry
 	// than to save every value separately.
@@ -39,14 +38,13 @@ struct CBoptions
 	int addoffset;
 	int language;
 	int piecesetindex;
-	};
+};
 
-typedef struct
-	{
+typedef struct {
 	int win;
 	int loss;
 	int draw;
-	} RESULT;
+} RESULT;
 
 
 /* A game move with associated move text, comments, and analysis text. */
@@ -97,14 +95,14 @@ struct gamepreview {
 	char event[128];
 	char date[32];
 	char PDN[256];
-	};
+};
 
 struct userbookentry {
 	// position
 	struct pos position;
 	// move
 	struct CBmove move;
-	};
+};
 
 /* A mapping between different time constants. */
 struct timemap {

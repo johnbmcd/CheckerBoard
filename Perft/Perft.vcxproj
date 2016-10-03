@@ -151,7 +151,6 @@
     <ClCompile Include="Perft.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Italian_movegen\move_api.h" />
     <ClInclude Include="..\source\enginedefs.h" />
     <ClInclude Include="board46_intf.h" />
   </ItemGroup>

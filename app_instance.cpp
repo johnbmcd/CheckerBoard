@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "app_instance.h"
 
-#define MAX_INSTANCES 100
+#define MAX_INSTANCES	100
 
 static HANDLE h_named_sem;
 
@@ -22,7 +22,7 @@ int get_app_instance(char *name, int *app_instance)
 		sprintf(sem_name, "%s_sem%d", name, i);
 		h_named_sem = CreateSemaphore(0, 1, 1, sem_name);
 		if (!h_named_sem)
-			return(1);			/* Cannot create handle to new or existing semaphore. */
+			return(1);					/* Cannot create handle to new or existing semaphore. */
 
 		errornum = GetLastError();
 		if (!errornum) {
@@ -39,10 +39,8 @@ int get_app_instance(char *name, int *app_instance)
 	return(1);
 }
 
-
 void close_app_instance()
 {
 	if (h_named_sem)
 		CloseHandle(h_named_sem);
 }
-
