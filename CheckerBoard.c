@@ -340,20 +340,21 @@ void reset_game_clocks()
 	if (cboptions.use_incremental_time) {
 		black_time_remaining = cboptions.initial_time;
 		white_time_remaining = cboptions.initial_time;
+		starttime = clock();
 	}
 }
 
 
 /*
  * Get the instantaneous values of time left of black and white clocks.
- * This means adding the value spent on thinking for the current side to move to
- * the clock value that was saved at the start of that sides turn.
+ * Add the value spent on thinking for the current move to
+ * the clock value that was last updated at the start of its turn.
  */
 void get_game_clocks(double *black_clock, double *white_clock)
 {
 	double newtime;
 
-	newtime = (clock() - starttime) / CLOCKS_PER_SEC;
+	newtime = (clock() - starttime) / (double)CLOCKS_PER_SEC;
 	if (cbcolor == CB_BLACK) {
 		*black_clock = black_time_remaining - newtime;
 		*white_clock = white_time_remaining;
@@ -2011,6 +2012,7 @@ int handletimer(void)
 		InvalidateRect(hwnd,NULL,0);
 		}
 
+	updateboardgraphics(hwnd);
 	return 1;
 	}
 
@@ -2969,6 +2971,7 @@ int start3move(void)
 
 	// new march 2005, jon kreuzer told me this was missing.
 	reset_move_history = true;
+	reset_game_clocks();
 
 	return 1;
 }	
@@ -3024,6 +3027,17 @@ DWORD ThreadFunc(LPVOID param)
 	struct pos userbookpos;
 	int founduserbookmove = 0;
 	double maxtime;
+
+	if (cboptions.use_incremental_time && CBstate != ENGINEMATCH) {
+		/* Player must have just made a move.
+		 * Subtract his accumulated clock time, add his increment.
+		 */
+		if (cbcolor == CB_BLACK)
+			/* Player was white. */
+			white_time_remaining += cboptions.time_increment - (clock() - starttime) / (double)CLK_TCK;
+		else
+			black_time_remaining += cboptions.time_increment - (clock() - starttime) / (double)CLK_TCK;
+	}
 
 	abortcalculation = 0;		// if this remains 0, we will execute the move - else not
 
@@ -3122,18 +3136,15 @@ DWORD ThreadFunc(LPVOID param)
 			PostMessage(tbwnd, TB_CHANGEBITMAP, (WPARAM)MOVESPLAY, MAKELPARAM(2, 0));
 
 			if (cboptions.use_incremental_time) {
-				if (cbcolor == CB_BLACK) {
-					black_time_remaining += cboptions.time_increment;
-					black_time_remaining -= (clock() - starttime) / (double)CLK_TCK;
-				}
-				else {
-					white_time_remaining += cboptions.time_increment;
-					white_time_remaining -= (clock() - starttime) / (double)CLK_TCK;
-				}
+				if (cbcolor == CB_BLACK)
+					black_time_remaining += cboptions.time_increment - (clock() - starttime) / (double)CLK_TCK;
+				else
+					white_time_remaining += cboptions.time_increment - (clock() - starttime) / (double)CLK_TCK;
 
-				/* If not engine match, then human player's clock starts now. */
-				if (CBstate != ENGINEMATCH)
-					starttime = clock();
+				/* If not engine match, then human player's clock starts now. For engine matches the
+				 * starttime will be set just before calling getmove().
+				 */
+				starttime = clock();
 			}
 		}
 		else
@@ -4255,7 +4266,7 @@ void appendmovetolist(CBmove &move)
 	}
 	catch (...) {
 		char *msg = "could not allocate memory for CB movelist";
-		CBlog("could not allocate memory for CB movelist");
+		CBlog(msg);
 		strcpy(statusbar_txt, msg);
 	}
 	cbgame.movesindex = (int)cbgame.moves.size();
@@ -4400,7 +4411,7 @@ int builtinislegal(int board8[8][8], int color, int from, int to, struct CBmove 
 
 
 void newgame(void)
-	{
+{
 	InitCheckerBoard(cbboard8);
 	reset_game(cbgame);
 	newposition = TRUE;
@@ -4408,7 +4419,8 @@ void newgame(void)
 	cboptions.mirror = is_mirror_gametype(cbgame.gametype);
 	cbcolor = get_startcolor(cbgame.gametype);	
 	updateboardgraphics(hwnd);
-	}
+	reset_game_clocks();
+}
 
 
 void doload(PDNgame *game, char *gamestring, int *color, int board8[8][8])
