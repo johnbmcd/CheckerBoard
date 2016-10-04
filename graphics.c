@@ -837,7 +837,7 @@ int printboard(HWND hwnd, HDC hdc, HDC bmpdc, HDC stretchdc, int b[8][8])
 		double black_clock, white_clock;
 		char clocktext[100];
 
-		hbrush = (HBRUSH) GetStockObject(WHITE_BRUSH);
+		hbrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
 		r.left = xoffset;
 		r.right = r.left + 8 * size;
 		r.top = upperoffset - CLOCKHEIGHT;

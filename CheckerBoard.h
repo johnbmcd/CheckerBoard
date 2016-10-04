@@ -242,7 +242,7 @@ extern char CBdocuments[MAX_PATH];
 #define CM_RUNTESTSET 805
 #define CM_HANDICAP 806
 
-#define CM_BUILDEGDB			900
+#define CM_BUILDEGDB 900
 
-#define IDTB_BMP				300
-#define ID_TOOLBAR				200
+#define IDTB_BMP 300
+#define ID_TOOLBAR 200

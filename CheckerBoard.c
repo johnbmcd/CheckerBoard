@@ -110,6 +110,7 @@ int result;
 clock_t starttime;
 
 int toolbarheight = 30;				//30;
+int clockheight;					/* 0 or CLOCKHEIGHT when clock is visible. */
 int statusbarheight = 20;			//20;
 int menuheight = 16;				//16;
 int titlebarheight = 12;			//12;
@@ -167,7 +168,7 @@ char commentname[256];		// comment we're searching for
 int searchwithposition = 0; // search with position?
 char string[256];
 HMENU hmenu;				// menu handle
-double o, xmetric, ymetric; //gives the size of the board8: one square is xmetric*ymetric
+double xmetric, ymetric;	//gives the size of the board8: one square is xmetric*ymetric
 int dummy, x1 = -1, x2 = -1, y1_ = -1, y2 = -1;
 
 /* When cboptions.use_incremental_time is true, these are game clocks for black and white. */
@@ -298,8 +299,7 @@ int WINAPI WinMain(HINSTANCE hThisInst, HINSTANCE hPrevInst, LPSTR lpszArgs, int
 	// get toolbar height
 	GetWindowRect(tbwnd, &rect);
 	toolbarheight = rect.bottom - rect.top;
-	if (cboptions.use_incremental_time)
-		toolbarheight += CLOCKHEIGHT;
+	clockheight = cboptions.use_incremental_time ? CLOCKHEIGHT : 0;
 
 	// initialize status bar
 	InitStatus(hwnd);
@@ -313,8 +313,8 @@ int WINAPI WinMain(HINSTANCE hThisInst, HINSTANCE hPrevInst, LPSTR lpszArgs, int
 	titlebarheight = GetSystemMetrics(SM_CXSIZE);
 
 	// get offsets before the board is printed for the first time
-	offset = toolbarheight + statusbarheight - 1;
-	upperoffset = toolbarheight - 1;
+	offset = toolbarheight + statusbarheight + clockheight - 1;
+	upperoffset = toolbarheight + clockheight - 1;
 	setoffsets(offset, upperoffset);
 
 	// start a timer @ 10Hz: every time this timer goes off, handletimer() is called
@@ -451,13 +451,13 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 
 	case WM_RBUTTONDOWN:
 		x = (int)(LOWORD(lParam) / xmetric);
-		y = (int)(8 - (HIWORD(lParam) - toolbarheight) / ymetric);
+		y = (int)(8 - (HIWORD(lParam) - toolbarheight - clockheight) / ymetric);
 		handle_rbuttondown(x, y);
 		break;
 
 	case WM_LBUTTONDOWN:
 		x = (int)(LOWORD(lParam) / xmetric);
-		y = (int)(8 - (HIWORD(lParam) - toolbarheight) / ymetric);
+		y = (int)(8 - (HIWORD(lParam) - toolbarheight - clockheight) / ymetric);
 		handle_lbuttondown(x, y);
 		break;
 
@@ -470,8 +470,8 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		mbi.cbSize = sizeof(MENUBARINFO);
 		GetMenuBarInfo(hwnd, OBJID_MENU, 0, &mbi);
 		menuheight = mbi.rcBar.bottom - mbi.rcBar.top;
-		offset = toolbarheight + statusbarheight - 1;
-		upperoffset = toolbarheight - 1;
+		offset = toolbarheight + statusbarheight + clockheight - 1;
+		upperoffset = toolbarheight + clockheight - 1;
 		setoffsets(offset, upperoffset);
 		cxClient = lprec->right - lprec->left;
 		cxClient -= cxClient % 8;
@@ -490,8 +490,8 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		mbi.cbSize = sizeof(MENUBARINFO);
 		GetMenuBarInfo(hwnd, OBJID_MENU, 0, &mbi);
 		menuheight = mbi.rcBar.bottom - mbi.rcBar.top;
-		offset = toolbarheight + statusbarheight - 1;
-		upperoffset = toolbarheight - 1;
+		offset = toolbarheight + statusbarheight + clockheight - 1;
+		upperoffset = toolbarheight + clockheight - 1;
 		setoffsets(offset, upperoffset);
 
 		// get window size, set xmetric and ymetric which CB needs to know where user clicks
@@ -1042,7 +1042,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 				RECT rect;
 
 				GetWindowRect(tbwnd, &rect);
-				toolbarheight = CLOCKHEIGHT + rect.bottom - rect.top;
+				toolbarheight = rect.bottom - rect.top;
 				checklevelmenu(&cboptions, hmenu, timelevel_to_token(cboptions.level));
 				sprintf(statusbar_txt,
 						"incremental time set: initial time %.0f sec, increment %.3f sec",
