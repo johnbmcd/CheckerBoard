@@ -1020,7 +1020,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		case LEVEL30M:
 		case LEVELINFINITE:
 			cboptions.use_incremental_time = false;
-
+			clockheight = 0;
 			RECT rect;
 			GetWindowRect(tbwnd, &rect);
 			toolbarheight = rect.bottom - rect.top;
@@ -1038,6 +1038,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			DialogBox(g_hInst, MAKEINTRESOURCE(IDD_INCREMENTAL_TIMES), hwnd, (DLGPROC) DialogIncrementalTimesFunc);
 			if (cboptions.use_incremental_time) {
 				reset_game_clocks();
+				clockheight = CLOCKHEIGHT;
 
 				RECT rect;
 
@@ -1050,6 +1051,8 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 						cboptions.time_increment);
 				PostMessage(hwnd, (UINT) WM_SIZE, (WPARAM) 0, (LPARAM) 0);
 			}
+			else
+				clockheight = 0;
 			break;
 
 		case LEVELADDTIME:
@@ -2108,7 +2111,7 @@ int handletimer(void)
 		InvalidateRect(hwnd, NULL, 0);
 	}
 
-	updateboardgraphics(hwnd);
+	refresh_clock(hwnd);
 	return 1;
 }
 
@@ -3150,6 +3153,21 @@ void format_time_args(double increment, double remaining, uint32_t *info, uint32
 	assert(0);
 }
 
+
+/*
+ * Return a reasonable setting for the maxtime argument to getmove() in incremental time mode.
+ * This is only for legacy engines that don't understand incremental settings.
+ */
+double maxtime_for_incremental_tc(double remaining)
+{
+	if (remaining < 0.3 * cboptions.time_increment)
+		return(0.3 * cboptions.time_increment);
+	if (0.6 * remaining <= cboptions.time_increment)
+		return(0.6 * remaining);
+	return(cboptions.time_increment + (remaining - cboptions.time_increment) / 10);
+}
+
+
 DWORD ThreadFunc(LPVOID param)
 // Threadfunc calls the checkers engine to find a move
 // it also logs the return string of the checkers engine
@@ -3169,7 +3187,7 @@ DWORD ThreadFunc(LPVOID param)
 	int founduserbookmove = 0;
 	double maxtime;
 
-	if (cboptions.use_incremental_time && CBstate != ENGINEMATCH) {
+	if (cboptions.use_incremental_time && CBstate != ENGINEMATCH && CBstate != AUTOPLAY) {
 
 		/* Player must have just made a move.
 		 * Subtract his accumulated clock time, add his increment.
@@ -3261,11 +3279,11 @@ DWORD ThreadFunc(LPVOID param)
 			if (cboptions.use_incremental_time) {
 				if (cbcolor == CB_BLACK) {
 					format_time_args(cboptions.time_increment, black_time_remaining, &info, &moreinfo);
-					maxtime = black_time_remaining / 4;
+					maxtime = maxtime_for_incremental_tc(black_time_remaining);
 				}
 				else {
 					format_time_args(cboptions.time_increment, white_time_remaining, &info, &moreinfo);
-					maxtime = white_time_remaining / 4;
+					maxtime = maxtime_for_incremental_tc(white_time_remaining);
 				}
 			}
 			else {
