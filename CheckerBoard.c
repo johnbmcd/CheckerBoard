@@ -3128,7 +3128,7 @@ void format_time_args(double increment, double remaining, uint32_t *info, uint32
 	uint16_t increment16, remaining16;
 	double mult[] = { 0.001, 0.01, 0.1 };
 
-	remaining = max(remaining, 0.001);	/* Dont allow negative remaining time. */
+	remaining = max(remaining, 0.005);	/* Dont allow negative remaining time. */
 	double largest = max(increment, remaining);
 	if (largest > limit) {
 		largest = min(largest, limit);
@@ -3145,7 +3145,7 @@ void format_time_args(double increment, double remaining, uint32_t *info, uint32
 			*moreinfo = ((remaining16 << 16) & 0xffff0000) | (increment16 & 0xffff);
 
 			/* Write the multiplier into *info. */
-			*info |= (i + 1) << 2;
+			*info |= (i + 1) << CB_INCR_TIME_SHIFT;
 			return;
 		}
 	}
@@ -3162,9 +3162,9 @@ double maxtime_for_incremental_tc(double remaining)
 {
 	if (remaining < 0.3 * cboptions.time_increment)
 		return(0.3 * cboptions.time_increment);
-	if (0.6 * remaining <= cboptions.time_increment)
-		return(0.6 * remaining);
-	return(cboptions.time_increment + (remaining - cboptions.time_increment) / 10);
+	if (0.9 * remaining <= cboptions.time_increment)
+		return(0.9 * remaining);
+	return(cboptions.time_increment + (remaining - cboptions.time_increment) / 7);
 }
 
 

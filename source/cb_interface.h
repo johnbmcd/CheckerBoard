@@ -20,10 +20,20 @@
 #define CB_LOSS 2
 #define CB_UNKNOWN 3
 
-/* getmove() info bitfield definitions. */
+/* getmove() info argument bit definitions. */
 #define CB_RESET_MOVES 1
 #define CB_EXACT_TIME 2
-#define CB_TIMEMASK (4 | 8)		/* 2 bits define the time mode and multiplier. */
+
+/* Bits 2 and 3 define the incremental time control mode and units.
+ * When shifted to a range from 0 to 3, their meanings are:
+ *	0	incremental time is disabled
+ *	1	incremental time is in units of 0.001 sec
+ *	2	incremental time is in units of 0.01 sec
+ *	3	incremental time is in units of 0.1 sec
+ * The upper 16 bits in moreinfo are the remaining time, and the lower 16 bits are the time increment,
+ * both in the units described above.
+ */
+#define CB_INCR_TIME_SHIFT 2
 
 /* gametype definitions for response to enginecommand "get gametype". */
 #define GT_ENGLISH 21
