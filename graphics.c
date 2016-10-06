@@ -40,6 +40,7 @@ static HBRUSH linebrush;
 static int offset = 0, upperoffset = 0;
 static HFONT myfont;	// font for board numbers
 static bool animation_state = true;
+static HANDLE memdc_sem;
 
 int setoffsets(int _offset, int _upperoffset)
 {
@@ -53,6 +54,8 @@ int initgraphics(HWND hwnd)
 {
 	HDC hdc;
 	int maxX, maxY;
+
+	memdc_sem = CreateSemaphore(NULL, 1, 1, "memdc_sem");
 
 	// get screen coordinates
 	maxX = GetSystemMetrics(SM_CXSCREEN);
@@ -671,7 +674,9 @@ void drawclock(HWND hwnd, HDC hdc)
 
 void refresh_clock(HWND hwnd)
 {
+	WaitForSingleObject(memdc_sem, INFINITE);
 	drawclock(hwnd, memdc);
+	ReleaseSemaphore(memdc_sem, 1, NULL);
 }
 
 int printboard(HWND hwnd, HDC hdc, HDC bmpdc, HDC stretchdc, int b[8][8])
@@ -703,6 +708,7 @@ int printboard(HWND hwnd, HDC hdc, HDC bmpdc, HDC stretchdc, int b[8][8])
 		return 0;
 	}
 
+	WaitForSingleObject(memdc_sem, INFINITE);
 	getxymetrics(&xmetric, &ymetric, hwnd);
 	size = xmetric;
 
@@ -877,6 +883,7 @@ int printboard(HWND hwnd, HDC hdc, HDC bmpdc, HDC stretchdc, int b[8][8])
 	r.bottom = r.top + 8 * size;
 
 	InvalidateRect(hwnd, &r, 0);
+	ReleaseSemaphore(memdc_sem, 1, NULL);
 
 	return 1;
 }

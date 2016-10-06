@@ -1,4 +1,5 @@
 #pragma once
+#include <stdint.h>
 
 /* Definitions shared between CheckerBoard and an engine.
  * Include this file in a program that interfaces
@@ -68,3 +69,25 @@ typedef INT (WINAPI *CB_GETSTRING)(char str[255]);		/* engine name, engine help 
 typedef unsigned int (WINAPI *CB_GETGAMETYPE)(void);	/* return GT_ENGLISH, GT_ITALIAN, ... */
 typedef INT (WINAPI *CB_ISLEGAL)(int board[8][8], int color, int from, int to, struct CBmove *move);
 typedef INT (WINAPI *CB_ENGINECOMMAND)(char command[256], char reply[ENGINECOMMAND_REPLY_SIZE]);
+
+
+/*
+ * If incremental time control is enabled, extract the increment and remaining times that are
+ * packed into info and moreinfo, and the function return value is true.
+ * Return false if incremental time control is disabled.
+ */
+inline bool get_incremental_times(int info, int moreinfo, double *increment, double *remaining)
+{
+	int tcmode;
+	double mult[] = {0.001, 0.01, 0.1};
+
+	tcmode = (info >> CB_INCR_TIME_SHIFT) & 3;
+	if (tcmode == 0)
+		return(false);
+
+	*increment = (uint16_t)(moreinfo & 0xffff) * mult[tcmode - 1];
+	*remaining = (uint16_t)(moreinfo >> 16) * mult[tcmode - 1];
+	return(true);
+}
+
+

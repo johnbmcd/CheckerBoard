@@ -499,7 +499,6 @@ void cblog_init()
 		sprintf(cblogfile_path, "%s\\CBlog%s.txt", CBdocuments, g_app_instance_suffix);
 		cblogfile = fopen(cblogfile_path, "w");
 		fclose(cblogfile);
-		cblogfile = fopen(cblogfile_path, "a");
 	}
 }
 

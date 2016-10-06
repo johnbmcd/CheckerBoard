@@ -3126,7 +3126,7 @@ void format_time_args(double increment, double remaining, uint32_t *info, uint32
 	int i;
 	const double limit = 65535 * 0.1;
 	uint16_t increment16, remaining16;
-	double mult[] = { 0.001, 0.01, 0.1 };
+	double mult[] = {0.001, 0.01, 0.1};
 
 	remaining = max(remaining, 0.005);	/* Dont allow negative remaining time. */
 	double largest = max(increment, remaining);
@@ -3140,8 +3140,8 @@ void format_time_args(double increment, double remaining, uint32_t *info, uint32
 		if (largest <= 65535 * mult[i]) {
 
 			/* Pack the 2 times into a 32-bit int. */
-			increment16 = (uint16_t) (increment / mult[i]);
-			remaining16 = (uint16_t) (remaining / mult[i]);
+			increment16 = (uint16_t)(increment / mult[i]);
+			remaining16 = (uint16_t)(remaining / mult[i]);
 			*moreinfo = ((remaining16 << 16) & 0xffff0000) | (increment16 & 0xffff);
 
 			/* Write the multiplier into *info. */
@@ -3162,9 +3162,36 @@ double maxtime_for_incremental_tc(double remaining)
 {
 	if (remaining < 0.3 * cboptions.time_increment)
 		return(0.3 * cboptions.time_increment);
-	if (0.9 * remaining <= cboptions.time_increment)
-		return(0.9 * remaining);
+	if (remaining <= cboptions.time_increment)
+		return(remaining);
 	return(cboptions.time_increment + (remaining - cboptions.time_increment) / 7);
+}
+
+
+/*
+ * Keep track of the ratio of maxtime to actual search time for each engine's searches.
+ * Write the average ratio to cblog every 25 searches.
+ */
+void save_time_stats(int enginenum, double maxtime, double elapsed)
+{
+	static double ratio_sum1, ratio_sum2;
+	static int count1, count2;
+
+	/* Dont count searches that were probably terminated early due to forced moves, etc. */
+	if (elapsed < 0.5 * maxtime || elapsed < .04)
+		return;
+	if (enginenum == 1) {
+		ratio_sum1 += elapsed / maxtime;
+		++count1;
+		if ((count1 % 25) == 0 && count1)
+			cblog("%d: primary engine ratio %.2f\n", count1, ratio_sum1 / count1);
+	}
+	else {
+		ratio_sum2 += elapsed / maxtime;
+		++count2;
+		if ((count2 % 25) == 0 && count2)
+			cblog("%d: secondary engine ratio %.2f\n", count2, ratio_sum2 / count2);
+	}
 }
 
 
@@ -3298,16 +3325,25 @@ DWORD ThreadFunc(LPVOID param)
 			}
 
 			starttime = clock();
-			result = (getmove) (originalcopy, cbcolor, maxtime, statusbar_txt, &playnow, info, moreinfo, &localmove);
+			result = (getmove)(originalcopy, cbcolor, maxtime, statusbar_txt, &playnow, info, moreinfo, &localmove);
 
 			/* Display the Play! bitmap with black foreground when the engine is not searching. */
 			PostMessage(tbwnd, TB_CHANGEBITMAP, (WPARAM) MOVESPLAY, MAKELPARAM(2, 0));
 
 			if (cboptions.use_incremental_time) {
-				if (cbcolor == CB_BLACK)
-					black_time_remaining += cboptions.time_increment - (clock() - starttime) / (double)CLK_TCK;
-				else
-					white_time_remaining += cboptions.time_increment - (clock() - starttime) / (double)CLK_TCK;
+				double elapsed = (clock() - starttime) / (double)CLK_TCK;
+				if (cbcolor == CB_BLACK) {
+					if (black_time_remaining - elapsed < 0)
+						cblog("engine %d has negative remaining time %.3f\n", currentengine, black_time_remaining - elapsed);
+					black_time_remaining += cboptions.time_increment - elapsed;
+				}
+				else {
+					if (white_time_remaining - elapsed < 0)
+						cblog("engine %d has negative remaining time %.3f\n", currentengine, white_time_remaining - elapsed);
+					white_time_remaining += cboptions.time_increment - elapsed;
+				}
+
+				save_time_stats(currentengine, maxtime, elapsed);
 
 				/* If not engine match, then human player's clock starts now. For engine matches the
 				 * starttime will be set just before calling getmove().
