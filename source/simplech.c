@@ -366,7 +366,7 @@ int WINAPI getmove
 		}
 
 		/* Allow a few msec for overhead. */
-		if (absolute_maxtime > .03)
+		if (absolute_maxtime > .01)
 			absolute_maxtime -= .003;
 	}
 	else {

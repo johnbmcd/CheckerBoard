@@ -637,6 +637,34 @@ void updatestretchDC(HWND hwnd, HDC bmpdc, HDC stretchdc, int size)
 }
 
 
+void format_clock(double clk, char *txt)
+{
+	int hours, mins, secs;
+	char *sign = "";
+
+	if (clk < 0) {
+		sign = "-";
+		clk = abs(clk);
+	}
+	if (clk >= 3600) {
+		hours = clk / 3600;
+		clk -= hours * 3600;
+		mins = clk / 60;
+		clk -= mins * 60;
+		secs = clk;
+		sprintf(txt, "%s%d:%02d:%02d", sign, hours, mins, secs);
+	}
+	else if (clk >= 10) {
+		mins = clk / 60;
+		clk -= mins * 60;
+		secs = 0.5 + clk;
+		sprintf(txt, "%s%d:%02d", sign, mins, secs);
+	}
+	else
+		sprintf(txt, "%s%.1f", sign, clk);
+}
+
+
 void drawclock(HWND hwnd, HDC hdc)
 {
 	/* Fill the clock background region. */
@@ -644,7 +672,8 @@ void drawclock(HWND hwnd, HDC hdc)
 		double black_clock, white_clock;
 		double xmetric, ymetric;
 		RECT r;
-		char clocktext[100];
+		char black_txt[20], white_txt[20];
+		char clocktext[150];
 		int xoffset = 0;
 		int yoffset = 0;
 
@@ -666,7 +695,9 @@ void drawclock(HWND hwnd, HDC hdc)
 
 		/* Write the clock text. */
 		get_game_clocks(&black_clock, &white_clock);
-		sprintf(clocktext, "    Black %.2f         White %.2f", black_clock, white_clock);
+		format_clock(black_clock, black_txt);
+		format_clock(white_clock, white_txt);
+		sprintf(clocktext, "    Black %s         White %s", black_txt, white_txt);
 		SetTextColor(hdc, PALETTERGB(0, 0, 0));
 		TextOut(hdc, 5 + xoffset, upperoffset + yoffset - (CLOCKHEIGHT - 3), clocktext, (int)strlen(clocktext));
 	}

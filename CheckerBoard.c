@@ -3184,13 +3184,13 @@ void save_time_stats(int enginenum, double maxtime, double elapsed)
 		ratio_sum1 += elapsed / maxtime;
 		++count1;
 		if ((count1 % 25) == 0 && count1)
-			cblog("%d: primary engine ratio %.2f\n", count1, ratio_sum1 / count1);
+			cblog("%d: primary engine search time ratio %.2f\n", count1, ratio_sum1 / count1);
 	}
 	else {
 		ratio_sum2 += elapsed / maxtime;
 		++count2;
 		if ((count2 % 25) == 0 && count2)
-			cblog("%d: secondary engine ratio %.2f\n", count2, ratio_sum2 / count2);
+			cblog("%d: secondary engine search time ratio %.2f\n", count2, ratio_sum2 / count2);
 	}
 }
 

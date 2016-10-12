@@ -220,6 +220,8 @@ timemap time_table[] =
 	{ 16, LEVELINFINITE, 8600000 },
 };
 
+static char cblogfile_path[MAX_PATH];
+
 extern char g_app_instance_suffix[10];
 
 int initcolorstruct(HWND hwnd, CHOOSECOLOR *ccs, int index)
@@ -488,7 +490,6 @@ void setmenuchecks(struct CBoptions *CBoptions, HMENU hmenu)
 		CheckMenuItem(hmenu, OPTIONSUSERBOOK, MF_UNCHECKED);
 }
 
-static TCHAR cblogfile_path[MAX_PATH];
 
 void cblog_init()
 {
