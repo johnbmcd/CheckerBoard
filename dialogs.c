@@ -1386,6 +1386,7 @@ BOOL CALLBACK EngineDialogFunc(HWND hdwnd, UINT message, WPARAM wParam, LPARAM l
 
 BOOL DialogIncrementalTimesFunc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
+	double initial, increment;
 	char buf[80];
 
 	switch (message) {
@@ -1406,12 +1407,26 @@ BOOL DialogIncrementalTimesFunc(HWND hwnd, UINT message, WPARAM wparam, LPARAM l
 		// find out which engine we are setting params for:
 		switch (LOWORD(wparam)) {
 		case ID_OK:
-			EndDialog(hwnd, TRUE);
 			GetDlgItemText(hwnd, IDC_INITIAL_TIME, buf, sizeof(buf));
-			sscanf(buf, "%lf", &cboptions.initial_time);
+			sscanf(buf, "%lf", &initial);
+			if (initial < 0.1 || initial > 6553) {
+				MessageBox(hwnd, "Initial time must be between 0.1 and 6553 seconds", NULL, MB_OK);
+				return(FALSE);
+			}
 			GetDlgItemText(hwnd, IDC_TIME_INCREMENT, buf, sizeof(buf));
-			sscanf(buf, "%lf", &cboptions.time_increment);
+			sscanf(buf, "%lf", &increment);
+			if (increment < 0.1 || increment > 6553) {
+				MessageBox(hwnd, "Increment must be between 0.1 and 6553 seconds", "Error!", MB_OK);
+				return(FALSE);
+			}
+			if (initial < increment) {
+				MessageBox(hwnd, "Initial time must be >= increment", "Error!", MB_OK);
+				return(FALSE);
+			}
+			cboptions.initial_time = initial;
+			cboptions.time_increment = increment;
 			cboptions.use_incremental_time = true;
+			EndDialog(hwnd, TRUE);
 			return(TRUE);
 
 		case ID_CANCEL:
