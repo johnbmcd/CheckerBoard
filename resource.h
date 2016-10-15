@@ -2,6 +2,9 @@
 // Microsoft Visual C++ generated include file.
 // Used by checkerboard.rc
 //
+#define ID_OK                           1
+#define IDC_OK                          1
+#define ID_CANCEL                       2
 #define IDC_BROWSE_WLD_DIR_BUTTON       4
 #define IDC_MORE_OPTIONS_BUTTON         5
 #define IDC_BROWSE_MTC_DIR_BUTTON       6
@@ -27,16 +30,14 @@
 #define ID_LANGAGE_FRANCAIS             40039
 #define ID_SPRACHE_FRANCAIS             40040
 #define ID_LANGUAGE_FRANCAIS            40041
-#define ID_CANCEL 2
-#define ID_OK 1
-#define IDC_OK 1
+#define ID_CLOCK_RESET                  40042
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        107
-#define _APS_NEXT_COMMAND_VALUE         40042
+#define _APS_NEXT_COMMAND_VALUE         40046
 #define _APS_NEXT_CONTROL_VALUE         1014
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

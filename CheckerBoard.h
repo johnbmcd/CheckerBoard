@@ -41,7 +41,7 @@ LRESULT CALLBACK CB_edit_func(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
 // thread functions
 DWORD AutoThreadFunc(LPVOID param);
-DWORD ThreadFunc(LPVOID param);
+DWORD SearchThreadFunc(LPVOID param);
 
 // my functions in alphabetical list
 void abortengine();

@@ -1404,7 +1404,6 @@ BOOL DialogIncrementalTimesFunc(HWND hwnd, UINT message, WPARAM wparam, LPARAM l
 		break;
 
 	case WM_COMMAND:
-		// find out which engine we are setting params for:
 		switch (LOWORD(wparam)) {
 		case ID_OK:
 			GetDlgItemText(hwnd, IDC_INITIAL_TIME, buf, sizeof(buf));
@@ -1416,11 +1415,11 @@ BOOL DialogIncrementalTimesFunc(HWND hwnd, UINT message, WPARAM wparam, LPARAM l
 			GetDlgItemText(hwnd, IDC_TIME_INCREMENT, buf, sizeof(buf));
 			sscanf(buf, "%lf", &increment);
 			if (increment < 0.1 || increment > 6553) {
-				MessageBox(hwnd, "Increment must be between 0.1 and 6553 seconds", "Error!", MB_OK);
+				MessageBox(hwnd, "Increment must be between 0.1 and 6553 seconds", NULL, MB_OK);
 				return(FALSE);
 			}
 			if (initial < increment) {
-				MessageBox(hwnd, "Initial time must be >= increment", "Error!", MB_OK);
+				MessageBox(hwnd, "Initial time must be >= increment", NULL, MB_OK);
 				return(FALSE);
 			}
 			cboptions.initial_time = initial;

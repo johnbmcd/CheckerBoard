@@ -262,7 +262,8 @@ BEGIN
             MENUITEM "30 minutes",                  351
             MENUITEM "Infinite",                    352
             MENUITEM SEPARATOR
-            MENUITEM "Increment...",                353
+            MENUITEM "Game time...",                353
+            MENUITEM "Reset\t<delete>",             ID_CLOCK_RESET
             MENUITEM "add time\t+",                 354
             MENUITEM "subtract time\t-",            355
         END
@@ -771,7 +772,7 @@ FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     PUSHBUTTON      "OK",1,50,193,50,14,BS_CENTER
     LTEXT           "This is CheckerBoard 1.73a\nCopyright (c) 2000-2016 Martin Fierz\nwith contributions by Ed Gilbert\n\nCheckerBoard is an interface program to checkers engines\n\nInspired by Tim Mann's Winboard\n\nThanks to all who have contributed",101,7,88,140,98,NOT WS_GROUP
-    CONTROL         VK_NUMPAD5,-1,"Static",SS_BITMAP | SS_REALSIZEIMAGE,4,4,143,80
+    CONTROL         AFX_IDC_CHANGE,-1,"Static",SS_BITMAP | SS_REALSIZEIMAGE,4,4,143,80
 END
 
 IDD_COMMENT DIALOGEX 0, 0, 186, 66
@@ -909,7 +910,7 @@ BEGIN
     LTEXT           "Name (e.g. Tinsley)",-1,5,78,68,8
     LTEXT           "Event (e.g. Petal)",-1,5,108,62,8
     LTEXT           "Date (e.g. 1981)",-1,5,138,59,8
-    CONTROL         VK_NUMPAD9,-1,"Static",SS_BITMAP,0,0,174,38
+    CONTROL         IDD_INCREMENTAL_TIMES,-1,"Static",SS_BITMAP,0,0,174,38
     EDITTEXT        1004,5,179,161,12,ES_AUTOHSCROLL
     LTEXT           "Full Text (e.g. a great move)",-1,5,167,96,8
     CONTROL         "Search with position",1005,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,200,79,10
@@ -960,7 +961,7 @@ END
 
 IDD_INCREMENTAL_TIMES DIALOGEX 0, 0, 189, 150
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Incremental Time Settings"
+CAPTION "Game Time Settings"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDC_OK,55,116,50,14
@@ -1042,8 +1043,9 @@ BEGIN
     VK_ESCAPE,      310,                    VIRTKEY, NOINVERT
     "2",            315,                    VIRTKEY, CONTROL, NOINVERT
     "+",            354,                    ASCII,  NOINVERT
-    VK_INSERT,      355,                    VIRTKEY, NOINVERT
     "M",            800,                    VIRTKEY, SHIFT, CONTROL, NOINVERT
+    VK_DELETE,      ID_CLOCK_RESET,         VIRTKEY, NOINVERT
+    "-",            355,                    ASCII,  NOINVERT
 END
 
 

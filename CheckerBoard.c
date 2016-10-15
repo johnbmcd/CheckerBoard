@@ -43,6 +43,7 @@
 #include <windowsx.h>
 #include <wininet.h>
 #include <commctrl.h>
+#include <mmsystem.h>
 #include <stdio.h>
 #include <shellapi.h>
 #include <shlwapi.h>
@@ -87,15 +88,15 @@ CBoptions cboptions;
 
 int g_app_instance;				/* 0, 1, 2, ... */
 char g_app_instance_suffix[10]; /* "", "[1]", "[2]", ... */
-DWORD g_ThreadId, g_AniThreadId, AutoThreadId;
-HANDLE hThread, hAniThread, hAutoThread;
+DWORD g_SearchThreadId, g_AniThreadId, AutoThreadId;
+HANDLE hSearchThread, hAniThread, hAutoThread;
 int enginethreadpriority = THREAD_PRIORITY_NORMAL;	/* default priority setting*/
 int usersetpriority = THREAD_PRIORITY_NORMAL;		/* default priority setting*/
 HICON hIcon;						/* CB icon for the window */
 TBBUTTON tbButtons[NUMBUTTONS];		/* for the toolbar */
 
 /* these globals are used to synchronize threads */
-int abortcalculation = 0;			// used to tell the threadfunc that the calculation has been aborted
+int abortcalculation = 0;			// used to tell the SearchThreadFunc that the calculation has been aborted
 static BOOL enginebusy = FALSE;		/* true while engine thread is busy */
 static BOOL animationbusy = FALSE;	/* true while animation thread is busy */
 static BOOL enginestarting = FALSE; // true when a play command is issued to the engine but engine has
@@ -118,7 +119,7 @@ int offset = 40;					//40;
 int upperoffset = 20;				//20;
 char szWinName[] = "CheckerBoard";	/* name of window class */
 int cbboard8[8][8];					/* the board being displayed in the GUI*/
-int cbcolor = CB_BLACK;				/* color is the side to move next in the GUI */
+int cbcolor = CB_BLACK;				/* the side to move next in the GUI */
 int setup = 0;						/* 1 if in setup mode */
 static int addcomment = 0;
 int handicap = 0;
@@ -154,7 +155,6 @@ HINSTANCE g_hInst;					//instance of checkerboard
 HWND hwnd;					// main window
 HWND hStatusWnd;			// status window
 static HWND tbwnd;			// toolbar window
-HWND hHeadWnd;				// window of header control for game load
 HWND hDlgSelectgame;
 
 std::vector<gamepreview> game_previews;
@@ -330,6 +330,15 @@ int WINAPI WinMain(HINSTANCE hThisInst, HINSTANCE hPrevInst, LPSTR lpszArgs, int
 	}
 
 	return (int)msg.wParam;
+}
+
+bool fixed_time_needed_msg()
+{
+	if (cboptions.use_incremental_time) {
+		MessageBox(hwnd, "Change to a fixed time/move.", "Error", MB_OK);
+		return(true);
+	}
+	return(false);
 }
 
 void reset_game_clocks()
@@ -524,7 +533,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		// that CB may generate itself
 		switch (LOWORD(wParam)) {
 		case LOADENGINES:
-			hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) initengines, (HWND) 0, 0, &g_ThreadId);
+			hSearchThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) initengines, (HWND) 0, 0, &g_SearchThreadId);
 			break;
 
 		case GAMENEW:
@@ -535,6 +544,8 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		case GAMEANALYZE:
 			if (CBstate == BOOKVIEW || CBstate == BOOKADD)
 				break;
+			if (fixed_time_needed_msg())
+				break;
 			changeCBstate(CBstate, ANALYZEGAME);
 			startmatch = TRUE;
 
@@ -543,6 +554,8 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 
 		case GAMEANALYZEPDN:
 			if (CBstate == BOOKVIEW || CBstate == BOOKADD)
+				break;
+			if (fixed_time_needed_msg())
 				break;
 			changeCBstate(CBstate, ANALYZEPDN);
 			startmatch = TRUE;
@@ -811,8 +824,8 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 				// TODO think about synchronization issues here!
 				setenginebusy(TRUE);
 				setenginestarting(FALSE);
-				CloseHandle(hThread);
-				hThread = CreateThread(NULL, 100000, (LPTHREAD_START_ROUTINE) ThreadFunc, (LPVOID) 0, 0, &g_ThreadId);
+				CloseHandle(hSearchThread);
+				hSearchThread = CreateThread(NULL, 100000, (LPTHREAD_START_ROUTINE)SearchThreadFunc, (LPVOID) 0, 0, &g_SearchThreadId);
 			}
 			else
 				SendMessage(hwnd, WM_COMMAND, INTERRUPTENGINE, 0);
@@ -1058,14 +1071,10 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		case LEVELADDTIME:
 			// add 1 second when '+' is pressed
 			if (cboptions.use_incremental_time) {
-				if (cbcolor == CB_BLACK) {
+				if (cbcolor == CB_BLACK)
 					black_time_remaining += 1.0;
-					sprintf(statusbar_txt, "black remaining time: %.1f", black_time_remaining);
-				}
-				else {
+				else
 					white_time_remaining += 1.0;
-					sprintf(statusbar_txt, "white remaining time: %.1f", white_time_remaining);
-				}
 			}
 			else
 				sprintf(statusbar_txt, "not in increment mode!");
@@ -1074,17 +1083,17 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		case LEVELSUBTRACTTIME:
 			// subtract 1 second when '-' is pressed
 			if (cboptions.use_incremental_time) {
-				if (cbcolor == CB_BLACK) {
+				if (cbcolor == CB_BLACK)
 					black_time_remaining -= 1.0;
-					sprintf(statusbar_txt, "black remaining time: %.1f", black_time_remaining);
-				}
-				else {
+				else
 					white_time_remaining -= 1.0;
-					sprintf(statusbar_txt, "white remaining time: %.1f", white_time_remaining);
-				}
 			}
 			else
 				sprintf(statusbar_txt, "not in increment mode!");
+			break;
+
+		case ID_CLOCK_RESET:
+			reset_game_clocks();
 			break;
 
 		// piece sets
@@ -1322,6 +1331,9 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			// go to analysis mode
 			if (CBstate == BOOKVIEW || CBstate == BOOKADD)
 				break;
+			if (cboptions.use_incremental_time)
+				PostMessage(hwnd, WM_COMMAND, LEVELINFINITE, 0);
+
 			changeCBstate(CBstate, OBSERVEGAME);
 			break;
 
@@ -3195,8 +3207,8 @@ void save_time_stats(int enginenum, double maxtime, double elapsed)
 }
 
 
-DWORD ThreadFunc(LPVOID param)
-// Threadfunc calls the checkers engine to find a move
+DWORD SearchThreadFunc(LPVOID param)
+// SearchThreadfunc calls the checkers engine to find a move
 // it also logs the return string of the checkers engine
 // to a file if CB is in either ANALYZEGAME or ENGINEMATCH mode
 {
@@ -3285,7 +3297,7 @@ DWORD ThreadFunc(LPVOID param)
 		// set thread priority
 		// next lower ist '_LOWEST', higher '_NORMAL'
 		enginethreadpriority = usersetpriority;
-		SetThreadPriority(hThread, enginethreadpriority);
+		SetThreadPriority(hSearchThread, enginethreadpriority);
 
 		// set directory to CB directory
 		SetCurrentDirectory(CBdirectory);
@@ -3430,7 +3442,8 @@ DWORD ThreadFunc(LPVOID param)
 
 		// if sound is on we make a beep
 		if (cboptions.sound)
-			Beep(440, 5);
+			PlaySound("start.wav", NULL, SND_FILENAME | SND_ASYNC);
+
 		CloseHandle(hAniThread);
 		setanimationbusy(TRUE);			// this was missing in CB 1.65 which was the reason for the bug...
 		hAniThread = CreateThread(NULL,
