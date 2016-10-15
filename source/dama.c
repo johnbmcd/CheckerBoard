@@ -85,8 +85,7 @@
 #undef MUTE
 #undef VERBOSE
 #define STATISTICS
-
-/*----------> structure definitions  */
+#define LOG_TIME_MGMT
 
 /*----------> function prototypes  */
 
@@ -135,14 +134,46 @@ struct coor numbertocoor(int squarenumber);
 
 /*----------> globals  */
 #ifdef STATISTICS
-int alphabetas, generatemovelists, evaluations, generatecapturelists, testcaptures;
+int generatemovelists, evaluations, generatecapturelists, testcaptures;
 #endif
+int alphabetas;
 int value[17] = { 0, 0, 0, 0, 0, 1, 256, 0, 0, 16, 4096, 0, 0, 0, 0, 0, 0 };
 int *play;
 struct CBmove GCBmove;
+clock_t starttime;
+double absolute_maxtime;
+
+#ifdef LOG_TIME_MGMT
+const char *filename = "d:/temp/dama.log";
+
+void init_logfile()
+{
+	FILE *fp;
+
+	fp = fopen(filename, "w");
+	fclose(fp);
+}
+
+void log(const char *fmt, ...)
+{
+	FILE *fp;
+	va_list args;
+	va_start(args, fmt);
+
+	if (fmt == NULL)
+		return;
+
+	fp = fopen(filename, "a");
+	if (fp == NULL)
+		return;
+
+	vfprintf(fp, fmt, args);
+	fclose(fp);
+}
+#endif
 
 /*-------------- PART 1: dll stuff -------------------------------------------*/
-BOOL WINAPI DllEntryPoint(HANDLE hDLL, DWORD dwReason, LPVOID lpReserved)
+BOOL WINAPI DllMain(HANDLE hDLL, DWORD dwReason, LPVOID lpReserved)
 {
 	/* in a dll you used to have LibMain instead of WinMain in windows programs, or main
    in normal C programs
@@ -150,6 +181,7 @@ BOOL WINAPI DllEntryPoint(HANDLE hDLL, DWORD dwReason, LPVOID lpReserved)
 	switch (dwReason) {
 	case DLL_PROCESS_ATTACH:
 		/* dll loaded. put initializations here! */
+		init_logfile();
 		break;
 
 	case DLL_PROCESS_DETACH:
@@ -324,7 +356,7 @@ int WINAPI getmove
 			char str[255],
 			int *playnow,
 			int info,
-			int unused,
+			int moreinfo,
 			struct CBmove *move
 		)
 {
@@ -349,6 +381,8 @@ int WINAPI getmove
 	*/
 	int i;
 	int value;
+	double desired, new_iter_maxtime;
+	double remaining, increment;
 	int board[46];
 
 	/* initialize board */
@@ -404,9 +438,41 @@ int WINAPI getmove
 			board[i] = FREE;
 	for (i = 9; i <= 36; i += 9)
 		board[i] = OCCUPIED;
+
 	play = playnow;
 
-	value = checkers(board, color, maxtime, str);
+	starttime = clock();
+	if (get_incremental_times(info, moreinfo, &increment, &remaining)) {
+		if (remaining < increment) {
+			desired = remaining / 1.5;
+			absolute_maxtime = remaining;
+			new_iter_maxtime = 0.7 * absolute_maxtime / 1.5;
+		}
+		else {
+			desired = increment + (remaining - increment) / 8;
+			absolute_maxtime = min(1.5 * desired, remaining);
+			new_iter_maxtime = 0.7 * absolute_maxtime / 1.5;
+		}
+
+		/* Allow a few msec for overhead. */
+		if (absolute_maxtime > .01)
+			absolute_maxtime -= .003;
+	}
+	else {
+		/* Using fixed time per move. These params result in an average search time of maxtime. */
+		new_iter_maxtime = 0.59 * maxtime;
+		absolute_maxtime = 3 * maxtime;
+	}
+
+	value = checkers(board, color, new_iter_maxtime, str);
+
+#ifdef LOG_TIME_MGMT
+	double elapsed = (clock() - starttime) / (double)CLK_TCK;
+	log("incr %.1f, remaining %.3f, abs maxt %.3f, desired %.1f, new iter maxt %.1f, actual %.3f, margin %.3f %s\n",
+		increment, remaining, absolute_maxtime, desired, new_iter_maxtime, 
+		elapsed, remaining - elapsed,
+		remaining - elapsed < 0 ? "***" : "");
+#endif
 	for (i = 5; i <= 40; i++)
 		if (board[i] == FREE)
 			board[i] = 0;
@@ -732,12 +798,11 @@ int checkers(int b[46], int color, double maxtime, char *str)
   ----------> date: 9th october 98 */
 {
 	int i, numberofmoves;
-	double start;
 	int eval;
 	struct move2 best, lastbest, movelist[MAXMOVES];
 	char str2[255];
-#ifdef STATISTICS
 	alphabetas = 0;
+#ifdef STATISTICS
 	generatemovelists = 0;
 	generatecapturelists = 0;
 	evaluations = 0;
@@ -762,14 +827,13 @@ int checkers(int b[46], int color, double maxtime, char *str)
 		return(0);
 	}
 
-	start = clock();
 	eval = firstalphabeta(b, 1, -10000, 10000, color, &best);
-	for (i = 2; (i <= MAXDEPTH) && ((clock() - start) / CLK_TCK < maxtime); i++) {
+	for (i = 2; (i <= MAXDEPTH) && ((clock() - starttime) / (double)CLK_TCK < maxtime); i++) {
 		lastbest = best;
 		eval = firstalphabeta(b, i, -10000, 10000, color, &best);
 		movetonotation(best, str2);
 #ifndef MUTE
-		sprintf(str, "best:%s time %2.2fs, depth %2li, value %4li", str2, (clock() - start) / CLK_TCK, i, eval);
+		sprintf(str, "best:%s time %2.2fs, depth %2li, value %4li", str2, (clock() - starttime) / (double)CLK_TCK, i, eval);
 #ifdef STATISTICS
 		sprintf(str2, "  nodes %li", alphabetas);
 		strcat(str, str2);
@@ -792,7 +856,7 @@ int checkers(int b[46], int color, double maxtime, char *str)
 	sprintf(str,
 			"best:%s time %2.2f, depth %2li, value %4li, nodes %li",
 			str2,
-			(clock() - start) / CLK_TCK,
+			(clock() - starttime) / (double)CLK_TCK,
 			i,
 			eval,
 			alphabetas);
@@ -873,9 +937,7 @@ int firstalphabeta(int b[46], int depth, int alpha, int beta, int color, struct 
 	int capture;
 	struct move2 movelist[MAXMOVES];
 
-#ifdef STATISTICS
 	alphabetas++;
-#endif
 	if (*play)
 		return 0;
 
@@ -947,9 +1009,15 @@ int alphabeta(int b[46], int depth, int alpha, int beta, int color)
 	int numberofmoves;
 	struct move2 movelist[MAXMOVES];
 
-#ifdef STATISTICS
 	alphabetas++;
+	if ((alphabetas & 0x3ff) == 0) {
+		if ((clock() - starttime) / (double)CLK_TCK >= absolute_maxtime) {
+#ifdef LOG_TIME_MGMT
+			log("max detected at %.3f\n", (clock() - starttime) / (double)CLK_TCK);
 #endif
+			*play = 1;
+		}
+	}
 	if (*play)
 		return 0;
 

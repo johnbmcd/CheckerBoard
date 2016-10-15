@@ -651,7 +651,6 @@ int alphabeta(int b[46], int depth, int alpha, int beta, int color)
 	if (*play)
 		return 0;
 
-	/* Test for 
 
 	/*----------> test if captures are possible */
 	capture = testcapture(b, color);

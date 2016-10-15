@@ -7,8 +7,8 @@
 #include <vector>
 
 // version 
-#define VERSION "1.73a"
-#define PLACE "September 15, 2016"
+#define VERSION "1.73b"
+#define PLACE "October 15, 2016"
 // 1.721 fixes a bug in search position which lets CB crash on new windows systems
 
 #define OP_BOARD 0			// different opening decks
