@@ -189,7 +189,6 @@ int op = 0;
 int togglemode = 0;						// 1-2-player toggle state
 int togglebook = 0;						// engine book state (0/1/2/3)
 int toggleengine = 1;					// primary/secondary engine (1/2)
-struct pos currentposition;
 
 // keep a small user book
 struct userbookentry userbook[MAXUSERBOOK];
@@ -2535,6 +2534,7 @@ int selectgame(int how)
 				how == GAMEFINDCR ||
 				(how == SEARCHMASK && searchwithposition == 1)
 			) {
+				pos currentposition;
 
 				// search for a position: this is done by calling pdnopen to index
 				// the pdn file, pdnfind to return a list of games with the current position
