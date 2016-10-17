@@ -3099,17 +3099,17 @@ int start3move(void)
 	cbcolor = CB_BLACK;
 	cbgame.moves.clear();
 
-	getmovelist(1, movelist, cbboard8, &iscapture);
+	getmovelist(cbcolor, movelist, cbboard8, &iscapture);
 	domove(movelist[three[op][0]], cbboard8);
 	appendmovetolist(movelist[three[op][0]]);
 
 	cbcolor = CB_CHANGECOLOR(cbcolor);
-	getmovelist(-1, movelist, cbboard8, &iscapture);
+	getmovelist(cbcolor, movelist, cbboard8, &iscapture);
 	domove(movelist[three[op][1]], cbboard8);
 	appendmovetolist(movelist[three[op][1]]);
 
 	cbcolor = CB_CHANGECOLOR(cbcolor);
-	getmovelist(1, movelist, cbboard8, &iscapture);
+	getmovelist(cbcolor, movelist, cbboard8, &iscapture);
 	domove(movelist[three[op][2]], cbboard8);
 	appendmovetolist(movelist[three[op][2]]);
 
@@ -3219,7 +3219,6 @@ DWORD SearchThreadFunc(LPVOID param)
 	CBmove localmove;
 	char PDN[40];
 	int found = 0;
-	int c;
 	int iscapture;
 	FILE *Lfp;
 	char Lstr[1024];
@@ -3242,11 +3241,7 @@ DWORD SearchThreadFunc(LPVOID param)
 	abortcalculation = 0;				// if this remains 0, we will execute the move - else not
 
 	// test if there is a move at all: if not, return and set state to NORMAL
-	if (cbcolor == CB_BLACK)
-		c = 1;
-	else
-		c = -1;
-	nmoves = getmovelist(c, m, cbboard8, &iscapture);
+	nmoves = getmovelist(cbcolor, m, cbboard8, &iscapture);
 	if (nmoves == 0) {
 		sprintf(statusbar_txt, "there is no move in this position");
 
@@ -3402,10 +3397,7 @@ DWORD SearchThreadFunc(LPVOID param)
 			// determine the move that was made: we only do this if gametype is GT_ENGLISH,
 			//	else the engine must return the appropriate information in localmove
 			if (gametype() == GT_ENGLISH) {
-				if (cbcolor == CB_BLACK)
-					nmoves = getmovelist(1, m, b8copy, &iscapture);
-				else
-					nmoves = getmovelist(-1, m, b8copy, &iscapture);
+				nmoves = getmovelist(cbcolor, m, b8copy, &iscapture);
 				cbmove = m[0];
 				for (i = 0; i < nmoves; i++) {
 
@@ -4677,11 +4669,7 @@ int builtinislegal(int board8[8][8], int color, int from, int to, struct CBmove 
 	int isjump;
 	CBmove movelist[28];
 
-	/* This color translation does not seem to agree with code in getmovelist (but it also seems to work!) */
-	if (color == CB_BLACK)
-		n = getmovelist(1, movelist, board8, &isjump);
-	else
-		n = getmovelist(-1, movelist, board8, &isjump);
+	n = getmovelist(color, movelist, board8, &isjump);
 	for (i = 0; i < n; i++) {
 		c.x = movelist[i].from.x;
 		c.y = movelist[i].from.y;

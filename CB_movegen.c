@@ -24,6 +24,14 @@ static void blackkingcapture(int board[12][12], struct CBmove movelist[MAXMOVES]
 
 static int n;
 
+static inline int cbcolor_to_getmovelistcolor(int cbcolor)
+{
+	if (cbcolor == CB_BLACK)
+		return(1);
+	else
+		return(-1);
+}
+
 int getmovelist(int color, struct CBmove m[MAXMOVES], int b[8][8], int *isjump)
 {
 	int i, j;
@@ -31,9 +39,8 @@ int getmovelist(int color, struct CBmove m[MAXMOVES], int b[8][8], int *isjump)
 	int board12[12][12];
 
 	board8toboard12(b, board12);
-	assert(color == 1 || color == -1);
-
-	n = makemovelist(color, m, board12, isjump);
+	assert(color == CB_BLACK || color == CB_WHITE);
+	n = makemovelist(cbcolor_to_getmovelistcolor(color), m, board12, isjump);
 
 	// now: do something to the coordinates, so that the moves are in a 8x8-format
 	for (i = 0; i < n; i++) {
