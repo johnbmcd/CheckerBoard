@@ -263,9 +263,9 @@ BEGIN
             MENUITEM "Infinite",                    352
             MENUITEM SEPARATOR
             MENUITEM "Game time...",                353
-            MENUITEM "Reset\t<delete>",             ID_CLOCK_RESET
-            MENUITEM "add time\t+",                 354
-            MENUITEM "subtract time\t-",            355
+            MENUITEM "Reset\t<Delete>",             ID_CLOCK_RESET
+            MENUITEM "Add time\t+",                 354
+            MENUITEM "Subtract time\t-",            355
         END
         POPUP "Display"
         BEGIN

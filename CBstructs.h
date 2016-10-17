@@ -2,6 +2,7 @@
 #include <vector>
 #include "cb_interface.h"
 #include "min_movegen.h"
+#include <time.h>
 
 #define COMMENTLENGTH 1024
 
@@ -110,4 +111,13 @@ struct timemap {
 	int token;		/* resource token of Windows control. */
 	double time;	/* search time. */
 };
+
+struct time_ctrl_t {
+	bool clock_paused;
+	clock_t starttime;
+	double black_time_remaining;
+	double white_time_remaining;
+};
+
+
 

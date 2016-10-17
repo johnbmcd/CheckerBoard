@@ -108,8 +108,7 @@ BOOL newposition = TRUE;			/* is true when position has changed. used in analysi
 								restart search and then reset */
 BOOL startengine = FALSE;			/* is true if engine is expected to start */
 int result;
-clock_t starttime;
-
+time_ctrl_t time_ctrl;				/* Clock control. */
 int toolbarheight = 30;				//30;
 int clockheight;					/* 0 or CLOCKHEIGHT when clock is visible. */
 int statusbarheight = 20;			//20;
@@ -170,10 +169,6 @@ char string[256];
 HMENU hmenu;				// menu handle
 double xmetric, ymetric;	//gives the size of the board8: one square is xmetric*ymetric
 int x1 = -1, x2 = -1, y1_ = -1, y2 = -1;
-
-/* When cboptions.use_incremental_time is true, these are game clocks for black and white. */
-double black_time_remaining;
-double white_time_remaining;
 
 char reply[ENGINECOMMAND_REPLY_SIZE];	// holds reply of engine to command requests
 char CBdirectory[256] = "";				// holds the directory from where CB is started:
@@ -343,10 +338,23 @@ bool fixed_time_needed_msg()
 void reset_game_clocks()
 {
 	if (cboptions.use_incremental_time) {
-		black_time_remaining = cboptions.initial_time;
-		white_time_remaining = cboptions.initial_time;
-		starttime = clock();
+		time_ctrl.clock_paused = true;
+		time_ctrl.black_time_remaining = cboptions.initial_time;
+		time_ctrl.white_time_remaining = cboptions.initial_time;
+		time_ctrl.starttime = clock();
 	}
+}
+
+void start_clock()
+{
+	time_ctrl.clock_paused = false;
+	time_ctrl.starttime = clock();
+}
+
+void stop_clock()
+{
+	if (cboptions.use_incremental_time && time_ctrl.clock_paused == false)
+		time_ctrl.clock_paused = true;
 }
 
 /*
@@ -358,14 +366,17 @@ void get_game_clocks(double *black_clock, double *white_clock)
 {
 	double newtime;
 
-	newtime = (clock() - starttime) / (double)CLOCKS_PER_SEC;
+	if (time_ctrl.clock_paused)
+		newtime = 0;
+	else
+		newtime = (clock() - time_ctrl.starttime) / (double)CLOCKS_PER_SEC;
 	if (cbcolor == CB_BLACK) {
-		*black_clock = black_time_remaining - newtime;
-		*white_clock = white_time_remaining;
+		*black_clock = time_ctrl.black_time_remaining - newtime;
+		*white_clock = time_ctrl.white_time_remaining;
 	}
 	else {
-		*black_clock = black_time_remaining;
-		*white_clock = white_time_remaining - newtime;
+		*black_clock = time_ctrl.black_time_remaining;
+		*white_clock = time_ctrl.white_time_remaining - newtime;
 	}
 }
 
@@ -1071,9 +1082,9 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			// add 1 second when '+' is pressed
 			if (cboptions.use_incremental_time) {
 				if (cbcolor == CB_BLACK)
-					black_time_remaining += 1.0;
+					time_ctrl.black_time_remaining += 1.0;
 				else
-					white_time_remaining += 1.0;
+					time_ctrl.white_time_remaining += 1.0;
 			}
 			else
 				sprintf(statusbar_txt, "not in increment mode!");
@@ -1083,9 +1094,9 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			// subtract 1 second when '-' is pressed
 			if (cboptions.use_incremental_time) {
 				if (cbcolor == CB_BLACK)
-					black_time_remaining -= 1.0;
+					time_ctrl.black_time_remaining -= 1.0;
 				else
-					white_time_remaining -= 1.0;
+					time_ctrl.white_time_remaining -= 1.0;
 			}
 			else
 				sprintf(statusbar_txt, "not in increment mode!");
@@ -1348,6 +1359,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			}
 			else {
 				changeCBstate(CBstate, NORMAL);
+				stop_clock();
 
 				//setenginebusy(FALSE);
 				//setanimationbusy(FALSE);
@@ -3226,16 +3238,20 @@ DWORD SearchThreadFunc(LPVOID param)
 	int founduserbookmove = 0;
 	double maxtime;
 
-	if (cboptions.use_incremental_time && CBstate != ENGINEMATCH && CBstate != AUTOPLAY) {
+	if (cboptions.use_incremental_time && CBstate != ENGINEMATCH && CBstate != AUTOPLAY && CBstate != ENGINEGAME) {
 
 		/* Player must have just made a move.
 		 * Subtract his accumulated clock time, add his increment.
 		 */
-		if (cbcolor == CB_BLACK)
-			/* Player was white. */
-			white_time_remaining += cboptions.time_increment - (clock() - starttime) / (double)CLK_TCK;
-		else
-			black_time_remaining += cboptions.time_increment - (clock() - starttime) / (double)CLK_TCK;
+		if (time_ctrl.clock_paused)
+			start_clock();
+		else {
+			if (cbcolor == CB_BLACK)
+				/* Player was white. */
+				time_ctrl.white_time_remaining += cboptions.time_increment - (clock() - time_ctrl.starttime) / (double)CLK_TCK;
+			else
+				time_ctrl.black_time_remaining += cboptions.time_increment - (clock() - time_ctrl.starttime) / (double)CLK_TCK;
+		}
 	}
 
 	abortcalculation = 0;				// if this remains 0, we will execute the move - else not
@@ -3307,12 +3323,12 @@ DWORD SearchThreadFunc(LPVOID param)
 				info |= CB_RESET_MOVES;
 			if (cboptions.use_incremental_time) {
 				if (cbcolor == CB_BLACK) {
-					format_time_args(cboptions.time_increment, black_time_remaining, &info, &moreinfo);
-					maxtime = maxtime_for_incremental_tc(black_time_remaining);
+					format_time_args(cboptions.time_increment, time_ctrl.black_time_remaining, &info, &moreinfo);
+					maxtime = maxtime_for_incremental_tc(time_ctrl.black_time_remaining);
 				}
 				else {
-					format_time_args(cboptions.time_increment, white_time_remaining, &info, &moreinfo);
-					maxtime = maxtime_for_incremental_tc(white_time_remaining);
+					format_time_args(cboptions.time_increment, time_ctrl.white_time_remaining, &info, &moreinfo);
+					maxtime = maxtime_for_incremental_tc(time_ctrl.white_time_remaining);
 				}
 			}
 			else {
@@ -3326,23 +3342,23 @@ DWORD SearchThreadFunc(LPVOID param)
 					maxtime /= 2;
 			}
 
-			starttime = clock();
+			start_clock();
 			result = (getmove)(originalcopy, cbcolor, maxtime, statusbar_txt, &playnow, info, moreinfo, &localmove);
 
 			/* Display the Play! bitmap with black foreground when the engine is not searching. */
 			PostMessage(tbwnd, TB_CHANGEBITMAP, (WPARAM) MOVESPLAY, MAKELPARAM(2, 0));
 
 			if (cboptions.use_incremental_time) {
-				double elapsed = (clock() - starttime) / (double)CLK_TCK;
+				double elapsed = (clock() - time_ctrl.starttime) / (double)CLK_TCK;
 				if (cbcolor == CB_BLACK) {
-					if (black_time_remaining - elapsed < 0)
-						cblog("engine %d has negative remaining time %.3f\n", currentengine, black_time_remaining - elapsed);
-					black_time_remaining += cboptions.time_increment - elapsed;
+					if (time_ctrl.black_time_remaining - elapsed < 0)
+						cblog("engine %d has negative remaining time %.3f\n", currentengine, time_ctrl.black_time_remaining - elapsed);
+					time_ctrl.black_time_remaining += cboptions.time_increment - elapsed;
 				}
 				else {
-					if (white_time_remaining - elapsed < 0)
-						cblog("engine %d has negative remaining time %.3f\n", currentengine, white_time_remaining - elapsed);
-					white_time_remaining += cboptions.time_increment - elapsed;
+					if (time_ctrl.white_time_remaining - elapsed < 0)
+						cblog("engine %d has negative remaining time %.3f\n", currentengine, time_ctrl.white_time_remaining - elapsed);
+					time_ctrl.white_time_remaining += cboptions.time_increment - elapsed;
 				}
 
 				save_time_stats(currentengine, maxtime, elapsed);
@@ -3350,7 +3366,7 @@ DWORD SearchThreadFunc(LPVOID param)
 				/* If not engine match, then human player's clock starts now. For engine matches the
 				 * starttime will be again set just before calling getmove().
 				 */
-				starttime = clock();
+				time_ctrl.starttime = clock();
 			}
 		}
 		else
