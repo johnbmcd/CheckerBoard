@@ -3264,13 +3264,7 @@ DWORD SearchThreadFunc(LPVOID param)
 	if (cboptions.userbook) {
 		boardtobitboard(cbboard8, &userbookpos);
 		for (i = 0; i < userbooknum; i++) {
-			if
-			(
-				userbookpos.bm == userbook[i].position.bm &&
-				userbookpos.bk == userbook[i].position.bk &&
-				userbookpos.wm == userbook[i].position.wm &&
-				userbookpos.wk == userbook[i].position.wk
-			) {
+			if (memcmp(&userbookpos, &userbook[i].position, sizeof(userbookpos)) == 0) {
 
 				// we have this position in the userbook!
 				cbmove = userbook[i].move;
@@ -3566,6 +3560,23 @@ int changeCBstate(int oldstate, int newstate)
 	// clear status bar
 	sprintf(statusbar_txt, "");
 	return 1;
+}
+
+/*
+ * Do a quick search with both engines to init the endgame dbs
+ * before starting an engine match.
+ */
+void quick_search_both_engines()
+{
+	int playnow;
+	CBmove move;
+
+	newgame();
+	playnow = 0;
+	getmove1(cbboard8, cbcolor, 0.1, statusbar_txt, &playnow, 0, 0, &move);
+	newgame();
+	playnow = 0;
+	getmove2(cbboard8, cbcolor, 0.1, statusbar_txt, &playnow, 0, 0, &move);
 }
 
 DWORD AutoThreadFunc(LPVOID param)
@@ -3901,6 +3912,10 @@ DWORD AutoThreadFunc(LPVOID param)
 					iselevenman = 0;
 				else
 					iselevenman = 1;
+
+				/* Do a quick search with each engine to init endgame dbs if not already done. */
+				quick_search_both_engines();
+
 			}	// end if startmatch
 
 			// stuff below is for regular games
