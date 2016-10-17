@@ -340,7 +340,7 @@ int PDNgametostartposition(PDNgame *game, int b[64])
 	// fills the array b with the pieces in the starting position of a PDN game
 	// needs to check whether it's a setup or not.
 	int i, j;
-	int dummy;
+	int returncolor;
 	int b8[8][8];
 
 	for (i = 0; i < 64; i++)
@@ -382,8 +382,8 @@ int PDNgametostartposition(PDNgame *game, int b[64])
 	}
 	else {
 
-	// setup: here, i'm only checking for GT_ITALIAN, nothing else - i.e. all other game types might fail.
-		FENtoboard8(b8, game->FEN, &dummy, game->gametype);
+		// setup: here, i'm only checking for GT_ITALIAN, nothing else - i.e. all other game types might fail.
+		FENtoboard8(b8, game->FEN, &returncolor, game->gametype);
 		for (i = 0; i < 8; i++) {
 			for (j = 0; j < 8; j++) {
 				b[8 * (7 - j) + i] = b8[i][j];

@@ -169,7 +169,7 @@ int searchwithposition = 0; // search with position?
 char string[256];
 HMENU hmenu;				// menu handle
 double xmetric, ymetric;	//gives the size of the board8: one square is xmetric*ymetric
-int dummy, x1 = -1, x2 = -1, y1_ = -1, y2 = -1;
+int x1 = -1, x2 = -1, y1_ = -1, y2 = -1;
 
 /* When cboptions.use_incremental_time is true, these are game clocks for black and white. */
 double black_time_remaining;
@@ -3090,6 +3090,7 @@ int start3move(void)
 	// this function executes the 3 first moves of 3moveopening #(op), op
 	// is a global which is set by random if the user chooses
 	// 3-move, or it can be set controlled by engine match
+	int iscapture;
 	CBmove movelist[28];
 
 	extern int three[174][4];			// describes 3-move-openings
@@ -3098,17 +3099,17 @@ int start3move(void)
 	cbcolor = CB_BLACK;
 	cbgame.moves.clear();
 
-	getmovelist(1, movelist, cbboard8, &dummy);
+	getmovelist(1, movelist, cbboard8, &iscapture);
 	domove(movelist[three[op][0]], cbboard8);
 	appendmovetolist(movelist[three[op][0]]);
 
 	cbcolor = CB_CHANGECOLOR(cbcolor);
-	getmovelist(-1, movelist, cbboard8, &dummy);
+	getmovelist(-1, movelist, cbboard8, &iscapture);
 	domove(movelist[three[op][1]], cbboard8);
 	appendmovetolist(movelist[three[op][1]]);
 
 	cbcolor = CB_CHANGECOLOR(cbcolor);
-	getmovelist(1, movelist, cbboard8, &dummy);
+	getmovelist(1, movelist, cbboard8, &iscapture);
 	domove(movelist[three[op][2]], cbboard8);
 	appendmovetolist(movelist[three[op][2]]);
 
@@ -3219,7 +3220,7 @@ DWORD SearchThreadFunc(LPVOID param)
 	char PDN[40];
 	int found = 0;
 	int c;
-	int dummy;
+	int iscapture;
 	FILE *Lfp;
 	char Lstr[1024];
 	struct pos userbookpos;
@@ -3245,7 +3246,7 @@ DWORD SearchThreadFunc(LPVOID param)
 		c = 1;
 	else
 		c = -1;
-	nmoves = getmovelist(c, m, cbboard8, &dummy);
+	nmoves = getmovelist(c, m, cbboard8, &iscapture);
 	if (nmoves == 0) {
 		sprintf(statusbar_txt, "there is no move in this position");
 
@@ -3358,7 +3359,7 @@ DWORD SearchThreadFunc(LPVOID param)
 				save_time_stats(currentengine, maxtime, elapsed);
 
 				/* If not engine match, then human player's clock starts now. For engine matches the
-				 * starttime will be set just before calling getmove().
+				 * starttime will be again set just before calling getmove().
 				 */
 				starttime = clock();
 			}
@@ -3402,9 +3403,9 @@ DWORD SearchThreadFunc(LPVOID param)
 			//	else the engine must return the appropriate information in localmove
 			if (gametype() == GT_ENGLISH) {
 				if (cbcolor == CB_BLACK)
-					nmoves = getmovelist(1, m, b8copy, &dummy);
+					nmoves = getmovelist(1, m, b8copy, &iscapture);
 				else
-					nmoves = getmovelist(-1, m, b8copy, &dummy);
+					nmoves = getmovelist(-1, m, b8copy, &iscapture);
 				cbmove = m[0];
 				for (i = 0; i < nmoves; i++) {
 
