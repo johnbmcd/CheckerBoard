@@ -29,3 +29,4 @@ int timelevel_to_token(int level);
 int timetoken_to_level(int token);
 double timetoken_to_time(int token);
 void toggle(int *x);
+int writefile(char *filename, char *mode, char *fmt, ...);

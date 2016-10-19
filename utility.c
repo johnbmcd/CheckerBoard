@@ -286,6 +286,21 @@ int logtofile(char *filename, char *str, char *mode)
 	return 1;
 }
 
+int writefile(char *filename, char *mode, char *fmt, ...)
+{
+	FILE *fp;
+	va_list args;
+	va_start(args, fmt);
+
+	fp = fopen(filename, mode);
+	if (!fp)
+		return(1);
+
+	vfprintf(fp, fmt, args);
+	fclose(fp);
+	return(0);
+}
+
 int texttoclipboard(char *text)
 {
 	// generic text-to-clipboard: pass a text, and it gets put

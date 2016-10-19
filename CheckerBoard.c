@@ -3722,7 +3722,6 @@ void reset_match_stats(void)
 	emstats.losses = 0;
 	emstats.unknowns = 0;
 	emstats.wins = 0;
-	emstats.progress[0] = 0;
 }
 
 DWORD AutoThreadFunc(LPVOID param)
@@ -3997,18 +3996,6 @@ DWORD AutoThreadFunc(LPVOID param)
 							emstats.losses,
 							emstats.draws,
 							emstats.unknowns);
-
-					// read match-progress file 	// TODO: this should be superfluous, write directly to file...
-					emprogress_filename(statsfilename);
-					Lfp = fopen(statsfilename, "r");
-					if (Lfp != NULL) {
-						while (!feof(Lfp)) {
-							fgets(Lstr, 255, Lfp);
-							strcat(emstats.progress, Lstr);
-						}
-
-						fclose(Lfp);
-					}
 				}
 
 				// finally, display stats in window title
@@ -4045,16 +4032,18 @@ DWORD AutoThreadFunc(LPVOID param)
 
 					sprintf(cbgame.resultstring, "?");
 					if (!((gamenumber - 1) % 20)) {
-						if (gamenumber != 1)
-							strcat(emstats.progress, "\n");
+						if (gamenumber != 1) {
+							emprogress_filename(statsfilename);
+							writefile(statsfilename, "a", "\n");
+						}
 					}
 
 					if (gamenumber % 2) {
+						emprogress_filename(statsfilename);
 						if (iselevenman == 1)
-							sprintf(Lstr, "%4i:", gamenumber / 2 + 1);
+							writefile(statsfilename, "a", "%4i:", gamenumber / 2 + 1);
 						else
-							sprintf(Lstr, "%3i:", op + 1);
-						strcat(emstats.progress, Lstr);
+							writefile(statsfilename, "a", "%3i:", op + 1);
 					}
 
 					dostats(result, movecount, gamenumber, &emstats);
@@ -4064,8 +4053,10 @@ DWORD AutoThreadFunc(LPVOID param)
 					sprintf(Lstr, ": W-L-D:%i-%i-%i", emstats.wins, emstats.losses, emstats.draws + emstats.unknowns);
 					strcat(windowtitle, Lstr);
 					SetWindowText(hwnd, windowtitle);
-					if (!(gamenumber % 2))
-						strcat(emstats.progress, "  ");
+					if (!(gamenumber % 2)) {
+						emprogress_filename(statsfilename);
+						writefile(statsfilename, "a", "  ");
+					}
 
 					// write match statistics
 					emstats_filename(statsfilename);
@@ -4083,10 +4074,6 @@ DWORD AutoThreadFunc(LPVOID param)
 								emstats.blacklosses);
 						fclose(Lfp);
 					}
-
-					// write match_progress.txt file
-					emprogress_filename(statsfilename);
-					logtofile(statsfilename, emstats.progress, "w");
 
 					// save the game
 					if (iselevenman == 1)
@@ -4177,18 +4164,20 @@ int dostats(int result, int movecount, int gamenumber, emstats_t *stats)
 {
 	// handles statistics during an engine match
 	const int maxmovecount = 200;
+	char progress_filename[MAX_PATH];
 
+	emprogress_filename(progress_filename);
 	if (movecount > maxmovecount) {
 		++stats->unknowns;
 		sprintf(cbgame.resultstring, "*");
-		strcat(stats->progress, "?");
+		writefile(progress_filename, "a", "?");
 	}
 	else {
 		switch (result) {
 		case CB_WIN:
 			if (currentengine == 1) {
 				++stats->wins;
-				strcat(stats->progress, "+");
+				writefile(progress_filename, "a", "+");
 				if (gamenumber % 2) {
 					++stats->blackwins;
 					sprintf(cbgame.resultstring, "1-0");
@@ -4198,7 +4187,7 @@ int dostats(int result, int movecount, int gamenumber, emstats_t *stats)
 			}
 			else {
 				++stats->losses;
-				strcat(stats->progress, "-");
+				writefile(progress_filename, "a", "-");
 				if (gamenumber % 2) {
 					++stats->blacklosses;
 					sprintf(cbgame.resultstring, "0-1");
@@ -4209,7 +4198,7 @@ int dostats(int result, int movecount, int gamenumber, emstats_t *stats)
 			break;
 
 		case CB_DRAW:
-			strcat(stats->progress, "=");
+			writefile(progress_filename, "a", "=");
 			++stats->draws;
 			sprintf(cbgame.resultstring, "1/2-1/2");
 			break;
@@ -4217,7 +4206,7 @@ int dostats(int result, int movecount, int gamenumber, emstats_t *stats)
 		case CB_LOSS:
 			if (currentengine == 1) {
 				++stats->losses;
-				strcat(stats->progress, "-");
+				writefile(progress_filename, "a", "-");
 				if (gamenumber % 2) {
 					++stats->blacklosses;
 					sprintf(cbgame.resultstring, "0-1");
@@ -4227,7 +4216,7 @@ int dostats(int result, int movecount, int gamenumber, emstats_t *stats)
 			}
 			else {
 				++stats->wins;
-				strcat(stats->progress, "+");
+				writefile(progress_filename, "a", "+");
 				if (gamenumber % 2) {
 					++stats->blackwins;
 					sprintf(cbgame.resultstring, "1-0");
@@ -4239,7 +4228,7 @@ int dostats(int result, int movecount, int gamenumber, emstats_t *stats)
 
 		case CB_UNKNOWN:
 			++stats->unknowns;
-			strcat(stats->progress, "?");
+			writefile(progress_filename, "a", "?");
 			sprintf(cbgame.resultstring, "*");
 			break;
 		}

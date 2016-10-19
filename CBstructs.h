@@ -121,7 +121,6 @@ struct time_ctrl_t {
 
 struct emstats_t {
 	int wins, draws, losses, unknowns, blackwins, blacklosses, games;
-	char progress[65536];
 };
 
 
