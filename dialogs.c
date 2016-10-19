@@ -1120,7 +1120,7 @@ int get_more_engine_options(HWND hwnd, MORE_ENGINE_OPTIONS *options)
 		EnableWindow(hctrl, 0);
 	}
 
-	/* Check if the engins supports the "enable_mtc" engine command. */
+	/* Check if the engine supports the "enable_mtc" engine command. */
 	hctrl = GetDlgItem(hwnd, IDC_MTC_ENAB_CHECK);
 	if (enginecommand("get enable_mtc", reply)) {
 		EnableWindow(hctrl, 1);
@@ -1430,6 +1430,62 @@ BOOL DialogIncrementalTimesFunc(HWND hwnd, UINT message, WPARAM wparam, LPARAM l
 
 		case ID_CANCEL:
 			EndDialog(hwnd, TRUE);
+			return(TRUE);
+		}
+	}
+
+	return(FALSE);
+}
+
+BOOL DialogStartEngineMatchFunc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
+{
+	HWND hctrl;
+	extern int iselevenman;
+
+	switch (message) {
+	case WM_INITDIALOG:
+		// center dialog box on CB window
+		CenterDialog(hwnd);
+		hctrl = GetDlgItem(hwnd, IDC_START_POSITIONS);
+		SendDlgItemMessage(hwnd, IDC_START_POSITIONS, CB_ADDSTRING, 0, (LPARAM)"3-move");
+		SendDlgItemMessage(hwnd, IDC_START_POSITIONS, CB_ADDSTRING, 0, (LPARAM)"11-man");
+
+		/* Set the initial selection. */
+		SendDlgItemMessage(hwnd, IDC_START_POSITIONS, CB_SETCURSEL, iselevenman ? 1 : 0, 0);
+
+		hctrl = GetDlgItem(hwnd, ID_RESUME_MATCH);
+		if (match_is_resumable())
+			EnableWindow(hctrl, 1);
+		else
+			EnableWindow(hctrl, 0);
+		break;
+
+	case WM_COMMAND:
+		switch (LOWORD(wparam)) {
+		case IDC_START_POSITIONS:
+			if (HIWORD(wparam) == CBN_SELCHANGE) {
+				iselevenman = (int)SendDlgItemMessage(hwnd, IDC_START_POSITIONS, CB_GETCURSEL, 0, 0L);
+				hctrl = GetDlgItem(hwnd, ID_RESUME_MATCH);
+				if (match_is_resumable())
+					EnableWindow(hctrl, 1);
+				else
+					EnableWindow(hctrl, 0);
+			}
+			break;
+
+		case ID_RESUME_MATCH:
+			iselevenman = (int)SendDlgItemMessage(hwnd, IDC_START_POSITIONS, CB_GETCURSEL, 0, 0L);
+			EndDialog(hwnd, TRUE);
+			return(TRUE);
+
+		case ID_START_MATCH:
+			iselevenman = (int)SendDlgItemMessage(hwnd, IDC_START_POSITIONS, CB_GETCURSEL, 0, 0L);
+			reset_match_stats();
+			EndDialog(hwnd, TRUE);
+			return(TRUE);
+
+		case ID_CANCEL:
+			EndDialog(hwnd, FALSE);
 			return(TRUE);
 		}
 	}

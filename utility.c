@@ -537,7 +537,7 @@ void cblog(const char *fmt, ...)
 	fclose(fp);
 }
 
-int getopening(struct CBoptions *CBoptions)
+int getopening(CBoptions *CBoptions)
 /* chooses a 3-move opening at random. */
 {
 	int op = 0;
@@ -566,9 +566,34 @@ int getopening(struct CBoptions *CBoptions)
 	return op;
 }
 
+/*
+ * Return the number of 3-move ballots that will be played based 
+ * on the current settings for normal, mail, and lost ballots.
+ */
+int num_3move_ballots(CBoptions *options)
+{
+	int i, count;
+
+	for (i = 0, count = 0; i < ARRAY_SIZE(three); ++i) {
+		if (three[i][3] == OP_BOARD) {
+			if (options->op_crossboard)
+				++count;
+		}
+		else if (three[i][3] == OP_MAILPLAY) {
+			if (options->op_mailplay)
+				++count;
+		}
+		else if (three[i][3] == OP_BARRED) {
+			if (options->op_barred)
+				++count;
+		}
+	}
+	return(count);
+}
+
 int getthreeopening(int n, struct CBoptions *CBoptions)
 {
-	/* n is the number of the game in the engine match. 
+	/* n is the number of the game in the engine match, 0 through numopenings - 1. 
 		getthreeopening returns the number of the opening that should
 		be played in game number n depending on which subset of
 		the 3-move-deck is active */

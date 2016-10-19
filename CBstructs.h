@@ -119,5 +119,9 @@ struct time_ctrl_t {
 	double white_time_remaining;
 };
 
+struct emstats_t {
+	int wins, draws, losses, unknowns, blackwins, blacklosses, games;
+	char progress[65536];
+};
 
 

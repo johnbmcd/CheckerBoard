@@ -27,6 +27,7 @@ BOOL CALLBACK DirectoryDialogFunc(HWND hdwnd, UINT message, WPARAM wParam, LPARA
 BOOL CALLBACK EngineOptionsFunc(HWND hdwnd, UINT message, WPARAM wParam, LPARAM lParam);
 BOOL CALLBACK EngineDialogFunc(HWND hdwnd, UINT message, WPARAM wParam, LPARAM lParam);
 BOOL CALLBACK DialogIncrementalTimesFunc(HWND hdwnd, UINT message, WPARAM wParam, LPARAM lParam);
+BOOL CALLBACK DialogStartEngineMatchFunc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
 int CenterDialog(HWND hdwnd);
 int setengineoptions(HWND hdwnd, int availableMB, ENGINE_OPTIONS *oldoptions, ENGINE_OPTIONS *newoptions);
 int getengineoptions(HWND hdwnd, ENGINE_OPTIONS *options);

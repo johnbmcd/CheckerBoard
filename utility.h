@@ -19,6 +19,7 @@ int getopening(struct CBoptions *CBoptions);
 int getthreeopening(int n, struct CBoptions *CBoptions);
 int initcolorstruct(HWND hwnd, CHOOSECOLOR *ccs, int index);
 int logtofile(char *filename, char *str, char *mode);
+int num_3move_ballots(CBoptions *options);
 int PDNtoclipboard(HWND hwnd, PDNgame &game);
 void setmenuchecks(struct CBoptions *CBoptions, HMENU hmenu);
 char *textfromclipboard(HWND hwnd, char *str);

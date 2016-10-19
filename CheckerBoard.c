@@ -181,6 +181,8 @@ char engine1[255] = "";
 char engine2[255] = "";
 int currentengine = 1;					// 1=primary, 2=secondary
 int op = 0;
+int iselevenman;
+emstats_t emstats;
 int togglemode = 0;						// 1-2-player toggle state
 int togglebook = 0;						// engine book state (0/1/2/3)
 int toggleengine = 1;					// primary/secondary engine (1/2)
@@ -1329,7 +1331,8 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		case CM_ENGINEMATCH:
 			if (CBstate == BOOKVIEW || CBstate == BOOKADD)
 				break;
-			changeCBstate(CBstate, ENGINEMATCH);
+			if (DialogBox(g_hInst, MAKEINTRESOURCE(IDD_START_ENGINE_MATCH), hwnd, (DLGPROC)DialogStartEngineMatchFunc))
+				changeCBstate(CBstate, ENGINEMATCH);
 			break;
 
 		case ENGINEVSENGINE:
@@ -3021,6 +3024,7 @@ int showfile(char *filename)
 int start11man(int number)
 {
 	// start a new 11-move game:
+	// number ranges from 0 to numgames - 1.
 	// read FEN for this 11 man from file
 	// returns 1 if a game with gamenumber could be started, 0 if there is no FEN left in the file.
 	int i = 0;
@@ -3474,7 +3478,7 @@ DWORD SearchThreadFunc(LPVOID param)
 		{
 			filename[MAX_PATH];
 
-			sprintf(filename, "%s\\matchlog%s.txt", cboptions.matchdirectory, g_app_instance_suffix);
+			emlog_filename(filename);
 			Lfp = fopen(filename, "a");
 			enginename(Lstr);
 			if (Lfp != NULL) {
@@ -3595,6 +3599,132 @@ void quick_search_both_engines()
 	getmove2(cbboard8, cbcolor, 0.1, statusbar_txt, &playnow, 0, 0, &move);
 }
 
+void emstats_filename(char *filename)
+{
+	sprintf(filename, "%s\\stats%s.txt", cboptions.matchdirectory, g_app_instance_suffix);
+}
+
+void emprogress_filename(char *filename)
+{
+	sprintf(filename, "%s\\match_progress%s.txt", cboptions.matchdirectory, g_app_instance_suffix);
+}
+
+void empdn_filename(char *filename)
+{
+	sprintf(filename, "%s\\match%s.pdn", cboptions.matchdirectory, g_app_instance_suffix);
+}
+
+void emlog_filename(char *filename)
+{
+	sprintf(filename, "%s\\matchlog%s.txt", cboptions.matchdirectory, g_app_instance_suffix);
+}
+
+/*
+ * Read engine match stats.txt file, write stats to emstats struct.
+ * Return the number of games that have been played.
+ */
+int read_match_stats(void)
+{
+	FILE *fp;
+	char filename[MAX_PATH];
+	char linebuf[150];
+	int count;
+
+	emstats.games = 0;
+	emstats_filename(filename);
+	fp = fopen(filename, "r");
+	if (fp != NULL) {
+
+		// stats.txt exists
+		// read first line just to read second line, which holds the actual stats
+		fgets(linebuf, sizeof(linebuf), fp);
+		fgets(linebuf, sizeof(linebuf), fp);
+		count = sscanf(linebuf,
+				"+:%i =:%i -:%i unknown:%i +B:%i -B:%i",
+				&emstats.wins,
+				&emstats.draws,
+				&emstats.losses,
+				&emstats.unknowns,
+				&emstats.blackwins,
+				&emstats.blacklosses);
+		fclose(fp);
+		if (count == 6)
+			emstats.games = emstats.wins + emstats.losses + emstats.draws + emstats.unknowns;
+		else
+			emstats.games = 0;
+	}
+	return(emstats.games);
+}
+
+/*
+ * Return the number of ballots in the 11-man file.
+ */
+int num_11man_ballots(void)
+{
+	int count;
+	FILE *fp;
+	char linebuf[256];
+
+	// set directory to CB directory
+	SetCurrentDirectory(CBdirectory);
+	fp = fopen("11man_FEN.txt", "r");
+	if (fp == NULL)
+		return 0;
+
+	for (count = 0; !feof(fp); ++count)
+		fgets(linebuf, sizeof(linebuf), fp);
+
+	/* The count is off by 1 because of a newline at the end of the last ballot. */
+	-- count;
+
+	fclose(fp);
+	return(count);
+}
+
+bool match_is_resumable(void)
+{
+	int ngames;
+
+	ngames = read_match_stats();
+	if (ngames <= 0)
+		return(false);
+
+	if (iselevenman) {
+		if (ngames < 2 * num_11man_ballots())
+			return(true);
+		else
+			return(false);
+	}
+	else {
+		if (ngames < 2 * num_3move_ballots(&cboptions))
+			return(true);
+		else
+			return(false);
+	}
+}
+
+void reset_match_stats(void)
+{
+	char filename[MAX_PATH];
+
+	emstats_filename(filename);
+	DeleteFile(filename);
+	emprogress_filename(filename);
+	DeleteFile(filename);
+	empdn_filename(filename);
+	DeleteFile(filename);
+	emlog_filename(filename);
+	DeleteFile(filename);
+	emstats.blacklosses = 0;
+	emstats.blackwins = 0;
+	emstats.draws = 0;
+	emstats.games = 0;
+	emstats.losses = 0;
+	emstats.unknowns = 0;
+	emstats.wins = 0;
+	emstats.progress[0] = 0;
+}
+
 DWORD AutoThreadFunc(LPVOID param)
 {
 	//	this thread drives autoplay,analyze game and engine match.
@@ -3612,19 +3742,14 @@ DWORD AutoThreadFunc(LPVOID param)
 	char testlogname[MAX_PATH];
 	char testsetname[MAX_PATH];
 	char statsfilename[MAX_PATH];
-	static char matchlogstring[65536];	// large string which holds the output which we write to match_progress.txt
-	static int oldengine;
 	FILE *Lfp;
 	static int gamenumber;
 	static int movecount;
 	int i;
 	const int maxmovecount = 200;
-	static int wins, draws, losses, unknowns;
-	static int blackwins, blacklosses;	//wins as black of primary engine
 	static char FEN[256];
 	char engine1[256], engine2[256];	// holds engine names
 	int matchcontinues = 0;
-	static int iselevenman = 0;
 
 	// autothread is started at startup, and keeps running until the program
 	// terminates, that's what for(;;) is here for.
@@ -3861,50 +3986,25 @@ DWORD AutoThreadFunc(LPVOID param)
 		case ENGINEMATCH:
 			if (startmatch) {
 
-				// a new match has been started, do some initializations
-				sprintf(matchlogstring, "");
+				/* We've already initialized the emstats. */
 				gamenumber = 0;
-				wins = 0;
-				losses = 0;
-				draws = 0;
-				unknowns = 0;
-				blackwins = 0;
-				blacklosses = 0;
-
-				// check to see if a stats.txt file is here, and if yes, continue the match
-				sprintf(statsfilename, "%s\\stats%s.txt", cboptions.matchdirectory, g_app_instance_suffix);
-				Lfp = fopen(statsfilename, "r");
-				if (Lfp != NULL) {
-
-					// stats.txt exists
-					// read first line just to read second line, which holds the actual stats
-					fgets(Lstr, 255, Lfp);
-					fgets(Lstr, 255, Lfp);
-					sscanf(Lstr,
-						   "+:%i =:%i -:%i unknown:%i +B:%i -B:%i",
-						   &wins,
-						   &draws,
-						   &losses,
-						   &unknowns,
-						   &blackwins,
-						   &blacklosses);
-					gamenumber = wins + losses + draws + unknowns;
+				if (emstats.games) {
+					gamenumber = emstats.games;
 					sprintf(statusbar_txt,
 							"resuming match at game #%i, (+:%i -:%i =:%i unknown:%i)",
-							gamenumber,
-							wins,
-							losses,
-							draws,
-							unknowns);
-					fclose(Lfp);
+							emstats.games,
+							emstats.wins,
+							emstats.losses,
+							emstats.draws,
+							emstats.unknowns);
 
 					// read match-progress file 	// TODO: this should be superfluous, write directly to file...
-					sprintf(statsfilename, "%s\\match_progress%s.txt", cboptions.matchdirectory, g_app_instance_suffix);
+					emprogress_filename(statsfilename);
 					Lfp = fopen(statsfilename, "r");
 					if (Lfp != NULL) {
 						while (!feof(Lfp)) {
 							fgets(Lstr, 255, Lfp);
-							strcat(matchlogstring, Lstr);
+							strcat(emstats.progress, Lstr);
 						}
 
 						fclose(Lfp);
@@ -3915,19 +4015,9 @@ DWORD AutoThreadFunc(LPVOID param)
 				enginecommand1("name", engine1);
 				enginecommand2("name", engine2);
 				sprintf(windowtitle, "%s - %s", engine1, engine2);
-				sprintf(Lstr, ": W-L-D:%i-%i-%i", wins, losses, draws + unknowns);
+				sprintf(Lstr, ": W-L-D:%i-%i-%i", emstats.wins, emstats.losses, emstats.draws + emstats.unknowns);
 				strcat(windowtitle, Lstr);
 				SetWindowText(hwnd, windowtitle);
-
-				// ask user whether this is regular match or 11-man-match
-				iselevenman = MessageBox(hwnd,
-										 "Play 3-move openings? Choose Yes for 3-move, No for 11-man",
-										 "Choose Match Type",
-										 MB_ICONQUESTION | MB_YESNO);
-				if (iselevenman == IDYES)
-					iselevenman = 0;
-				else
-					iselevenman = 1;
 
 				/* Do a quick search with each engine to init endgame dbs if not already done. */
 				quick_search_both_engines();
@@ -3956,7 +4046,7 @@ DWORD AutoThreadFunc(LPVOID param)
 					sprintf(cbgame.resultstring, "?");
 					if (!((gamenumber - 1) % 20)) {
 						if (gamenumber != 1)
-							strcat(matchlogstring, "\n");
+							strcat(emstats.progress, "\n");
 					}
 
 					if (gamenumber % 2) {
@@ -3964,49 +4054,39 @@ DWORD AutoThreadFunc(LPVOID param)
 							sprintf(Lstr, "%4i:", gamenumber / 2 + 1);
 						else
 							sprintf(Lstr, "%3i:", op + 1);
-						strcat(matchlogstring, Lstr);
+						strcat(emstats.progress, Lstr);
 					}
 
-					// check result
-					dostats(result,
-							movecount,
-							gamenumber,
-							&wins,
-							&draws,
-							&losses,
-							&unknowns,
-							&blackwins,
-							&blacklosses,
-							matchlogstring);
+					dostats(result, movecount, gamenumber, &emstats);
 
 					// finally, display stats in window title
 					sprintf(windowtitle, "%s - %s", engine1, engine2);
-					sprintf(Lstr, ": W-L-D:%i-%i-%i", wins, losses, draws + unknowns);
+					sprintf(Lstr, ": W-L-D:%i-%i-%i", emstats.wins, emstats.losses, emstats.draws + emstats.unknowns);
 					strcat(windowtitle, Lstr);
 					SetWindowText(hwnd, windowtitle);
 					if (!(gamenumber % 2))
-						strcat(matchlogstring, "  ");
+						strcat(emstats.progress, "  ");
 
 					// write match statistics
-					sprintf(statsfilename, "%s\\stats%s.txt", cboptions.matchdirectory, g_app_instance_suffix);
+					emstats_filename(statsfilename);
 					Lfp = fopen(statsfilename, "w");
 					if (Lfp != NULL) {
 						fprintf(Lfp, "%s - %s", engine1, engine2);
 						fprintf(Lfp, " %s\n", Lstr);
 						fprintf(Lfp,
 								"+:%i =:%i -:%i unknown:%i +B:%i -B:%i",
-								wins,
-								draws,
-								losses,
-								unknowns,
-								blackwins,
-								blacklosses);
+								emstats.wins,
+								emstats.draws,
+								emstats.losses,
+								emstats.unknowns,
+								emstats.blackwins,
+								emstats.blacklosses);
 						fclose(Lfp);
 					}
 
 					// write match_progress.txt file
-					sprintf(statsfilename, "%s\\match_progress%s.txt", cboptions.matchdirectory, g_app_instance_suffix);
-					logtofile(statsfilename, matchlogstring, "w");
+					emprogress_filename(statsfilename);
+					logtofile(statsfilename, emstats.progress, "w");
 
 					// save the game
 					if (iselevenman == 1)
@@ -4015,7 +4095,7 @@ DWORD AutoThreadFunc(LPVOID param)
 						sprintf(cbgame.event, "ACF #%i", op + 1);
 
 					// dosave expects a fully initialized cbgame structure
-					sprintf(filename, "%s\\match%s.pdn", cboptions.matchdirectory, g_app_instance_suffix);
+					empdn_filename(filename);
 					SendMessage(hwnd, WM_COMMAND, DOSAVE, 0);
 
 					Sleep(SLEEPTIME);
@@ -4093,46 +4173,34 @@ DWORD AutoThreadFunc(LPVOID param)
 	}			// end for(;;)
 }
 
-int dostats
-	(
-		int result,
-		int movecount,
-		int gamenumber,
-		int *wins,
-		int *draws,
-		int *losses,
-		int *unknowns,
-		int *blackwins,
-		int *blacklosses,
-		char *matchlogstring
-	)
+int dostats(int result, int movecount, int gamenumber, emstats_t *stats)
 {
 	// handles statistics during an engine match
 	const int maxmovecount = 200;
 
 	if (movecount > maxmovecount) {
-		(*unknowns)++;
+		++stats->unknowns;
 		sprintf(cbgame.resultstring, "*");
-		strcat(matchlogstring, "?");
+		strcat(stats->progress, "?");
 	}
 	else {
 		switch (result) {
 		case CB_WIN:
 			if (currentengine == 1) {
-				(*wins)++;
-				strcat(matchlogstring, "+");
+				++stats->wins;
+				strcat(stats->progress, "+");
 				if (gamenumber % 2) {
-					(*blackwins)++;
+					++stats->blackwins;
 					sprintf(cbgame.resultstring, "1-0");
 				}
 				else
 					sprintf(cbgame.resultstring, "0-1");
 			}
 			else {
-				(*losses)++;
-				strcat(matchlogstring, "-");
+				++stats->losses;
+				strcat(stats->progress, "-");
 				if (gamenumber % 2) {
-					(*blacklosses)++;
+					++stats->blacklosses;
 					sprintf(cbgame.resultstring, "0-1");
 				}
 				else
@@ -4141,27 +4209,27 @@ int dostats
 			break;
 
 		case CB_DRAW:
-			strcat(matchlogstring, "=");
-			(*draws)++;
+			strcat(stats->progress, "=");
+			++stats->draws;
 			sprintf(cbgame.resultstring, "1/2-1/2");
 			break;
 
 		case CB_LOSS:
 			if (currentengine == 1) {
-				(*losses)++;
-				strcat(matchlogstring, "-");
+				++stats->losses;
+				strcat(stats->progress, "-");
 				if (gamenumber % 2) {
-					(*blacklosses)++;
+					++stats->blacklosses;
 					sprintf(cbgame.resultstring, "0-1");
 				}
 				else
 					sprintf(cbgame.resultstring, "1-0");
 			}
 			else {
-				(*wins)++;
-				strcat(matchlogstring, "+");
+				++stats->wins;
+				strcat(stats->progress, "+");
 				if (gamenumber % 2) {
-					(*blackwins)++;
+					++stats->blackwins;
 					sprintf(cbgame.resultstring, "1-0");
 				}
 				else
@@ -4170,8 +4238,8 @@ int dostats
 			break;
 
 		case CB_UNKNOWN:
-			(*unknowns)++;
-			strcat(matchlogstring, "?");
+			++stats->unknowns;
+			strcat(stats->progress, "?");
 			sprintf(cbgame.resultstring, "*");
 			break;
 		}
