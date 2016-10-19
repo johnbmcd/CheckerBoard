@@ -1331,8 +1331,10 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		case CM_ENGINEMATCH:
 			if (CBstate == BOOKVIEW || CBstate == BOOKADD)
 				break;
-			if (DialogBox(g_hInst, MAKEINTRESOURCE(IDD_START_ENGINE_MATCH), hwnd, (DLGPROC)DialogStartEngineMatchFunc))
+			if (DialogBox(g_hInst, MAKEINTRESOURCE(IDD_START_ENGINE_MATCH), hwnd, (DLGPROC)DialogStartEngineMatchFunc)) {
+				startmatch = TRUE;
 				changeCBstate(CBstate, ENGINEMATCH);
+			}
 			break;
 
 		case ENGINEVSENGINE:
