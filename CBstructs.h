@@ -74,19 +74,6 @@ struct PDNgame {
 	std::vector<gamebody_entry> moves;		/* Moves and comments in the game body. */
 };
 
-/*
-struct package
-	{
-	char name[256];			//package name
-	char version[64];		// package version
-	char URL[256]; 			//package location
-	char description[256];
-	char size[256];			// size in KB
-	char status[256]; 		// new package, new version, or up to date*
-	char publisher[256];
-	char filename[256];		//filename to write the file to. if this is ZIP, winzip is invoked
-	}; */
-
 /* This type is used to display game previews in the game select dialog. */
 struct gamepreview {
 	int game_index;		/* index of game into the current pdn database. */

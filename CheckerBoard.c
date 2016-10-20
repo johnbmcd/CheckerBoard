@@ -164,7 +164,7 @@ char playername[256];		// name of the player we are searching games of
 char eventname[256];		// event we're searching for
 char datename[256];			// date we're searching for
 char commentname[256];		// comment we're searching for
-int searchwithposition = 0; // search with position?
+int searchwithposition;		// search with position?
 char string[256];
 HMENU hmenu;				// menu handle
 double xmetric, ymetric;	//gives the size of the board8: one square is xmetric*ymetric
@@ -176,7 +176,7 @@ char CBdocuments[MAX_PATH];				// CheckerBoard directory under My Documents
 char database[256] = "";				// current PDN database
 char userbookname[256];					// current userbook
 CBmove cbmove;
-char filename[255] = "";
+char savegame_filename[255];
 char engine1[255] = "";
 char engine2[255] = "";
 int currentengine = 1;					// 1=primary, 2=secondary
@@ -275,7 +275,7 @@ int WINAPI WinMain(HINSTANCE hThisInst, HINSTANCE hPrevInst, LPSTR lpszArgs, int
 	UpdateWindow(hwnd);
 
 	// set database filename in case of shell-doubleclick on a *.pdn file
-	sprintf(filename, lpszArgs);
+	sprintf(savegame_filename, lpszArgs);
 
 	// initialize common controls - toolbar and status bar need this
 	iccex.dwSize = sizeof(INITCOMMONCONTROLSEX);
@@ -607,7 +607,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			// show save game dialog. if OK, call 'dosave' to do the work
 			SetCurrentDirectory(cboptions.userdirectory);
 			if (DialogBox(g_hInst, "IDD_SAVEGAME", hwnd, (DLGPROC) DialogFuncSavegame)) {
-				if (getfilename(filename, OF_SAVEGAME)) {
+				if (getfilename(savegame_filename, OF_SAVEGAME)) {
 					SendMessage(hwnd, WM_COMMAND, DOSAVE, 0);
 				}
 			}
@@ -618,8 +618,8 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		case GAMESAVEASHTML:
 			// show save game dialog. if OK is selected, call 'savehtml' to do the work
 			if (DialogBox(g_hInst, "IDD_SAVEGAME", hwnd, (DLGPROC) DialogFuncSavegame)) {
-				if (getfilename(filename, OF_SAVEASHTML)) {
-					saveashtml(filename, &cbgame);
+				if (getfilename(savegame_filename, OF_SAVEASHTML)) {
+					saveashtml(savegame_filename, &cbgame);
 					sprintf(statusbar_txt, "game saved as HTML!");
 				}
 			}
@@ -627,7 +627,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 
 		case DOSAVE:
 			// saves the game stored in cbgame
-			fp = fopen(filename, "at+");
+			fp = fopen(savegame_filename, "at+");
 
 			// file with filename opened	- we append to that file
 			// filename was set by save game
@@ -2971,8 +2971,8 @@ int createcheckerboard(HWND hwnd)
 	checklevelmenu(&cboptions, hmenu, timelevel_to_token(cboptions.level));
 
 	// in case of shell double click
-	if (strcmp(filename, "") != 0) {
-		sprintf(database, "%s", filename);
+	if (strcmp(savegame_filename, "") != 0) {
+		sprintf(database, "%s", savegame_filename);
 		PostMessage(hwnd, WM_COMMAND, GAMELOAD, 0);
 	}
 
@@ -4081,7 +4081,7 @@ DWORD AutoThreadFunc(LPVOID param)
 					writefile(statsfilename, "a", "---------- end of %s\n", cbgame.event);
 
 					// dosave expects a fully initialized cbgame structure
-					empdn_filename(filename);
+					empdn_filename(savegame_filename);
 					SendMessage(hwnd, WM_COMMAND, DOSAVE, 0);
 
 					Sleep(SLEEPTIME);
