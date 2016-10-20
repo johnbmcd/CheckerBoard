@@ -90,17 +90,17 @@ HICON hIcon;						/* CB icon for the window */
 TBBUTTON tbButtons[NUMBUTTONS];		/* for the toolbar */
 
 /* these globals are used to synchronize threads */
-int abortcalculation = 0;			// used to tell the SearchThreadFunc that the calculation has been aborted
-static BOOL enginebusy = FALSE;		/* true while engine thread is busy */
-static BOOL animationbusy = FALSE;	/* true while animation thread is busy */
-static BOOL enginestarting = FALSE; // true when a play command is issued to the engine but engine has
+int abortcalculation;				// used to tell the SearchThreadFunc that the calculation has been aborted
+static BOOL enginebusy;				/* true while engine thread is busy */
+static BOOL animationbusy;			/* true while animation thread is busy */
+static BOOL enginestarting;			// true when a play command is issued to the engine but engine has
 
 // not started yet
-BOOL gameover = FALSE;				/* true when autoplay or engine match game is finished */
+BOOL gameover;						/* true when autoplay or engine match game is finished */
 BOOL startmatch = TRUE;				/* startmatch is only true before engine match was started */
 BOOL newposition = TRUE;			/* is true when position has changed. used in analysis mode to
 										restart search and then reset */
-BOOL startengine = FALSE;			/* is true if engine is expected to start */
+BOOL startengine;					/* is true if engine is expected to start */
 int result;
 time_ctrl_t time_ctrl;				/* Clock control. */
 int toolbarheight = 30;				//30;
@@ -113,13 +113,13 @@ int upperoffset = 20;				//20;
 char szWinName[] = "CheckerBoard";	/* name of window class */
 int cbboard8[8][8];					/* the board being displayed in the GUI*/
 int cbcolor = CB_BLACK;				/* the side to move next in the GUI */
-int setup = 0;						/* 1 if in setup mode */
-static int addcomment = 0;
-int handicap = 0;
-int testset_number = 0;
-int playnow = 0;					/* playnow is passed to the checkers engines, it is set to nonzero if the user chooses 'play' */
+int setup;							/* 1 if in setup mode */
+static int addcomment;
+int handicap;
+int testset_number;
+int playnow;						/* playnow is passed to the checkers engines, it is set to nonzero if the user chooses 'play' */
 bool reset_move_history;			/* send option to engine to reset its list of game moves. */
-int gameindex = 0;					/* game to load/replace from/in a database */
+int gameindex;						/* game to load/replace from/in a database */
 
 /* dll globals */
 
@@ -128,32 +128,32 @@ enginename, engineabout, engineoptions, enginehelp, getmove point to the current
 ...1 and ...2 are the pointers to dll1 and dll2 as read from engines.ini. */
 
 /* library instances for primary, secondary and analysis engines */
-HINSTANCE hinstLib = 0, hinstLib1 = 0, hinstLib2 = 0;
+HINSTANCE hinstLib, hinstLib1, hinstLib2;
 
 /* function pointers for the engine functions */
-CB_GETMOVE getmove = 0, getmove1 = 0, getmove2 = 0;
-CB_ENGINECOMMAND enginecommandtmp = 0, enginecommand1 = 0, enginecommand2 = 0;
+CB_GETMOVE getmove, getmove1, getmove2;
+CB_ENGINECOMMAND enginecommand1, enginecommand2;
 
 // multi-version support
-CB_ISLEGAL islegal = 0, islegal1 = 0, islegal2 = 0;
-CB_GETSTRING enginename1 = 0, enginename2 = 0;
-CB_GETGAMETYPE CBgametype = 0;		// built in gametype and islegal functions
-CB_ISLEGAL CBislegal = 0;
+CB_ISLEGAL islegal, islegal1, islegal2;
+CB_GETSTRING enginename1, enginename2;
+CB_GETGAMETYPE CBgametype;			// built in gametype and islegal functions
+CB_ISLEGAL CBislegal;
 
 int enginename(char name[MAXNAME]);
 BOOL fFreeResult;
 
 // instance and window handles
-HINSTANCE g_hInst;					//instance of checkerboard
-HWND hwnd;					// main window
-HWND hStatusWnd;			// status window
-static HWND tbwnd;			// toolbar window
+HINSTANCE g_hInst;				//instance of checkerboard
+HWND hwnd;						// main window
+HWND hStatusWnd;				// status window
+static HWND tbwnd;				// toolbar window
 HWND hDlgSelectgame;
 
 std::vector<gamepreview> game_previews;
 
 // statusbar_txt holds the output string shown in the status bar - it is updated by WM_TIMER messages
-char statusbar_txt[1024] = "";
+char statusbar_txt[1024];
 char playername[MAXNAME];		// name of the player we are searching games of
 char eventname[MAXNAME];		// event we're searching for
 char datename[MAXNAME];			// date we're searching for
@@ -175,23 +175,23 @@ char engine2[255];
 int currentengine = 1;					// 1=primary, 2=secondary
 int iselevenman;
 emstats_t emstats;
-int togglemode = 0;						// 1-2-player toggle state
-int togglebook = 0;						// engine book state (0/1/2/3)
+int togglemode;							// 1-2-player toggle state
+int togglebook;							// engine book state (0/1/2/3)
 int toggleengine = 1;					// primary/secondary engine (1/2)
 
 // keep a small user book
 struct userbookentry userbook[MAXUSERBOOK];
-size_t userbooknum = 0;
-size_t userbookcur = 0;
+size_t userbooknum;
+size_t userbookcur;
 static CHOOSECOLOR ccs;
 
 // reindex tells whether we have to reindex a database when searching.
 // reindex is set to 1 if a game is saved, a game is replaced, or the
 // database changed. and initialized to 1.
 int reindex = 1;
-int re_search_ok = 0;
+int re_search_ok;
 char piecesetname[MAXPIECESET][256];
-int maxpieceset = 0;
+int maxpieceset;
 CRITICAL_SECTION ani_criticalsection, engine_criticalsection;
 int handletooltiprequest(LPTOOLTIPTEXT TTtext);
 void reset_game(PDNgame &game);
