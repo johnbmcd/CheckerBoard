@@ -101,7 +101,7 @@ int setanimationbusy(int value);
 int setenginebusy(int value);
 int setenginestarting(int value);
 int showfile(char *filename);
-int start3move(void);
+int start3move(int opening_index);
 int texttoclipboard(char *text);
 int undomove(struct CBmove m, int b[8][8]);
 
@@ -144,7 +144,6 @@ extern char CBdocuments[MAX_PATH];
 #define LOADPREVIOUS 126
 #define GAMEANALYZEPDN 127
 #define SAMPLEDIAGRAM 128
-#define START11MAN 129
 
 #define MOVESPLAY 201
 #define MOVESBACK 202

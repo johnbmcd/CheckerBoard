@@ -180,7 +180,6 @@ char filename[255] = "";
 char engine1[255] = "";
 char engine2[255] = "";
 int currentengine = 1;					// 1=primary, 2=secondary
-int op = 0;
 int iselevenman;
 emstats_t emstats;
 int togglemode = 0;						// 1-2-player toggle state
@@ -579,8 +578,8 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			PostMessage(hwnd, WM_COMMAND, ABORTENGINE, 0);
 			if (gametype() == GT_ENGLISH) {
 				if (cboptions.op_crossboard || cboptions.op_barred || cboptions.op_mailplay) {
-					op = getopening(&cboptions);
-					PostMessage(hwnd, WM_COMMAND, START3MOVE, 0);
+					int opening_index = getopening(&cboptions);
+					PostMessage(hwnd, WM_COMMAND, START3MOVE, opening_index);
 				}
 				else
 					MessageBox(hwnd, "nothing selected in the 3-move deck!", "Error", MB_OK);
@@ -594,7 +593,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			break;
 
 		case START3MOVE:
-			start3move();
+			start3move(LOWORD(lParam));
 			break;
 
 		case GAMEREPLACE:
@@ -3102,7 +3101,7 @@ void forward_to_game_end(void)
 	}
 }
 
-int start3move(void)
+int start3move(int opening_index)
 {
 	// start a new 3-move game:
 	// this function executes the 3 first moves of 3moveopening #(op), op
@@ -3118,18 +3117,18 @@ int start3move(void)
 	cbgame.moves.clear();
 
 	getmovelist(cbcolor, movelist, cbboard8, &iscapture);
-	domove(movelist[three[op][0]], cbboard8);
-	appendmovetolist(movelist[three[op][0]]);
+	domove(movelist[three[opening_index][0]], cbboard8);
+	appendmovetolist(movelist[three[opening_index][0]]);
 
 	cbcolor = CB_CHANGECOLOR(cbcolor);
 	getmovelist(cbcolor, movelist, cbboard8, &iscapture);
-	domove(movelist[three[op][1]], cbboard8);
-	appendmovetolist(movelist[three[op][1]]);
+	domove(movelist[three[opening_index][1]], cbboard8);
+	appendmovetolist(movelist[three[opening_index][1]]);
 
 	cbcolor = CB_CHANGECOLOR(cbcolor);
 	getmovelist(cbcolor, movelist, cbboard8, &iscapture);
-	domove(movelist[three[op][2]], cbboard8);
-	appendmovetolist(movelist[three[op][2]]);
+	domove(movelist[three[opening_index][2]], cbboard8);
+	appendmovetolist(movelist[three[opening_index][2]]);
 
 	cbcolor = CB_CHANGECOLOR(cbcolor);
 
@@ -3142,7 +3141,7 @@ int start3move(void)
 	}
 
 	updateboardgraphics(hwnd);
-	sprintf(statusbar_txt, "ACF opening number %i", op + 1);
+	sprintf(statusbar_txt, "ACF opening number %i", opening_index + 1);
 	newposition = TRUE;
 
 	// new march 2005, jon kreuzer told me this was missing.
@@ -4125,12 +4124,10 @@ DWORD AutoThreadFunc(LPVOID param)
 				else
 					setcurrentengine(2);
 
-				// post message so that main thread handles the request
+				// The main thread handles the 3-move ballot setup
 				if (CBstate != NORMAL) {
-					if (iselevenman == 1)
-						PostMessage(hwnd, WM_COMMAND, START11MAN, 0);
-					else
-						PostMessage(hwnd, WM_COMMAND, START3MOVE, 0);
+					if (iselevenman == 0)
+						PostMessage(hwnd, WM_COMMAND, START3MOVE, emstats.opening_index);
 
 					// give main thread some time to handle this message
 					Sleep(SLEEPTIME);
