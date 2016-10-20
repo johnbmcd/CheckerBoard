@@ -120,7 +120,14 @@ struct time_ctrl_t {
 };
 
 struct emstats_t {
-	int wins, draws, losses, unknowns, blackwins, blacklosses, games;
+	int wins;
+	int draws;
+	int losses;
+	int unknowns;
+	int blackwins;
+	int blacklosses;
+	int games;
+	int opening_index;	/* index into 3-move table, 1 less than the ACF ballot number. */
 };
 
 

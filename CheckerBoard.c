@@ -3238,8 +3238,6 @@ DWORD SearchThreadFunc(LPVOID param)
 	char PDN[40];
 	int found = 0;
 	int iscapture;
-	FILE *Lfp;
-	char Lstr[1024];
 	struct pos userbookpos;
 	int founduserbookmove = 0;
 	double maxtime;
@@ -3478,16 +3476,12 @@ DWORD SearchThreadFunc(LPVOID param)
 
 	case ENGINEMATCH:
 		{
-			filename[MAX_PATH];
+			char filename[MAX_PATH];
+			char name[250];
 
 			emlog_filename(filename);
-			Lfp = fopen(filename, "a");
-			enginename(Lstr);
-			if (Lfp != NULL) {
-				fprintf(Lfp, "\n%s played %s", Lstr, PDN);
-				fprintf(Lfp, "\nanalysis: %s", statusbar_txt);
-				fclose(Lfp);
-			}
+			enginename(name);
+			writefile(filename, "a", "%s played %s\nanalysis: %s\n", name, PDN, statusbar_txt);
 		}
 		break;
 	}
@@ -4045,7 +4039,7 @@ DWORD AutoThreadFunc(LPVOID param)
 						if (iselevenman == 1)
 							writefile(statsfilename, "a", "%4i:", gamenumber / 2 + 1);
 						else
-							writefile(statsfilename, "a", "%3i:", op + 1);
+							writefile(statsfilename, "a", "%3i:", emstats.opening_index + 1);
 					}
 
 					dostats(result, movecount, gamenumber, &emstats);
@@ -4081,7 +4075,11 @@ DWORD AutoThreadFunc(LPVOID param)
 					if (iselevenman == 1)
 						sprintf(cbgame.event, "11-man #%i", (gamenumber - 1) / 2 + 1);
 					else
-						sprintf(cbgame.event, "ACF #%i", op + 1);
+						sprintf(cbgame.event, "ACF #%i", emstats.opening_index + 1);
+
+					/* Save the Event text to the matchlog file. */
+					emlog_filename(statsfilename);
+					writefile(statsfilename, "a", "---------- end of %s\n", cbgame.event);
 
 					// dosave expects a fully initialized cbgame structure
 					empdn_filename(filename);
@@ -4097,8 +4095,8 @@ DWORD AutoThreadFunc(LPVOID param)
 				if (iselevenman == 1)
 					matchcontinues = start11man(gamenumber / 2);
 				else {
-					op = getthreeopening(gamenumber, &cboptions);
-					if (op == -1)
+					emstats.opening_index = getthreeopening(gamenumber, &cboptions);
+					if (emstats.opening_index == -1)
 						matchcontinues = 0;
 					else
 						matchcontinues = 1;
