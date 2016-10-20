@@ -1326,8 +1326,8 @@ BOOL CALLBACK EngineDialogFunc(HWND hdwnd, UINT message, WPARAM wParam, LPARAM l
 	*/
 	int i;
 
-	char pri_fname[256], sec_fname[256];
-	extern char CBdirectory[256];
+	char pri_fname[MAX_PATH], sec_fname[MAX_PATH];
+	extern char CBdirectory[MAX_PATH];
 	extern struct CBoptions cboptions;
 
 	switch (message) {

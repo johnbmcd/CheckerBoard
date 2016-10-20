@@ -105,7 +105,7 @@ int start3move(int opening_index);
 int texttoclipboard(char *text);
 int undomove(struct CBmove m, int b[8][8]);
 
-extern char CBdirectory[256];	// holds the directory from where CB is started:
+extern char CBdirectory[MAX_PATH];	// holds the directory from where CB is started:
 extern char CBdocuments[MAX_PATH];
 
 #define random(x) (rand() % x);

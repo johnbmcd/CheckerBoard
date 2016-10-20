@@ -159,20 +159,19 @@ char eventname[MAXNAME];		// event we're searching for
 char datename[MAXNAME];			// date we're searching for
 char commentname[MAXNAME];		// comment we're searching for
 int searchwithposition;			// search with position?
-//char string[256];
 HMENU hmenu;					// menu handle
 double xmetric, ymetric;		//gives the size of the board8: one square is xmetric*ymetric
 int x1 = -1, x2 = -1, y1_ = -1, y2 = -1;
 
 char reply[ENGINECOMMAND_REPLY_SIZE];	// holds reply of engine to command requests
-char CBdirectory[256] = "";				// holds the directory from where CB is started:
+char CBdirectory[MAX_PATH];				// holds the directory from where CB is started:
 char CBdocuments[MAX_PATH];				// CheckerBoard directory under My Documents
-char database[256] = "";				// current PDN database
-char userbookname[256];					// current userbook
+char pdn_filename[MAX_PATH];					// current PDN database
+char userbookname[MAX_PATH];					// current userbook
 CBmove cbmove;
-char savegame_filename[255];
-char engine1[255] = "";
-char engine2[255] = "";
+char savegame_filename[MAX_PATH];
+char engine1[255];
+char engine2[255];
 int currentengine = 1;					// 1=primary, 2=secondary
 int iselevenman;
 emstats_t emstats;
@@ -452,7 +451,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		break;
 
 	case WM_DROPFILES:
-		DragQueryFile((HDROP) wParam, 0, database, sizeof(database));
+		DragQueryFile((HDROP) wParam, 0, pdn_filename, sizeof(pdn_filename));
 		DragFinish((HDROP) wParam);
 		PostMessage(hwnd, WM_COMMAND, GAMELOAD, 0);
 		break;
@@ -592,9 +591,9 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 
 		case GAMEREPLACE:
 			// replace a game in the pdn database
-			// assumption: you have loaded a game, so now "database" holds the db filename
+			// assumption: you have loaded a game, so now "pdn_filename" holds the db filename
 			// and gameindex is the index of the game in the file
-			handlegamereplace(gameindex, database);
+			handlegamereplace(gameindex, pdn_filename);
 			break;
 
 		case GAMESAVE:
@@ -642,8 +641,8 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 
 		case GAMEDATABASE:
 			// set working database
-			sprintf(database, "%s", cboptions.userdirectory);
-			getfilename(database, OF_LOADGAME);
+			sprintf(pdn_filename, "%s", cboptions.userdirectory);
+			getfilename(pdn_filename, OF_LOADGAME);
 
 			// set reindex flag
 			reindex = 1;
@@ -2301,7 +2300,7 @@ int loadnextgame(void)
 	sprintf(statusbar_txt, "should load game %i", gameindex);
 
 	// load the database into memory
-	dbstring = loadPDNdbstring(database);
+	dbstring = loadPDNdbstring(pdn_filename);
 
 	// extract game from database
 	loadgamefromPDNstring(gameindex, dbstring);
@@ -2345,7 +2344,7 @@ int loadpreviousgame(void)
 	gameindex = game_previews[i - 1].game_index;
 
 	sprintf(statusbar_txt, "should load game %i", gameindex);
-	dbstring = loadPDNdbstring(database);
+	dbstring = loadPDNdbstring(pdn_filename);
 	loadgamefromPDNstring(gameindex, dbstring);
 	free(dbstring);
 	sprintf(statusbar_txt, "loaded game %i of %i", i, (int)game_previews.size());
@@ -2491,7 +2490,7 @@ int selectgame(int how)
 		sprintf(statusbar_txt, "re-searching! game_previews.size() is %zd", game_previews.size());
 
 		// load database into dbstring:
-		dbstring = loadPDNdbstring(database);
+		dbstring = loadPDNdbstring(pdn_filename);
 
 		gamestring = (char *)malloc(GAMEBUFSIZE);
 		if (gamestring == NULL) {
@@ -2516,25 +2515,25 @@ int selectgame(int how)
 
 		// get a valid database filename. if we already have one, we reuse it,
 		// else we prompt the user to select a PDN database
-		if (strcmp(database, "") == 0) {
+		if (strcmp(pdn_filename, "") == 0) {
 
 			// no valid database name
 			// display a dialog box with the available databases
-			sprintf(database, "%s", cboptions.userdirectory);
-			result = getfilename(database, OF_LOADGAME);	// 1 on ok, 0 on cancel
+			sprintf(pdn_filename, "%s", cboptions.userdirectory);
+			result = getfilename(pdn_filename, OF_LOADGAME);	// 1 on ok, 0 on cancel
 			if (!result)
-				sprintf(database, "");
+				sprintf(pdn_filename, "");
 		}
 		else {
-			sprintf(statusbar_txt, "database is '%s'", database);
+			sprintf(statusbar_txt, "database is '%s'", pdn_filename);
 			result = 1;
 		}
 
-		if (strcmp(database, "") != 0 && result) {
+		if (strcmp(pdn_filename, "") != 0 && result) {
 			sprintf(statusbar_txt, "loading...");
 
 			// get number of games
-			i = PDNparseGetnumberofgames(database);
+			i = PDNparseGetnumberofgames(pdn_filename);
 			sprintf(statusbar_txt, "%i games in database", i);
 
 			if
@@ -2553,7 +2552,7 @@ int selectgame(int how)
 					SendMessage(hStatusWnd, SB_SETTEXT, (WPARAM) 0, (LPARAM) statusbar_txt);
 
 					// index database with pdnopen; fills pdn_positions[].
-					pdnopen(database, cbgame.gametype);
+					pdnopen(pdn_filename, cbgame.gametype);
 					reindex = 0;
 				}
 
@@ -2591,7 +2590,7 @@ int selectgame(int how)
 			SendMessage(hStatusWnd, SB_SETTEXT, (WPARAM) 0, (LPARAM) statusbar_txt);
 
 			// read database file into buffer 'dbstring'
-			dbstring = loadPDNdbstring(database);
+			dbstring = loadPDNdbstring(pdn_filename);
 
 			// fill the struct 'data' with the PDN headers
 			gamestring = (char *)malloc(GAMEBUFSIZE);
@@ -2966,7 +2965,7 @@ int createcheckerboard(HWND hwnd)
 
 	// in case of shell double click
 	if (strcmp(savegame_filename, "") != 0) {
-		sprintf(database, "%s", savegame_filename);
+		sprintf(pdn_filename, "%s", savegame_filename);
 		PostMessage(hwnd, WM_COMMAND, GAMELOAD, 0);
 	}
 
