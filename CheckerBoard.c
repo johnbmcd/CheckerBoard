@@ -150,7 +150,7 @@ HWND hStatusWnd;				// status window
 static HWND tbwnd;				// toolbar window
 HWND hDlgSelectgame;
 
-std::vector<gamepreview> game_previews;
+std::vector<gamepreview> game_previews;	// preview info displaed in game select dialog.
 
 // statusbar_txt holds the output string shown in the status bar - it is updated by WM_TIMER messages
 char statusbar_txt[1024];
@@ -2054,7 +2054,6 @@ int handletimer(void)
 	static int oldtogglebook;
 	static int oldtoggleengine;
 	static int engineIcon;
-	FILE *Lfp;
 	int ch = '=';
 
 	if (strcmp(oldstr, statusbar_txt) != 0) {
@@ -2066,11 +2065,7 @@ int handletimer(void)
 			if (strchr(statusbar_txt, ch) != NULL) {
 				strcpy(filename, CBdocuments);
 				PathAppend(filename, "testlog.txt");
-				Lfp = fopen(filename, "a");
-				if (Lfp != NULL) {
-					fprintf(Lfp, "%s\n", statusbar_txt);
-					fclose(Lfp);
-				}
+				writefile(filename, "a", "%s\n", statusbar_txt);
 			}
 		}
 	}
@@ -3723,7 +3718,7 @@ DWORD AutoThreadFunc(LPVOID param)
 	//  detect if it is allowed to do anything
 	char Lstr[256];
 	char windowtitle[256];
-	char analysisfilename[256];
+	char analysisfilename[MAX_PATH];
 	char testlogname[MAX_PATH];
 	char testsetname[MAX_PATH];
 	char statsfilename[MAX_PATH];
@@ -3977,7 +3972,7 @@ DWORD AutoThreadFunc(LPVOID param)
 					gamenumber = emstats.games;
 					sprintf(statusbar_txt,
 							"resuming match at game #%i, (+:%i -:%i =:%i unknown:%i)",
-							emstats.games,
+							emstats.games + 1,
 							emstats.wins,
 							emstats.losses,
 							emstats.draws,

@@ -117,9 +117,7 @@ void board8toFEN(int board[8][8], char *p, int color, int gametype)
 	char s[256];
 
 	/* prints a FEN string into p derived from board */
-
-	/* sample FEN string:
-		"W:W18,20,23,K25:B02,06,09."*/
+	/* sample FEN string: "W:W18,20,23,K25:B2,6,9" */
 	sprintf(p, "");
 
 	if (color == CB_BLACK)
@@ -155,5 +153,6 @@ void board8toFEN(int board[8][8], char *p, int color, int gametype)
 		}
 	}
 
+	/* remove last comma */
 	p[strlen(p) - 1] = 0;
 }
