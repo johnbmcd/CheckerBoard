@@ -166,15 +166,13 @@ int x1 = -1, x2 = -1, y1_ = -1, y2 = -1;
 char reply[ENGINECOMMAND_REPLY_SIZE];	// holds reply of engine to command requests
 char CBdirectory[MAX_PATH];				// holds the directory from where CB is started:
 char CBdocuments[MAX_PATH];				// CheckerBoard directory under My Documents
-char pdn_filename[MAX_PATH];					// current PDN database
-char userbookname[MAX_PATH];					// current userbook
+char pdn_filename[MAX_PATH];			// current PDN database
+char userbookname[MAX_PATH];			// current userbook
 CBmove cbmove;
 char savegame_filename[MAX_PATH];
-char engine1[255];
-char engine2[255];
 int currentengine = 1;					// 1=primary, 2=secondary
 int iselevenman;
-emstats_t emstats;
+emstats_t emstats;						// engine match stats and state
 int togglemode;							// 1-2-player toggle state
 int togglebook;							// engine book state (0/1/2/3)
 int toggleengine = 1;					// primary/secondary engine (1/2)
