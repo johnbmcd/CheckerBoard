@@ -159,7 +159,7 @@ char eventname[MAXNAME];		// event we're searching for
 char datename[MAXNAME];			// date we're searching for
 char commentname[MAXNAME];		// comment we're searching for
 int searchwithposition;			// search with position?
-char string[256];
+//char string[256];
 HMENU hmenu;					// menu handle
 double xmetric, ymetric;		//gives the size of the board8: one square is xmetric*ymetric
 int x1 = -1, x2 = -1, y1_ = -1, y2 = -1;
