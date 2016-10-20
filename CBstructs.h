@@ -5,6 +5,7 @@
 #include <time.h>
 
 #define COMMENTLENGTH 1024
+#define MAXNAME 256
 
 struct CBoptions {
 	// holds all options of CB.
@@ -59,15 +60,15 @@ struct gamebody_entry {
 struct PDNgame {
 	// structure for a PDN game
 	// standard 7-tag-roster
-	char event[256];
-	char site[256];
-	char date[256];
-	char round[256];
-	char black[256];
-	char white[256];
-	char resultstring[256];
-	char setup[256];						/* support 2 more tags for setup */
-	char FEN[256];
+	char event[MAXNAME];
+	char site[MAXNAME];
+	char date[MAXNAME];
+	char round[MAXNAME];
+	char black[MAXNAME];
+	char white[MAXNAME];
+	char resultstring[MAXNAME];
+	char setup[MAXNAME];					/* support 2 more tags for setup */
+	char FEN[MAXNAME];
 	int result;								/* internal conversion to integers */
 	int gametype;
 	int movesindex;							/* Current index in moves[]. */

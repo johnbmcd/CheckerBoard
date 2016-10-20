@@ -221,7 +221,7 @@ int pdnopen(char filename[256], int gametype)
 	size_t bytesread;
 	struct pos p;
 	int color = CB_BLACK;
-	char headername[256], headervalue[256];
+	char headername[MAXNAME], headervalue[MAXNAME];
 	int result;
 	int win = 0, loss = 0, draw = 0, unknown = 0;
 	char FEN[255];

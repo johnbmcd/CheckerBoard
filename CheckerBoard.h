@@ -60,7 +60,7 @@ void empdn_filename(char *filename);
 void emprogress_filename(char *filename);
 void emstats_filename(char *filename);
 int enginecommand(char command[256], char reply[ENGINECOMMAND_REPLY_SIZE]);
-int enginename(char str[256]);
+int enginename(char str[MAXNAME]);
 void get_game_clocks(double *black_clock, double *white_clock);
 void get_pdnsearch_stats(std::vector<gamepreview> &previews, RESULT &res);
 int get_startcolor(int gametype);
@@ -154,7 +154,6 @@ extern char CBdocuments[MAX_PATH];
 #define INTERRUPTENGINE 206
 #define ABORTENGINE 208
 
-
 // options menu
 #define LEVELEXACT 340
 #define LEVELINSTANT 341
@@ -199,14 +198,12 @@ extern char CBdocuments[MAX_PATH];
 #define CM_2PLAYER 315
 #define ENGINEVSENGINE 316
 
-
 #define COLORBOARDNUMBERS 330
 #define COLORHIGHLIGHT 331
 
 #define BOOKMODE_VIEW 360
 #define BOOKMODE_ADD 361
 #define BOOKMODE_DELETE 362
-
 
 
 // help menu

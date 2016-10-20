@@ -24,12 +24,8 @@
 //	-> checkers engine runs in 'Thread'
 //	-> animation runs in 'AniThread'
 //	-> game analysis & engine match are driven by 'AutoThread'
-#define STRICT
 
-// stdafx.h : include file for standard system include files,
-// or project specific include files that are used frequently, but
-// are changed infrequently
-//
+#define STRICT
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 
 // C RunTime Header Files
@@ -37,8 +33,6 @@
 #include <malloc.h>
 #include <memory.h>
 #include <tchar.h>
-
-// TODO: reference additional headers your program requires here
 #include <windows.h>
 #include <windowsx.h>
 #include <wininet.h>
@@ -86,8 +80,8 @@ PDNgame cbgame;
 // as one struct in the registry, instead of using lots of commands.
 CBoptions cboptions;
 
-int g_app_instance;				/* 0, 1, 2, ... */
-char g_app_instance_suffix[10]; /* "", "[1]", "[2]", ... */
+int g_app_instance;					/* 0, 1, 2, ... */
+char g_app_instance_suffix[10];		/* "", "[1]", "[2]", ... */
 DWORD g_SearchThreadId, g_AniThreadId, AutoThreadId;
 HANDLE hSearchThread, hAniThread, hAutoThread;
 int enginethreadpriority = THREAD_PRIORITY_NORMAL;	/* default priority setting*/
@@ -105,7 +99,7 @@ static BOOL enginestarting = FALSE; // true when a play command is issued to the
 BOOL gameover = FALSE;				/* true when autoplay or engine match game is finished */
 BOOL startmatch = TRUE;				/* startmatch is only true before engine match was started */
 BOOL newposition = TRUE;			/* is true when position has changed. used in analysis mode to
-								restart search and then reset */
+										restart search and then reset */
 BOOL startengine = FALSE;			/* is true if engine is expected to start */
 int result;
 time_ctrl_t time_ctrl;				/* Clock control. */
@@ -125,7 +119,7 @@ int handicap = 0;
 int testset_number = 0;
 int playnow = 0;					/* playnow is passed to the checkers engines, it is set to nonzero if the user chooses 'play' */
 bool reset_move_history;			/* send option to engine to reset its list of game moves. */
-int gameindex = 0;					/* game to load/replace from/in a database*/
+int gameindex = 0;					/* game to load/replace from/in a database */
 
 /* dll globals */
 
@@ -146,7 +140,7 @@ CB_GETSTRING enginename1 = 0, enginename2 = 0;
 CB_GETGAMETYPE CBgametype = 0;		// built in gametype and islegal functions
 CB_ISLEGAL CBislegal = 0;
 
-int enginename(char Lstr[256]);
+int enginename(char name[MAXNAME]);
 BOOL fFreeResult;
 
 // instance and window handles
@@ -160,14 +154,14 @@ std::vector<gamepreview> game_previews;
 
 // statusbar_txt holds the output string shown in the status bar - it is updated by WM_TIMER messages
 char statusbar_txt[1024] = "";
-char playername[256];		// name of the player we are searching games of
-char eventname[256];		// event we're searching for
-char datename[256];			// date we're searching for
-char commentname[256];		// comment we're searching for
-int searchwithposition;		// search with position?
+char playername[MAXNAME];		// name of the player we are searching games of
+char eventname[MAXNAME];		// event we're searching for
+char datename[MAXNAME];			// date we're searching for
+char commentname[MAXNAME];		// comment we're searching for
+int searchwithposition;			// search with position?
 char string[256];
-HMENU hmenu;				// menu handle
-double xmetric, ymetric;	//gives the size of the board8: one square is xmetric*ymetric
+HMENU hmenu;					// menu handle
+double xmetric, ymetric;		//gives the size of the board8: one square is xmetric*ymetric
 int x1 = -1, x2 = -1, y1_ = -1, y2 = -1;
 
 char reply[ENGINECOMMAND_REPLY_SIZE];	// holds reply of engine to command requests
@@ -2401,8 +2395,8 @@ char *loadPDNdbstring(char *dbname)
 void assign_headers(gamepreview &preview, char *pdn)
 {
 	char *tag;
-	char header[256];
-	char headername[256], headervalue[256];
+	char header[MAXNAME];
+	char headername[MAXNAME], headervalue[MAXNAME];
 	char token[1024];
 
 	preview.white[0] = 0;
@@ -3742,7 +3736,7 @@ DWORD AutoThreadFunc(LPVOID param)
 	int i;
 	const int maxmovecount = 200;
 	static char FEN[256];
-	char engine1[256], engine2[256];	// holds engine names
+	char engine1[MAXNAME], engine2[MAXNAME];	// holds engine names
 	int matchcontinues = 0;
 
 	// autothread is started at startup, and keeps running until the program
@@ -4259,9 +4253,9 @@ int makeanalysisfile(char *filename)
 	int i;
 	char s[256];
 	char titlestring[256];
-	char c1[256] = "D84020";
-	char c2[256] = "A0C0C0";
-	char c3[256] = "444444";
+	char c1[] = "D84020";
+	char c2[] = "A0C0C0";
+	char c3[] = "444444";
 	FILE *fp;
 	char CPUinfostring[64];
 
@@ -4386,7 +4380,7 @@ int gametype(void)
 	// returns the game type which the current engine plays
 	// if the engine has no game type associated, it will return 21 for english checkers
 	char reply[ENGINECOMMAND_REPLY_SIZE];
-	char command[256];
+	char command[MAXNAME];
 
 	sprintf(reply, "");
 	sprintf(command, "get gametype");
@@ -4398,7 +4392,7 @@ int gametype(void)
 	return GT_ENGLISH;
 }
 
-int enginecommand(char command[256], char reply[ENGINECOMMAND_REPLY_SIZE])
+int enginecommand(char command[MAXNAME], char reply[ENGINECOMMAND_REPLY_SIZE])
 // sends a command to the current engine, defined with the currentengine variable
 // wraps a 'safety layer around calls to engine command by checking if this is supported */
 {
@@ -4414,7 +4408,7 @@ int enginecommand(char command[256], char reply[ENGINECOMMAND_REPLY_SIZE])
 	return result;
 }
 
-int enginename(char Lstr[256])
+int enginename(char Lstr[MAXNAME])
 // returns the name of the current engine in Lstr
 {
 	// set a default
@@ -4422,24 +4416,24 @@ int enginename(char Lstr[256])
 
 	if (currentengine == 1) {
 		if (enginecommand1 != 0) {
-			if ((enginecommand1) ("name", Lstr))
+			if ((enginecommand1)("name", Lstr))
 				return 1;
 		}
 
 		if (enginename1 != 0) {
-			(enginename1) (Lstr);
+			(enginename1)(Lstr);
 			return 1;
 		}
 	}
 
 	if (currentengine == 2) {
 		if (enginecommand2 != 0) {
-			if ((enginecommand2) ("name", Lstr))
+			if ((enginecommand2)("name", Lstr))
 				return 1;
 		}
 
 		if (enginename2 != 0) {
-			(enginename2) (Lstr);
+			(enginename2)(Lstr);
 			return 1;
 		}
 	}
@@ -4797,8 +4791,8 @@ void doload(PDNgame *game, char *gamestring, int *color, int board8[8][8])
 	// it into a game
 	// read headers
 	char *p, *start;
-	char header[256], token[1024];
-	char headername[256], headervalue[256];
+	char header[MAXNAME], token[1024];
+	char headername[MAXNAME], headervalue[MAXNAME];
 	int i;
 	int issetup = 0;
 	PDN_PARSE_STATE state;

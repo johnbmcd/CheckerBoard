@@ -157,7 +157,7 @@ BOOL CALLBACK ThreeMoveDialogFunc(HWND hdwnd, UINT message, WPARAM wParam, LPARA
 
 BOOL CALLBACK DialogFuncSavegame(HWND hdwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	char Lstr[256];
+	char Lstr[MAXNAME];
 
 	switch (message) {
 	case WM_INITDIALOG:
@@ -232,8 +232,8 @@ BOOL CALLBACK DialogFuncSelectgame(HWND hdwnd, UINT message, WPARAM wParam, LPAR
 	// of the game chosen is written to the global variable selected_game
 	int i, n, j;
 	HWND hHead;
-	char Lstr[256];
-	char black[256], white[256];
+	char Lstr[MAXNAME];
+	char black[MAXNAME], white[MAXNAME];
 	extern std::vector<gamepreview> game_previews;
 	HD_NOTIFY *hdnptr;
 	HD_ITEM *hdiptr;
@@ -489,10 +489,10 @@ BOOL CALLBACK DialogSearchMask(HWND hdwnd, UINT message, WPARAM wParam, LPARAM l
 	// it sets the global variables in checkerboard.c which hold
 	// name of player, event, date, comments in pdn which the user
 	// wants to search for.
-	extern char playername[256];	// globals in checkerboard.c
-	extern char eventname[256];		// i should wrap these in a struct
-	extern char datename[256];		// and pass it as parameter!
-	extern char commentname[256];
+	extern char playername[MAXNAME];	// globals in checkerboard.c
+	extern char eventname[MAXNAME];		// i should wrap these in a struct
+	extern char datename[MAXNAME];		// and pass it as parameter!
+	extern char commentname[MAXNAME];
 	extern int searchwithposition;
 
 	switch (message) {
@@ -543,7 +543,7 @@ BOOL CALLBACK DialogSearchMask(HWND hdwnd, UINT message, WPARAM wParam, LPARAM l
 BOOL CALLBACK DialogFuncEnginecommand(HWND hdwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	// allow entry of an engine command.
-	char command[256], reply[ENGINECOMMAND_REPLY_SIZE];
+	char command[MAXNAME], reply[ENGINECOMMAND_REPLY_SIZE];
 
 	switch (message) {
 	case WM_INITDIALOG:
@@ -636,7 +636,7 @@ BOOL CALLBACK DialogFuncMoreOptions(HWND hwnd, UINT msg, UINT wparam, LONG lpara
 {
 	char buf[MAX_PATH];
 	static MORE_ENGINE_OPTIONS current_options, new_options;
-	char command[256], reply[ENGINECOMMAND_REPLY_SIZE];
+	char command[MAXNAME], reply[ENGINECOMMAND_REPLY_SIZE];
 
 	switch (msg) {
 	case WM_INITDIALOG:
@@ -719,7 +719,7 @@ BOOL CALLBACK EngineOptionsFunc(HWND hdwnd, UINT message, WPARAM wParam, LPARAM 
 	// sets engine options for primary and secondary engines.
 	// TODO: if settings are not changed, but OK pressed, don't send command to the
 	// engine
-	char Lstr[256];
+	char Lstr[MAXNAME];
 	static ENGINE_OPTIONS primaryoptions;
 	static ENGINE_OPTIONS secondaryoptions;
 	static ENGINE_OPTIONS currentoptions;
@@ -728,7 +728,7 @@ BOOL CALLBACK EngineOptionsFunc(HWND hdwnd, UINT message, WPARAM wParam, LPARAM 
 	static int availableMB;
 	int i, egdb_max;
 
-	extern char reply[256];
+	extern char reply[MAXNAME];
 	extern int currentengine;
 	extern int togglebook;
 
@@ -906,9 +906,9 @@ int getoptionsfromdialog(HWND hdwnd, ENGINE_OPTIONS *options)
 
 int setengineoptions(HWND hdwnd, int availableMB, ENGINE_OPTIONS *oldoptions, ENGINE_OPTIONS *newoptions)
 {
-	char Lstr[256];
-	char commandstring[256];
-	char reply[256];
+	char Lstr[MAXNAME];
+	char commandstring[MAXNAME];
+	char reply[MAXNAME];
 
 	if (newoptions->db_MB + newoptions->hash_MB > availableMB - 32) {
 		sprintf(Lstr,
