@@ -63,12 +63,16 @@
 
 
 /*----------> includes */
+#include <ShlObj.h>
+#include <Shlwapi.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include <windows.h>
 #include "cb_interface.h"
 #include "enginedefs.h"
+
+#define VERSION "1.04"
 
 /* Piece definitions, defined in cb_interface.h  */
 #define WHITE CB_WHITE
@@ -144,13 +148,25 @@ clock_t starttime;
 double absolute_maxtime;
 
 #ifdef LOG_TIME_MGMT
-const char *filename = "d:/temp/dama.log";
+char logfilename[MAX_PATH];
 
 void init_logfile()
 {
 	FILE *fp;
+	char path[MAX_PATH];
 
-	fp = fopen(filename, "w");
+	/* Create directories for Simplech under My Documents. */
+	if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_PERSONAL, NULL, 0, path))) {
+
+		/* Create the directories under My Documents. */
+		PathAppend(path, "Martin Fierz");
+		CreateDirectory(path, NULL);
+
+		PathAppend(path, "Dama");
+		CreateDirectory(path, NULL);
+	}
+	sprintf(logfilename, "%s\\Dama.log", path);
+	fp = fopen(logfilename, "w");
 	fclose(fp);
 }
 
@@ -163,7 +179,7 @@ void log(const char *fmt, ...)
 	if (fmt == NULL)
 		return;
 
-	fp = fopen(filename, "a");
+	fp = fopen(logfilename, "a");
 	if (fp == NULL)
 		return;
 
@@ -181,7 +197,9 @@ BOOL WINAPI DllMain(HANDLE hDLL, DWORD dwReason, LPVOID lpReserved)
 	switch (dwReason) {
 	case DLL_PROCESS_ATTACH:
 		/* dll loaded. put initializations here! */
+#ifdef LOG_TIME_MGMT
 		init_logfile();
+#endif
 		break;
 
 	case DLL_PROCESS_DETACH:
@@ -215,12 +233,12 @@ int WINAPI enginecommand(char str[256], char reply[256])
 	sprintf(reply, "?");
 
 	if (strcmp(command, "name") == 0) {
-		sprintf(reply, "dama italiana 1.03");
+		sprintf(reply, "Dama Italiana %s", VERSION);
 		return 1;
 	}
 
 	if (strcmp(command, "about") == 0) {
-		sprintf(reply, "Dama Italiana 1.02\n\n2001 by Martin Fierz");
+		sprintf(reply, "Dama Italiana %s\n\n2001 by Martin Fierz", VERSION);
 		return 1;
 	}
 
@@ -381,6 +399,7 @@ int WINAPI getmove
 	*/
 	int i;
 	int value;
+	bool incremental;
 	double desired, new_iter_maxtime;
 	double remaining, increment;
 	int board[46];
@@ -442,7 +461,7 @@ int WINAPI getmove
 	play = playnow;
 
 	starttime = clock();
-	if (get_incremental_times(info, moreinfo, &increment, &remaining)) {
+	if (incremental = get_incremental_times(info, moreinfo, &increment, &remaining)) {
 		if (remaining < increment) {
 			desired = remaining / 1.5;
 			absolute_maxtime = remaining;
@@ -467,11 +486,13 @@ int WINAPI getmove
 	value = checkers(board, color, new_iter_maxtime, str);
 
 #ifdef LOG_TIME_MGMT
-	double elapsed = (clock() - starttime) / (double)CLK_TCK;
-	log("incr %.1f, remaining %.3f, abs maxt %.3f, desired %.1f, new iter maxt %.1f, actual %.3f, margin %.3f %s\n",
-		increment, remaining, absolute_maxtime, desired, new_iter_maxtime, 
-		elapsed, remaining - elapsed,
-		remaining - elapsed < 0 ? "***" : "");
+	if (incremental) {
+		double elapsed = (clock() - starttime) / (double)CLK_TCK;
+		log("incr %.1f, remaining %.3f, abs maxt %.3f, desired %.3f, new iter maxt %.3f, actual %.3f, margin %.3f %s\n",
+			increment, remaining, absolute_maxtime, desired, new_iter_maxtime, 
+			elapsed, remaining - elapsed,
+			remaining - elapsed < 0 ? "***" : "");
+	}
 #endif
 	for (i = 5; i <= 40; i++)
 		if (board[i] == FREE)
