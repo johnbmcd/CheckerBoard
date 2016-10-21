@@ -23,7 +23,7 @@ int num_3move_ballots(CBoptions *options);
 int PDNtoclipboard(HWND hwnd, PDNgame &game);
 void setmenuchecks(struct CBoptions *CBoptions, HMENU hmenu);
 char *textfromclipboard(HWND hwnd, char *str);
-int texttoclipboard(char *text);
+int texttoclipboard(const char *text);
 double timelevel_to_time(int level);
 int timelevel_to_token(int level);
 int timetoken_to_level(int token);

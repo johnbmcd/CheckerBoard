@@ -52,7 +52,7 @@ int builtinislegal(int board[8][8], int color, int from, int to, struct CBmove *
 int changeCBstate(int oldstate, int newstate);
 HWND CreateAToolBar(HWND hwndParent);
 int createcheckerboard(HWND hwnd);
-void doload(PDNgame *PDNgame, char *gamestring, int *color, int board8[8][8]);
+void doload(PDNgame *PDNgame, const char *gamestring, int *color, int board8[8][8]);
 int domove(struct CBmove m, int b[8][8]);
 int dostats(int result, int movecount, int gamenumber, emstats_t *stats);
 void emlog_filename(char *filename);
@@ -90,7 +90,7 @@ bool match_is_resumable(void);
 void move4tonotation(struct CBmove, char str[80]);
 void newgame(void);
 int num_11man_ballots(void);
-void PDNgametoPDNstring(PDNgame &game, char *pdnstring, char *lf);
+void PDNgametoPDNstring(PDNgame &game, std::string &pdnstring, char *lineterm);
 void pdntogame(int startposition[8][8], int startcolor);
 int read_match_stats(void);
 void reset_match_stats(void);
@@ -102,7 +102,6 @@ int setenginebusy(int value);
 int setenginestarting(int value);
 int showfile(char *filename);
 int start3move(int opening_index);
-int texttoclipboard(char *text);
 int undomove(struct CBmove m, int b[8][8]);
 
 extern char CBdirectory[MAX_PATH];	// holds the directory from where CB is started:

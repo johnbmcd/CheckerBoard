@@ -16,22 +16,19 @@ size_t getfilesize(char *filename)
 	// returns the file size, in bytes, of a file with name file, rounded up to the
 	// next multiple of 1024 = 1KB.
 	FILE *fp;
-
-	//int filesize=0;
+	char buffer[1024];
 	size_t filesize = 0;
-	char *buffer;
 
-	buffer = (char *)malloc(1024);
-	if (buffer == 0)
-		return -1;
 	fp = fopen(filename, "r");
+	if (!fp)
+		return(0);
+
 	while (!feof(fp))
 		filesize += fread(buffer, 1024, 1, fp);
 
 	filesize++;
 
 	fclose(fp);
-	free(buffer);
 	return filesize * 1024;
 }
 
@@ -40,7 +37,7 @@ int PDNparseGetnumberofgames(char *filename)
 	// returns the number of games in a PDN file
 	FILE *fp;
 	char *buffer;
-	char game[MAXGAMESIZE];
+	std::string game;
 	char *p;
 	size_t filesize;
 	int ngames;
@@ -72,7 +69,6 @@ int PDNparseGetnumberofgames(char *filename)
 	ngames = 0;
 	while (PDNparseGetnextgame(&p, game))
 		++ngames;
-	buffer[bytesread] = 0;
 
 	free(buffer);
 	return(ngames);
@@ -90,9 +86,22 @@ inline bool is_pdnquote(uint8_t c)
 	return(false);
 }
 
-int PDNparseGetnextgame(char **start, char *game)
+/*
+ * Append length characters from src to dest.
+ */
+void string_append(std::string &dest, char *src, size_t length)
 {
-	/* getnextgame */
+	char savechar;
+
+	/* Temporarily terminate src so we can treat src as a null-terminated C string. */
+	savechar = src[length];
+	src[length] = 0;
+	dest += src;
+	src[length] = savechar;
+}
+
+int PDNparseGetnextgame(char **start, std::string &game)
+{
 
 	/* searches a game in buffer, starting at **start. a 
 		game is defined as everything between **start and
@@ -111,8 +120,10 @@ int PDNparseGetnextgame(char **start, char *game)
 	char *p_org;
 	int headersdone = 0;
 
+	game.clear();
 	if ((*start) == 0)
 		return 0;
+
 	p = (*start);
 	p_org = p;
 	while (*p != 0) {
@@ -167,40 +178,35 @@ int PDNparseGetnextgame(char **start, char *game)
 		/* check for game terminators*/
 		if (p[0] == '[' && headersdone) {
 			p--;
-			strncpy(game, *start, (p -*start));
-			game[p -*start] = 0;
+			string_append(game, *start, (p - *start));
 			*start = p;
 			return (int)(p - p_org);
 		}
 
 		if (p[0] == '1' && p[1] == '-' && p[2] == '0') {
 			p += 3;
-			strncpy(game, *start, (p -*start));
-			game[p -*start] = 0;
+			string_append(game, *start, (p -*start));
 			*start = p;
 			return (int)(p - p_org);
 		}
 
 		if (p[0] == '0' && p[1] == '-' && p[2] == '1' && !isdigit((uint8_t) p[3])) {
 			p += 3;
-			strncpy(game, *start, p - (*start));
-			game[p -*start] = 0;
+			string_append(game, *start, (p - *start));
 			*start = p;
 			return (int)(p - p_org);
 		}
 
 		if (p[0] == '*') {
 			p++;
-			strncpy(game, *start, p - (*start));
-			game[p -*start] = 0;
+			string_append(game, *start, (p - *start));
 			*start = p;
 			return (int)(p - p_org);
 		}
 
 		if (p[0] == '1' && p[1] == '/' && p[2] == '2' && p[3] == '-' && p[4] == '1' && p[5] == '/' && p[6] == '2') {
 			p += 7;
-			strncpy(game, *start, p - (*start));
-			game[p -*start] = 0;
+			string_append(game, *start, (p - *start));
 			*start = p;
 			return (int)(p - p_org);
 		}
@@ -209,8 +215,7 @@ int PDNparseGetnextgame(char **start, char *game)
 	}
 
 	if (headersdone) {
-		strncpy(game, *start, p - (*start));
-		game[p -*start] = 0;
+		string_append(game, *start, (p - *start));
 		*start = p;
 		return (int)(p - p_org);
 	}
@@ -218,7 +223,7 @@ int PDNparseGetnextgame(char **start, char *game)
 	return 0;
 }
 
-int PDNparseGetnextheader(char **start, char *header)
+int PDNparseGetnextheader(const char **start, char *header)
 {
 	/* getnextheader */
 
@@ -230,7 +235,7 @@ int PDNparseGetnextheader(char **start, char *header)
 	if a header is found, getnextheader sets **start
 	to the next character after the header.
 	the header is returned in *header */
-	char *p, *q;
+	const char *p, *q;
 	int i;
 
 	if (*start == 0)
@@ -264,7 +269,7 @@ int PDNparseGetnextheader(char **start, char *header)
 	return 1;
 }
 
-int PDNparseGetnexttag(char **start, char *tag)
+int PDNparseGetnexttag(const char **start, char *tag)
 {
 	/* getnexttag */
 
@@ -276,7 +281,7 @@ int PDNparseGetnexttag(char **start, char *tag)
 	if a tag is found, getnexttag sets **start
 	to the next character after the header.
 	the tag is returned in *tag */
-	char *p, *q;
+	const char *p, *q;
 	int i;
 
 	if ((*start) == 0)
@@ -344,12 +349,12 @@ inline void trim_trailing_whitespace(char *buf, int len)
  * The function return value is true if a token is successfully parsed.
  * If we reach the end of the pdn buffer and found nothing but whitespace, the return value is false.
  */
-int PDNparseGetnextPDNtoken(char **start, char *token)
+int PDNparseGetnextPDNtoken(const char **start, char *token)
 {
 	int len = 0;
 	PDN_PARSE_STATE state;
 	int tokentype = PDN_DONE;
-	char *p, *possible_end, *tok_start;
+	const char *p, *possible_end, *tok_start;
 
 	/* Skip past leading white space. */
 	p = (*start);
@@ -366,7 +371,7 @@ int PDNparseGetnextPDNtoken(char **start, char *token)
 		switch (state) {
 		case PDN_IDLE:
 			/* We are only in idle until we see the first non-space. */
-			if (isdigit((uint8_t) * p))
+			if (isdigit((uint8_t)*p))
 				state = PDN_READING_FROM;
 			else if (*p == '{')
 				state = PDN_CURLY_COMMENT;
@@ -384,7 +389,7 @@ int PDNparseGetnextPDNtoken(char **start, char *token)
 			 * until we see something we recognize, then return the fluff as a non-move.
 			 */
 			tokentype = PDN_FLUFF;
-			if (isdigit((uint8_t) * p) || *p == '{' || *p == '(' || is_pdnquote(*p)) {
+			if (isdigit((uint8_t)*p) || *p == '{' || *p == '(' || is_pdnquote(*p)) {
 				state = PDN_DONE;
 				len = (int)(p - tok_start);
 				memcpy(token, tok_start, len);
@@ -428,7 +433,7 @@ int PDNparseGetnextPDNtoken(char **start, char *token)
 #endif
 
 		case PDN_READING_FROM:
-			if (isdigit((uint8_t) * p))
+			if (isdigit((uint8_t)*p))
 				++p;
 
 			/* If we get a forward slash then its a good chance we have a game draw result. */
@@ -464,7 +469,7 @@ int PDNparseGetnextPDNtoken(char **start, char *token)
 			/* Here we allow white space or a move number.  Anything else 
 			 * means its not a move and we call it fluff.
 			 */
-			if (isdigit((uint8_t) * p)) {
+			if (isdigit((uint8_t)*p)) {
 				++p;
 				state = PDN_READING_TO;
 			}
@@ -478,7 +483,7 @@ int PDNparseGetnextPDNtoken(char **start, char *token)
 			break;
 
 		case PDN_READING_TO:
-			if (isdigit((uint8_t) * p))
+			if (isdigit((uint8_t)*p))
 				++p;
 			else if (is_pdn_move_sep(*p)) {
 				possible_end = p;	/* Remember in case this was the end of the move. */
@@ -527,7 +532,7 @@ int PDNparseGetnextPDNtoken(char **start, char *token)
 			/* Here we allow white space or a move number.  Anything else 
 			 * means its not more jump moves and we roll back to the end of the valid move.
 			 */
-			if (isdigit((uint8_t) (*p))) {
+			if (isdigit((uint8_t)(*p))) {
 
 				/* This is now part of a good move, so we can cancel any previous rollback point. */
 				possible_end = 0;
@@ -682,7 +687,7 @@ int PDNparseTokentonumbers(char *token, int *from, int *to)
 		return(0);			/* not a move. */
 }
 
-int PDNparseGetnexttoken(char **start, char *token)
+int PDNparseGetnexttoken(const char **start, char *token)
 {
 	/*getnexttoken 
 	gets the next token in buffer, starting at start. a token
@@ -696,7 +701,7 @@ int PDNparseGetnexttoken(char **start, char *token)
 	if a token is found, getnexttoken sets **start
 	to the next character after the token.
 	the token is returned in *token */
-	char *p, *q;
+	const char *p, *q;
 	int i;
 
 	if ((*start) == 0)
@@ -704,7 +709,7 @@ int PDNparseGetnexttoken(char **start, char *token)
 	p = (*start);
 
 	// skip leading whitespace characters
-	while (is_pdnspace((uint8_t) * p))
+	while (is_pdnspace((uint8_t)*p))
 		*p++;
 
 	i = 0;
@@ -713,7 +718,7 @@ int PDNparseGetnexttoken(char **start, char *token)
 	// check for comment
 	if (*p == '{') {
 
-	// comment
+		// comment
 		while (*p != '}' && *p != 0) {
 			token[i] = *p;
 			p++;

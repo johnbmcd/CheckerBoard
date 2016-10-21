@@ -216,7 +216,10 @@ int pdnopen(char filename[256], int gametype)
 	int maxpos;
 	int i, ply, gamenumber;
 	FILE *fp;
-	char *start, *tag, *startheader, *starttoken, *buffer, game[MAXGAMESIZE], header[256], token[1024];
+	std::string game;
+	char *start, *buffer, header[256], token[1024];
+	const char *startheader, *tag;
+	const char *starttoken;
 	int from, to;
 	size_t bytesread;
 	struct pos p;
@@ -273,15 +276,9 @@ int pdnopen(char filename[256], int gametype)
 	start = buffer;
 	gamenumber = 0;
 	while (PDNparseGetnextgame(&start, game)) {
-
-	//pdnparsenextgame puts PDN of one game in "game" and terminates "game" with a 0.					
-		// load headers
-		startheader = game;
-
-		// double check zero termination of game
-		game[MAXGAMESIZE - 1] = 0;
 		result = CB_UNKNOWN;
 		FEN[0] = 0;
+		startheader = game.c_str();
 		while (PDNparseGetnextheader(&startheader, header)) {
 			tag = header;
 			PDNparseGetnexttoken(&tag, headername);

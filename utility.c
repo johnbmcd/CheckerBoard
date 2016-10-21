@@ -242,27 +242,21 @@ int initcolorstruct(HWND hwnd, CHOOSECOLOR *ccs, int index)
 
 int FENtoclipboard(HWND hwnd, int board8[8][8], int color, int gametype)
 {
-	char *FENstring;
+	char FENstring[1000];
 
-	FENstring = (char *)malloc(GAMEBUFSIZE);
 	board8toFEN(board8, FENstring, color, gametype);
 	MessageBox(hwnd, FENstring, "printout is", MB_OK);
 	texttoclipboard(FENstring);
-	free(FENstring);
 	return 1;
 }
 
 int PDNtoclipboard(HWND hwnd, PDNgame &game)
 {
-	char *gamestring;
+	std::string gamestring;
 
-	// allocate memory for game, print game to memory, call texttoclipboard to
-	// place it on clipboard.
-	gamestring = (char *)malloc(GAMEBUFSIZE);
 	PDNgametoPDNstring(game, gamestring, "\r\n");
-	MessageBox(hwnd, gamestring, "printout is", MB_OK);
-	texttoclipboard(gamestring);
-	free(gamestring);
+	MessageBox(hwnd, gamestring.c_str(), "printout is", MB_OK);
+	texttoclipboard(gamestring.c_str());
 	return 1;
 }
 
@@ -301,15 +295,17 @@ int writefile(char *filename, char *mode, char *fmt, ...)
 	return(0);
 }
 
-int texttoclipboard(char *text)
+int texttoclipboard(const char *text)
 {
 	// generic text-to-clipboard: pass a text, and it gets put
 	// on the clipboard
+	size_t size;
 	HGLOBAL hOut;
 	char *gamestring;
 
 	// allocate memory for the game string
-	hOut = GlobalAlloc(GHND | GMEM_DDESHARE, (DWORD) GAMEBUFSIZE);
+	size = 1 + strlen(text);
+	hOut = GlobalAlloc(GHND | GMEM_DDESHARE, (DWORD)size);
 
 	// and lock it
 	gamestring = (char *)GlobalLock(hOut);
@@ -330,18 +326,12 @@ char *textfromclipboard(HWND hwnd, char *str)
 {
 	// read a text from the clipboard; return it if it is valid text, NULL otherwise
 	// prints an error message in *str if an error occurs
-	int loadok = 0;
-	char *gamestring = NULL;
+	char *gamestring;
 	char *p;
 	HGLOBAL hIn;
-	int i;
+	size_t length;
 
-	gamestring = (char *)malloc(GAMEBUFSIZE);
-	if (gamestring == NULL) {
-		sprintf(str, "clipboard open failed");
-		return 0;
-	}
-
+	gamestring = NULL;
 	if (OpenClipboard(hwnd)) {
 		hIn = GetClipboardData(CF_TEXT);
 		if (hIn != NULL) {
@@ -349,23 +339,20 @@ char *textfromclipboard(HWND hwnd, char *str)
 			if (p == NULL) {
 				sprintf(str, "globalloc failed");
 				GlobalUnlock(hIn);
-				free(gamestring);
-				gamestring = NULL;
 				CloseClipboard();
-				return gamestring;
+				return NULL;
 			}
 
-			// copy data from clipboard
-			for (i = 0; i < GAMEBUFSIZE - 1; i++) {
-				gamestring[i] = *p;
-				if (*p == 0)
-					break;
-				*p++;
+			length = strlen(p);
+			gamestring = (char *)malloc(length + 1);
+			if (!gamestring) {
+				sprintf(str, "malloc failed");
+				GlobalUnlock(hIn);
+				CloseClipboard();
+				return NULL;
 			}
 
-			*p = 0;
-			gamestring[GAMEBUFSIZE - 1] = 0;
-			loadok = 1;
+			strcpy(gamestring, p);
 			GlobalUnlock(hIn);
 		}
 		else {

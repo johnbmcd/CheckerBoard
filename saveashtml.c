@@ -22,7 +22,7 @@ int saveashtml(char *filename, PDNgame *game)
 {
 	// produces a html file with javascript replay of the current game
 	FILE *fp;
-	char *gamestring;
+	std::string gamestring;
 	int i, j;
 	int movei;
 	int movenumber = 0;
@@ -299,12 +299,8 @@ int saveashtml(char *filename, PDNgame *game)
 	fprintf(fp, "<H3>%s - %s</H3>\n", game->black, game->white);
 
 	// print moves
-	gamestring = (char *)malloc(GAMEBUFSIZE);
-	if (gamestring != NULL) {
-		PDNgametoPDNHTMLstring(game, gamestring);
-		fprintf(fp, "%s", gamestring);
-		free(gamestring);
-	}
+	PDNgametoPDNHTMLstring(game, gamestring);
+	fprintf(fp, "%s", gamestring.c_str());
 
 	fprintf(fp,
 			"<P><FONT SIZE=\"-2\">\ngenerated with <A HREF=\"http://www.fierz.ch/checkers.htm\">CheckerBoard %s</A><br>Use the buttons below the board to move through the game or click a move in the notation to jump to that position.You can select and copy the PDN above and paste it into CheckerBoard.</FONT>",
@@ -421,41 +417,34 @@ int coortohtml(struct coor c, int gametype)
 	}
 }
 
-void PDNgametoPDNHTMLstring(PDNgame *game, char *pdnstring)
+void PDNgametoPDNHTMLstring(PDNgame *game, std::string &pdnstring)
 {
-	/* prints a formatted PDN in *pdnstring*/
-
+	/* prints a formatted PDN in pdnstring */
 	/* is used for PDN to html*/
 
-	/* warning! \n is no good for printf, it s acutually \r\n*/
+	/* warning! \n is no good for printf, it s actually \r\n*/
 	char s[256];
 	int counter, i;
 	size_t movei;
 
 	/* I: print headers */
-	sprintf(pdnstring, "");
+	pdnstring.clear();
 	sprintf(s, "[Event \"%s\"]<BR>", game->event);
-	strcat(pdnstring, s);
+	pdnstring += s;
 
-	//sprintf(s,"[Site \"%s\"]<BR>",game->site);
-	//strcat(pdnstring,s);
-	//sprintf(s,"[Date \"%s\"]<BR>",game->date);
-	//strcat(pdnstring,s);
-	//sprintf(s,"[Round \"%s\"]<BR>",game->round);
-	//strcat(pdnstring,s);
 	sprintf(s, "[Black \"%s\"]<BR>", game->black);
-	strcat(pdnstring, s);
+	pdnstring += s;
 	sprintf(s, "[White \"%s\"]<BR>", game->white);
-	strcat(pdnstring, s);
+	pdnstring += s;
 	sprintf(s, "[Result \"%s\"]<BR>", game->resultstring);
-	strcat(pdnstring, s);
+	pdnstring += s;
 
 	/* if this was after a setup, add FEN and setup header*/
 	if (strcmp(game->setup, "") != 0) {
 		sprintf(s, "[Setup \"%s\"]<BR>", game->setup);
-		strcat(pdnstring, s);
+		pdnstring += s;
 		sprintf(s, "[FEN \"%s\"]<BR>", game->FEN);
-		strcat(pdnstring, s);
+		pdnstring += s;
 	}
 
 	/* print PDN */
@@ -466,30 +455,28 @@ void PDNgametoPDNHTMLstring(PDNgame *game, char *pdnstring)
 
 		// print anchor
 		sprintf(s, "<a href=\"javascript:moveto(%i)\" name=\"%i\" class=\"move\">", i, i);
-
-		strcat(pdnstring, s);
+		pdnstring += s;
 
 		/* print the move number */
 		if (i % 2) {
 			sprintf(s, "%i. ", (int)((i + 1) / 2));
 			counter += (int)strlen(s);
-			strcat(pdnstring, s);
+			pdnstring += s;
 		}
 
 		/* print the move */
 		sprintf(s, "%s", game->moves[movei].PDN);
-		strcat(pdnstring, s);
+		pdnstring += s;
 
 		// close anchor
-		strcat(pdnstring, "</a> ");
-
+		pdnstring += "</a> ";
 		i++;
 	}
 
 	/* add game terminator */
 	sprintf(s, "*");	/* Game terminator is '*' as per PDN 3.0. See http://pdn.fmjd.org/ */
 	counter += (int)strlen(s);
-	strcat(pdnstring, s);
+	pdnstring += s;
 }
 
 /*

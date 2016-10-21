@@ -620,16 +620,13 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			// saves the game stored in cbgame
 			fp = fopen(savegame_filename, "at+");
 
-			// file with filename opened	- we append to that file
+			// file with savegame_filename opened - we append to that file
 			// filename was set by save game
 			if (fp != NULL) {
-				gamestring = (char *)malloc(GAMEBUFSIZE);
-				if (gamestring != NULL) {
-					PDNgametoPDNstring(cbgame, gamestring, "\n");
-					fprintf(fp, "%s", gamestring);
-					free(gamestring);
-				}
+				std::string gamepdn;
 
+				PDNgametoPDNstring(cbgame, gamepdn, "\n");
+				fprintf(fp, "\n%s", gamepdn.c_str());
 				fclose(fp);
 			}
 
@@ -670,7 +667,6 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 
 		case GAMEINFO:
 			// display a box with information on the game
-			//cpuid(str);
 			sprintf(str1024,
 					"Black: %s\nWhite: %s\nEvent: %s\nResult: %s",
 					cbgame.black,
@@ -2185,7 +2181,8 @@ int addmovetouserbook(int b[8][8], struct CBmove *move)
 int handlegamereplace(int replaceindex, char *databasename)
 {
 	FILE *fp;
-	char *gamestring, *dbstring, *p;
+	std::string gamestring;
+	char *dbstring, *p;
 	size_t bytesread;
 	int i;
 	size_t filesize = getfilesize(databasename);
@@ -2216,14 +2213,6 @@ int handlegamereplace(int replaceindex, char *databasename)
 		dbstring[bytesread] = 0;
 		fclose(fp);
 
-		// allocate gamestring for pdnstring
-		gamestring = (char *)malloc(GAMEBUFSIZE);
-		if (gamestring == NULL) {
-			sprintf(statusbar_txt, "malloc error");
-			free(dbstring);
-			return 0;
-		}
-
 		// rewrite file
 		fp = fopen(databasename, "w");
 
@@ -2231,7 +2220,7 @@ int handlegamereplace(int replaceindex, char *databasename)
 		p = dbstring;
 		for (i = 0; i < replaceindex; i++) {
 			PDNparseGetnextgame(&p, gamestring);
-			fprintf(fp, "%s", gamestring);
+			fprintf(fp, "%s", gamestring.c_str());
 		}
 
 		// skip current game
@@ -2240,17 +2229,15 @@ int handlegamereplace(int replaceindex, char *databasename)
 		// write replaced game
 		PDNgametoPDNstring(cbgame, gamestring, "\n");
 		if (gameindex != 0)
-			fprintf(fp, "\n\n\n\n%s", gamestring);
+			fprintf(fp, "\n\n%s", gamestring.c_str());
 		else
-			fprintf(fp, "%s", gamestring);
+			fprintf(fp, "%s", gamestring.c_str());
 
 		// and read the rest of the file
 		while (PDNparseGetnextgame(&p, gamestring))
-			fprintf(fp, "%s", gamestring);
+			fprintf(fp, "%s", gamestring.c_str());
 
 		fclose(fp);
-		if (gamestring != NULL)
-			free(gamestring);
 		if (dbstring != NULL)
 			free(dbstring);
 		return 1;
@@ -2384,9 +2371,9 @@ char *loadPDNdbstring(char *dbname)
 /*
  * Get headers and moves for this game
  */
-void assign_headers(gamepreview &preview, char *pdn)
+void assign_headers(gamepreview &preview, const char *pdn)
 {
-	char *tag;
+	const char *tag;
 	char header[MAXNAME];
 	char headername[MAXNAME], headervalue[MAXNAME];
 	char token[1024];
@@ -2458,7 +2445,7 @@ int selectgame(int how)
 	static int oldgameindex;
 	int entry;
 	char *dbstring = NULL;
-	char *gamestring = NULL;
+	std::string gamestring;
 	char *p;
 	int searchhit;
 	gamepreview preview;
@@ -2484,13 +2471,6 @@ int selectgame(int how)
 
 		// load database into dbstring:
 		dbstring = loadPDNdbstring(pdn_filename);
-
-		gamestring = (char *)malloc(GAMEBUFSIZE);
-		if (gamestring == NULL) {
-			MessageBox(hwnd, "not enough memory for this operation", "Error", MB_OK);
-			SetCurrentDirectory(CBdirectory);
-			return 0;
-		}
 	}
 	else {
 
@@ -2585,14 +2565,6 @@ int selectgame(int how)
 			// read database file into buffer 'dbstring'
 			dbstring = loadPDNdbstring(pdn_filename);
 
-			// fill the struct 'data' with the PDN headers
-			gamestring = (char *)malloc(GAMEBUFSIZE);
-			if (gamestring == NULL) {
-				MessageBox(hwnd, "not enough memory for this operation", "Error", MB_OK);
-				SetCurrentDirectory(CBdirectory);
-				return 0;
-			}
-
 			p = dbstring;
 			entry = 0;
 			game_previews.clear();
@@ -2608,7 +2580,7 @@ int selectgame(int how)
 				}
 
 				/* Parse the game text and fill in the headers of the preview struct. */
-				assign_headers(preview, gamestring);
+				assign_headers(preview, gamestring.c_str());
 				preview.game_index = i;
 
 				// now, depending on what we are doing, we add this game to the list of
@@ -2668,7 +2640,7 @@ int selectgame(int how)
 
 						// if a comment is defined, search for that comment
 						if (strcmp(commentname, "") != 0) {
-							if (strstr(gamestring, commentname))
+							if (strstr(gamestring.c_str(), commentname))
 								searchhit &= 1;
 							else
 								searchhit = 0;
@@ -2727,8 +2699,6 @@ int selectgame(int how)
 	}
 
 	// free up memory
-	if (gamestring != NULL)
-		free(gamestring);
 	if (dbstring != NULL)
 		free(dbstring);
 
@@ -2740,7 +2710,7 @@ int loadgamefromPDNstring(int gameindex, char *dbstring)
 {
 	char *p;
 	int i;
-	char *gamestring = (char *)malloc(GAMEBUFSIZE);
+	std::string gamestring;
 
 	p = dbstring;
 	i = gameindex + 1;
@@ -2752,8 +2722,7 @@ int loadgamefromPDNstring(int gameindex, char *dbstring)
 
 	// now the game is in gamestring. use pdnparser routines to convert
 	//	it into a cbgame
-	doload(&cbgame, gamestring, &cbcolor, cbboard8);
-	free(gamestring);
+	doload(&cbgame, gamestring.c_str(), &cbcolor, cbboard8);
 
 	// game is fully loaded, clean up
 	updateboardgraphics(hwnd);
@@ -4502,46 +4471,46 @@ void move4tonotation(struct CBmove m, char s[80])
 	strcat(s, Lstr);
 }
 
-void PDNgametoPDNstring(PDNgame &game, char *pdnstring, char *lf)
+void PDNgametoPDNstring(PDNgame &game, std::string &pdnstring, char *lineterm)
 {
 	// prints a formatted PDN in *pdnstring
-	// uses lf as line feed; for the clipboard this should be \r\n, normally just \n
+	// uses lineterm as the line terminator; for the clipboard this should be \r\n, normally just \n
 	// i have no idea why this is so!
 	char s[256];
 	size_t counter;
 	int i;
 
 	// I: print headers
-	sprintf(pdnstring, "");
+	pdnstring.clear();
 	sprintf(s, "[Event \"%s\"]", game.event);
-	strcat(pdnstring, s);
-	strcat(pdnstring, lf);
+	pdnstring += s;
+	pdnstring += lineterm;
 
 	sprintf(s, "[Date \"%s\"]", game.date);
-	strcat(pdnstring, s);
-	strcat(pdnstring, lf);
+	pdnstring += s;
+	pdnstring += lineterm;
 
 	sprintf(s, "[Black \"%s\"]", game.black);
-	strcat(pdnstring, s);
-	strcat(pdnstring, lf);
+	pdnstring += s;
+	pdnstring += lineterm;
 
 	sprintf(s, "[White \"%s\"]", game.white);
-	strcat(pdnstring, s);
-	strcat(pdnstring, lf);
+	pdnstring += s;
+	pdnstring += lineterm;
 
 	sprintf(s, "[Result \"%s\"]", game.resultstring);
-	strcat(pdnstring, s);
-	strcat(pdnstring, lf);
+	pdnstring += s;
+	pdnstring += lineterm;
 
 	// if this was after a setup, add FEN and setup header
 	if (strcmp(game.setup, "") != 0) {
 		sprintf(s, "[Setup \"%s\"]", game.setup);
-		strcat(pdnstring, s);
-		strcat(pdnstring, lf);
+		pdnstring += s;
+		pdnstring += lineterm;
 
 		sprintf(s, "[FEN \"%s\"]", game.FEN);
-		strcat(pdnstring, s);
-		strcat(pdnstring, lf);
+		pdnstring += s;
+		pdnstring += lineterm;
 	}
 
 	// print PDN
@@ -4554,34 +4523,34 @@ void PDNgametoPDNstring(PDNgame &game, char *pdnstring, char *lf)
 			sprintf(s, "%i. ", moveindex2movenum(game, i));
 			counter += strlen(s);
 			if (counter > 79) {
-				strcat(pdnstring, lf);
+				pdnstring += lineterm;
 				counter = strlen(s);
 			}
 
-			strcat(pdnstring, s);
+			pdnstring += s;
 		}
 
 		// print the move
 		counter += strlen(game.moves[i].PDN);
 		if (counter > 79) {
-			strcat(pdnstring, lf);
+			pdnstring += lineterm;
 			counter = strlen(game.moves[i].PDN);
 		}
 
 		sprintf(s, "%s ", game.moves[i].PDN);
-		strcat(pdnstring, s);
+		pdnstring += s;
 
 		// if the move has a comment, print it too
 		if (strcmp(game.moves[i].comment, "") != 0) {
 			counter += strlen(game.moves[i].comment);
 			if (counter > 79) {
-				strcat(pdnstring, lf);
+				pdnstring += lineterm;
 				counter = strlen(game.moves[i].comment);
 			}
 
-			strcat(pdnstring, "{");
-			strcat(pdnstring, game.moves[i].comment);
-			strcat(pdnstring, "} ");
+			pdnstring += "{";
+			pdnstring += game.moves[i].comment;
+			pdnstring += "} ";
 		}
 	}
 
@@ -4589,12 +4558,10 @@ void PDNgametoPDNstring(PDNgame &game, char *pdnstring, char *lf)
 	sprintf(s, "*");	/* Game terminator is '*' as per PDN 3.0. See http://pdn.fmjd.org/ */
 	counter += strlen(s);
 	if (counter > 79)
-		strcat(pdnstring, lf);
+		pdnstring += lineterm;
 
-	strcat(pdnstring, s);
-
-	strcat(pdnstring, lf);
-	strcat(pdnstring, lf);
+	pdnstring += s;
+	pdnstring += lineterm;
 }
 
 /*
@@ -4777,12 +4744,13 @@ void newgame(void)
 	reset_game_clocks();
 }
 
-void doload(PDNgame *game, char *gamestring, int *color, int board8[8][8])
+void doload(PDNgame *game, const char *gamestring, int *color, int board8[8][8])
 {
 	// game is in gamestring. use pdnparser routines to convert
 	// it into a game
 	// read headers
-	char *p, *start;
+	const char *start;
+	const char *p;
 	char header[MAXNAME], token[1024];
 	char headername[MAXNAME], headervalue[MAXNAME];
 	int i;
@@ -4793,7 +4761,7 @@ void doload(PDNgame *game, char *gamestring, int *color, int board8[8][8])
 	// gamestring may terminate in a move, i.e. "1. 11-15 21-17". in this
 	// case the tokenizer will not find a space after "11-15 " and not
 	// parse the move 21-17. therefore:
-	strcat(gamestring, " ");
+//	strcat(gamestring, " ");
 
 	reset_game(*game);
 	p = gamestring;
