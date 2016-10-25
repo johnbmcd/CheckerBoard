@@ -3193,7 +3193,7 @@ DWORD SearchThreadFunc(LPVOID param)
 	int iscapture;
 	struct pos userbookpos;
 	int founduserbookmove = 0;
-	double maxtime;
+	double elapsed, maxtime;
 
 	if (cboptions.use_incremental_time && CBstate != ENGINEMATCH && CBstate != AUTOPLAY && CBstate != ENGINEGAME) {
 
@@ -3301,12 +3301,12 @@ DWORD SearchThreadFunc(LPVOID param)
 
 			start_clock();
 			result = (getmove)(originalcopy, cbcolor, maxtime, statusbar_txt, &playnow, info, moreinfo, &localmove);
+			elapsed = (clock() - time_ctrl.starttime) / (double)CLK_TCK;
 
 			/* Display the Play! bitmap with black foreground when the engine is not searching. */
 			PostMessage(tbwnd, TB_CHANGEBITMAP, (WPARAM) MOVESPLAY, MAKELPARAM(2, 0));
 
 			if (cboptions.use_incremental_time) {
-				double elapsed = (clock() - time_ctrl.starttime) / (double)CLK_TCK;
 				if (cbcolor == CB_BLACK) {
 					if (time_ctrl.black_time_remaining - elapsed < 0)
 						cblog("engine %d has negative remaining time %.3f\n", currentengine, time_ctrl.black_time_remaining - elapsed);
@@ -3318,13 +3318,14 @@ DWORD SearchThreadFunc(LPVOID param)
 					time_ctrl.white_time_remaining += cboptions.time_increment - elapsed;
 				}
 
-				save_time_stats(currentengine, maxtime, elapsed);
-
 				/* If not engine match, then human player's clock starts now. For engine matches the
-				 * starttime will be again set just before calling getmove().
+				 * starttime will be set again just before calling getmove().
 				 */
 				time_ctrl.starttime = clock();
 			}
+			else
+				/* Keep track of how well the engine's average search time tracks the maxtime param. */
+				save_time_stats(currentengine, maxtime, elapsed);
 		}
 		else
 			sprintf(statusbar_txt, "error: no engine defined!");
