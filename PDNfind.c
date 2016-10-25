@@ -239,8 +239,7 @@ int pdnopen(char filename[256], int gametype)
 	// Not a hard limit. It just makes it more efficient to build the list.
 	// hans' 22'000 game archive has about 1.2 million positions, avg 54 pos/game.
 	maxpos = 100 + 54 * games_in_pdn;
-	try
-	{
+	try {
 		pdn_positions.clear();
 		pdn_positions.reserve(maxpos);
 	}
@@ -333,8 +332,7 @@ int pdnopen(char filename[256], int gametype)
 		position.gameindex = gamenumber;
 		position.result = result;
 		position.color = color;
-		try
-		{
+		try {
 			pdn_positions.push_back(position);
 		}
 		catch(...) {
@@ -379,8 +377,7 @@ int pdnopen(char filename[256], int gametype)
 			position.gameindex = gamenumber;
 			position.result = result;
 			position.color = color;
-			try
-			{
+			try {
 				pdn_positions.push_back(position);
 			}
 			catch(...) {

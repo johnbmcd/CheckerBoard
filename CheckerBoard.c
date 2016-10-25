@@ -2587,8 +2587,7 @@ int selectgame(int how)
 				// games to display
 				// remember: entry is our running variable, from 0...numberofgames in db
 				// i is index of game in the pdn database file.
-				try
-				{
+				try {
 					switch (how) {
 					case GAMEFIND:
 					case GAMEFINDCR:
@@ -3951,6 +3950,13 @@ DWORD AutoThreadFunc(LPVOID param)
 				// finally, display stats in window title
 				enginecommand1("name", engine1);
 				enginecommand2("name", engine2);
+
+				/* Restrict engine names in title to 30 chars. */
+				if (strlen(engine1) > 30)
+					sprintf(engine1 + 30, "...");
+				if (strlen(engine2) > 30)
+					sprintf(engine2 + 30, "...");
+
 				sprintf(windowtitle, "%s - %s", engine1, engine2);
 				sprintf(Lstr, ": W-L-D:%i-%i-%i", emstats.wins, emstats.losses, emstats.draws + emstats.unknowns);
 				strcat(windowtitle, Lstr);
@@ -4585,8 +4591,7 @@ void appendmovetolist(CBmove &move)
 	entry.comment[0] = 0;
 	entry.move = move;
 	move4tonotation(move, entry.PDN);
-	try
-	{
+	try {
 		cbgame.moves.push_back(entry);
 	}
 	catch(...) {
