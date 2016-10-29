@@ -150,7 +150,7 @@ HWND hStatusWnd;				// status window
 static HWND tbwnd;				// toolbar window
 HWND hDlgSelectgame;
 
-std::vector<gamepreview> game_previews;	// preview info displaed in game select dialog.
+std::vector<gamepreview> game_previews;	// preview info displayed in game select dialog.
 
 // statusbar_txt holds the output string shown in the status bar - it is updated by WM_TIMER messages
 char statusbar_txt[1024];
