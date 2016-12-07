@@ -378,7 +378,7 @@ int WINAPI getmove
 			new_iter_maxtime = 0.7 * absolute_maxtime / 1.5;
 		}
 		else {
-			desired = increment + (remaining - increment) / 8;
+			desired = increment + remaining / 9;
 			absolute_maxtime = min(1.5 * desired, remaining);
 			new_iter_maxtime = 0.7 * absolute_maxtime / 1.5;
 		}

@@ -1414,8 +1414,8 @@ BOOL DialogIncrementalTimesFunc(HWND hwnd, UINT message, WPARAM wparam, LPARAM l
 			}
 			GetDlgItemText(hwnd, IDC_TIME_INCREMENT, buf, sizeof(buf));
 			sscanf(buf, "%lf", &increment);
-			if (increment < 0.1 || increment > 6553) {
-				MessageBox(hwnd, "Increment must be between 0.1 and 6553 seconds", NULL, MB_OK);
+			if (increment < 0 || increment > 6553) {
+				MessageBox(hwnd, "Increment must be between 0 and 6553 seconds", NULL, MB_OK);
 				return(FALSE);
 			}
 			if (initial < increment) {

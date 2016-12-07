@@ -3148,7 +3148,7 @@ double maxtime_for_incremental_tc(double remaining)
 		return(0.3 * cboptions.time_increment);
 	if (remaining <= cboptions.time_increment)
 		return(remaining);
-	return(cboptions.time_increment + (remaining - cboptions.time_increment) / 7);
+	return(min(remaining, cboptions.time_increment + remaining / 10));
 }
 
 
