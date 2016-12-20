@@ -40,7 +40,7 @@ static HBRUSH linebrush;
 static int offset = 0, upperoffset = 0;
 static HFONT myfont;	// font for board numbers
 static bool animation_state = true;
-static HANDLE memdc_sem;
+static HANDLE memdc_lock;		/* Prevent multiple threads from simultaneous access to memdc. */
 
 int setoffsets(int _offset, int _upperoffset)
 {
@@ -55,8 +55,7 @@ int initgraphics(HWND hwnd)
 	HDC hdc;
 	int maxX, maxY;
 
-	memdc_sem = CreateSemaphore(NULL, 1, 1, "memdc_sem");
-
+	memdc_lock = CreateMutex(NULL, FALSE, NULL);
 	// get screen coordinates
 	maxX = GetSystemMetrics(SM_CXSCREEN);
 	maxY = GetSystemMetrics(SM_CYSCREEN);
@@ -335,7 +334,6 @@ DWORD AnimationThreadFunc(HWND hwnd)
 	int yoffset = 0;
 	int size;
 
-	//return 0;
 	setanimationbusy(TRUE);
 
 	bmp_bm = getCBbitmap(BMPBLACKMAN);
@@ -392,6 +390,7 @@ DWORD AnimationThreadFunc(HWND hwnd)
 
 		// a normal move without jumps
 			for (i = 0; i <= STEPS; i++) {
+				WaitForSingleObject(memdc_lock, INFINITE);
 				timer = clock();
 
 				// find redrawing rectangle
@@ -439,6 +438,7 @@ DWORD AnimationThreadFunc(HWND hwnd)
 				r.right += 5;
 				r.bottom += 5;
 				InvalidateRect(hwnd, &r, 0);
+				ReleaseMutex(memdc_lock);
 				SendMessage(hwnd, WM_PAINT, (WPARAM) 0, (LPARAM) 0);
 
 				//-----------------------------------------------
@@ -467,6 +467,7 @@ DWORD AnimationThreadFunc(HWND hwnd)
 
 				// now animate the part-move:
 				for (i = 0; i <= 2 * STEPS; i++) {
+					WaitForSingleObject(memdc_lock, INFINITE);
 					timer = clock();
 
 					// find redrawing region
@@ -507,6 +508,7 @@ DWORD AnimationThreadFunc(HWND hwnd)
 					StretchBlt(memdc, r.left, r.top, size, size, bmpdc, 0, 0, BMPSIZE, BMPSIZE, SRCPAINT);
 
 					InvalidateRect(hwnd, &r, 0);
+					ReleaseMutex(memdc_lock);
 					SendMessage(hwnd, WM_PAINT, (WPARAM) 0, (LPARAM) 0);
 
 					//-----------------------------------------------
@@ -534,6 +536,7 @@ DWORD AnimationThreadFunc(HWND hwnd)
 
 	// if move highlighting is on, we do it!
 	// this should go in a separate function!
+	WaitForSingleObject(memdc_lock, INFINITE);
 	if (cboptions.highlight) {
 
 		// create a pen:
@@ -570,6 +573,7 @@ DWORD AnimationThreadFunc(HWND hwnd)
 	r.top = upperoffset;
 
 	InvalidateRect(hwnd, &r, 0);
+	ReleaseMutex(memdc_lock);
 
 	// TODO: should not mix game state stuff with animation!
 	cbcolor = CB_CHANGECOLOR(cbcolor);
@@ -705,9 +709,9 @@ void drawclock(HWND hwnd, HDC hdc)
 
 void refresh_clock(HWND hwnd)
 {
-	WaitForSingleObject(memdc_sem, INFINITE);
+	WaitForSingleObject(memdc_lock, INFINITE);
 	drawclock(hwnd, memdc);
-	ReleaseSemaphore(memdc_sem, 1, NULL);
+	ReleaseMutex(memdc_lock);
 }
 
 int printboard(HWND hwnd, HDC hdc, HDC bmpdc, HDC stretchdc, int b[8][8])
@@ -739,7 +743,7 @@ int printboard(HWND hwnd, HDC hdc, HDC bmpdc, HDC stretchdc, int b[8][8])
 		return 0;
 	}
 
-	WaitForSingleObject(memdc_sem, INFINITE);
+	WaitForSingleObject(memdc_lock, INFINITE);
 	getxymetrics(&xmetric, &ymetric, hwnd);
 	size = xmetric;
 
@@ -914,7 +918,7 @@ int printboard(HWND hwnd, HDC hdc, HDC bmpdc, HDC stretchdc, int b[8][8])
 	r.bottom = r.top + 8 * size;
 
 	InvalidateRect(hwnd, &r, 0);
-	ReleaseSemaphore(memdc_sem, 1, NULL);
+	ReleaseMutex(memdc_lock);
 
 	return 1;
 }
