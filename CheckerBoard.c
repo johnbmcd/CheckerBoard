@@ -2989,9 +2989,6 @@ int start11man(int number)
 	// set directory to CB directory
 	SetCurrentDirectory(CBdirectory);
 
-	// don't play entire match as it takes way too much time!
-	//if(number >= 500)
-	//	return 0;
 	fp = fopen("11man_FEN.txt", "r");
 	if (fp == NULL)
 		return 0;
@@ -3624,11 +3621,20 @@ int num_11man_ballots(void)
 	for (count = 0; !feof(fp); ++count)
 		fgets(linebuf, sizeof(linebuf), fp);
 
-	/* The count is off by 1 because of a newline at the end of the last ballot. */
+	/* The count is off by 1 because we had to do one extra read to set eof. */
 	-- count;
 
 	fclose(fp);
 	return(count);
+}
+
+
+int num_ballots(void)
+{
+	if (iselevenman)
+		return(num_11man_ballots());
+	else
+		return(num_3move_ballots(&cboptions));
 }
 
 bool match_is_resumable(void)
@@ -3639,18 +3645,10 @@ bool match_is_resumable(void)
 	if (ngames <= 0)
 		return(false);
 
-	if (iselevenman) {
-		if (ngames < 2 * num_11man_ballots())
-			return(true);
-		else
-			return(false);
-	}
-	else {
-		if (ngames < 2 * num_3move_ballots(&cboptions))
-			return(true);
-		else
-			return(false);
-	}
+	if (ngames < 2 * num_ballots() * cboptions.match_repeat_count)
+		return(true);
+	else
+		return(false);
 }
 
 void reset_match_stats(void)
@@ -3976,6 +3974,7 @@ DWORD AutoThreadFunc(LPVOID param)
 			// when a game is terminated, save result and save game
 			if ((gameover || startmatch == TRUE)) {
 				if (gameover) {
+					int round_gamenumber;
 
 					// set white and black players
 					if (gamenumber % 2) {
@@ -3988,7 +3987,8 @@ DWORD AutoThreadFunc(LPVOID param)
 					}
 
 					sprintf(cbgame.resultstring, "?");
-					if (!((gamenumber - 1) % 20)) {
+					round_gamenumber = gamenumber % (2 * num_ballots());
+					if (!((round_gamenumber - 1) % 20)) {
 						if (gamenumber != 1) {
 							emprogress_filename(statsfilename);
 							writefile(statsfilename, "a", "\n");
@@ -3998,7 +3998,7 @@ DWORD AutoThreadFunc(LPVOID param)
 					if (gamenumber % 2) {
 						emprogress_filename(statsfilename);
 						if (iselevenman == 1)
-							writefile(statsfilename, "a", "%4i:", gamenumber / 2 + 1);
+							writefile(statsfilename, "a", "%4i:", round_gamenumber / 2 + 1);
 						else
 							writefile(statsfilename, "a", "%3i:", emstats.opening_index + 1);
 					}
@@ -4033,10 +4033,14 @@ DWORD AutoThreadFunc(LPVOID param)
 					}
 
 					// save the game
-					if (iselevenman == 1)
-						sprintf(cbgame.event, "11-man #%i", (gamenumber - 1) / 2 + 1);
+					char matchstr[20];
+					matchstr[0] = 0;
+					if (cboptions.match_repeat_count > 1)
+						sprintf(matchstr, "match %d, ", 1 + (gamenumber - 1) / (2 * num_ballots()));
+					if (iselevenman)
+						sprintf(cbgame.event, "%s11-man #%i", matchstr, 1 + ((gamenumber - 1) % (2 * num_ballots())) / 2);
 					else
-						sprintf(cbgame.event, "ACF #%i", emstats.opening_index + 1);
+						sprintf(cbgame.event, "%sACF #%i", matchstr, emstats.opening_index + 1);
 
 					/* Save the Event text to the matchlog file. */
 					emlog_filename(statsfilename);
@@ -4053,14 +4057,16 @@ DWORD AutoThreadFunc(LPVOID param)
 				startmatch = FALSE;
 
 				// get the opening for the gamenumber, and check whether the match is over
-				if (iselevenman == 1)
-					matchcontinues = start11man(gamenumber / 2);
+				if (gamenumber >= 2 * num_ballots() * cboptions.match_repeat_count)
+					matchcontinues = 0;
 				else {
-					emstats.opening_index = getthreeopening(gamenumber, &cboptions);
-					if (emstats.opening_index == -1)
-						matchcontinues = 0;
-					else
-						matchcontinues = 1;
+					matchcontinues = 1;
+					if (iselevenman == 1)
+						start11man((gamenumber % (2 * num_ballots())) / 2);
+					else {
+						emstats.opening_index = getthreeopening(gamenumber % (2 * num_ballots()), &cboptions);
+						assert(emstats.opening_index >= 0);
+					}
 				}
 
 				// move on to the next game

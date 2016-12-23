@@ -32,6 +32,8 @@
 #define IDC_START_POSITIONS             1015
 #define ID_START                        1017
 #define ID_START_MATCH                  1017
+#define IDC_EDIT1                       1018
+#define IDC_MATCH_REPEAT_COUNT          1018
 #define ID_LANGAGE_FRANCAIS             40039
 #define ID_SPRACHE_FRANCAIS             40040
 #define ID_LANGUAGE_FRANCAIS            40041
@@ -43,7 +45,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        110
 #define _APS_NEXT_COMMAND_VALUE         40046
-#define _APS_NEXT_CONTROL_VALUE         1018
+#define _APS_NEXT_CONTROL_VALUE         1019
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

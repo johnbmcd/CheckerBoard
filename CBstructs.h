@@ -30,6 +30,7 @@ struct CBoptions {
 	int level;
 	double initial_time;		/* incremental time control settings. */
 	double time_increment;
+	int match_repeat_count;
 	int op_crossboard;
 	int op_mailplay;
 	int op_barred;

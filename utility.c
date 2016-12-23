@@ -577,7 +577,7 @@ int num_3move_ballots(CBoptions *options)
 	int i, count;
 
 	for (i = 0, count = 0; i < ARRAY_SIZE(three); ++i) {
-		if (three[i][3] == OP_BOARD) {
+		if (three[i][3] == OP_BOARD || three[i][3] == OP_CTD) {
 			if (options->op_crossboard)
 				++count;
 		}

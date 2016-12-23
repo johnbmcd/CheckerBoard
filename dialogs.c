@@ -1440,6 +1440,7 @@ BOOL DialogIncrementalTimesFunc(HWND hwnd, UINT message, WPARAM wparam, LPARAM l
 BOOL DialogStartEngineMatchFunc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
 	HWND hctrl;
+	BOOL status;
 	extern int iselevenman;
 
 	switch (message) {
@@ -1449,6 +1450,9 @@ BOOL DialogStartEngineMatchFunc(HWND hwnd, UINT message, WPARAM wparam, LPARAM l
 		hctrl = GetDlgItem(hwnd, IDC_START_POSITIONS);
 		SendDlgItemMessage(hwnd, IDC_START_POSITIONS, CB_ADDSTRING, 0, (LPARAM)"3-move");
 		SendDlgItemMessage(hwnd, IDC_START_POSITIONS, CB_ADDSTRING, 0, (LPARAM)"11-man");
+
+		/* Init the 'Match repeat count' edit box. */
+		SetDlgItemInt(hwnd, IDC_MATCH_REPEAT_COUNT, cboptions.match_repeat_count, FALSE);
 
 		/* Set the initial selection. */
 		SendDlgItemMessage(hwnd, IDC_START_POSITIONS, CB_SETCURSEL, iselevenman ? 1 : 0, 0);
@@ -1474,11 +1478,15 @@ BOOL DialogStartEngineMatchFunc(HWND hwnd, UINT message, WPARAM wparam, LPARAM l
 			break;
 
 		case ID_RESUME_MATCH:
+			cboptions.match_repeat_count = GetDlgItemInt(hwnd, IDC_MATCH_REPEAT_COUNT, &status, FALSE);
+			cboptions.match_repeat_count = max(1, cboptions.match_repeat_count);
 			iselevenman = (int)SendDlgItemMessage(hwnd, IDC_START_POSITIONS, CB_GETCURSEL, 0, 0L);
 			EndDialog(hwnd, TRUE);
 			return(TRUE);
 
 		case ID_START_MATCH:
+			cboptions.match_repeat_count = GetDlgItemInt(hwnd, IDC_MATCH_REPEAT_COUNT, &status, FALSE);
+			cboptions.match_repeat_count = max(1, cboptions.match_repeat_count);
 			iselevenman = (int)SendDlgItemMessage(hwnd, IDC_START_POSITIONS, CB_GETCURSEL, 0, 0L);
 			reset_match_stats();
 			EndDialog(hwnd, TRUE);

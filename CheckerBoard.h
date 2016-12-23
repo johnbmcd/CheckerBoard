@@ -89,6 +89,7 @@ bool match_is_resumable(void);
 void move4tonotation(struct CBmove, char str[80]);
 void newgame(void);
 int num_11man_ballots(void);
+int num_ballots(void);
 void PDNgametoPDNstring(PDNgame &game, std::string &pdnstring, char *lineterm);
 void pdntogame(int startposition[8][8], int startcolor);
 int read_match_stats(void);

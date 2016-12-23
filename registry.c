@@ -156,6 +156,7 @@ void loadsettings(struct CBoptions *options, char CBdirectory[256])
 		options->level = timetoken_to_level(LEVEL2S);
 		options->initial_time = 300;
 		options->time_increment = 15;
+		options->match_repeat_count = 1;
 		options->mirror = 0;
 		options->numbers = 1;
 		options->op_barred = 0;
