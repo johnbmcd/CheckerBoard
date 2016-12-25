@@ -72,6 +72,8 @@
 #pragma message("_WIN64 is defined.")
 #endif
 
+#define EARLY_DECISION	/* Remove this to allow engine matches to completely finish decisive games. */
+
 //---------------------------------------------------------------------
 // globals - should be identified in code by g_varname but aren't all...
 PDNgame cbgame;
@@ -176,6 +178,13 @@ emstats_t emstats;						// engine match stats and state
 int togglemode;							// 1-2-player toggle state
 int togglebook;							// engine book state (0/1/2/3)
 int toggleengine = 1;					// primary/secondary engine (1/2)
+#ifndef EARLY_DECISION
+const bool play_to_end = true;
+const int maxmovecount = 300;
+#else
+const bool play_to_end = false;
+const int maxmovecount = 200;
+#endif
 
 // keep a small user book
 struct userbookentry userbook[MAXUSERBOOK];
@@ -3223,6 +3232,7 @@ DWORD SearchThreadFunc(LPVOID param)
 
 		if (CBstate == ENGINEMATCH || CBstate == ENGINEGAME) {
 			gameover = TRUE;
+			result = CB_LOSS;
 			sprintf(statusbar_txt, "game over");
 		}
 
@@ -3350,10 +3360,16 @@ DWORD SearchThreadFunc(LPVOID param)
 
 		// if we are in engine match mode and one of the engines claims a win
 		// or a loss or a draw we stop
-		if (result != CB_UNKNOWN && (CBstate == ENGINEMATCH)) {
-			if (cbgame.movesindex > 0)
-				sprintf(cbgame.moves[cbgame.movesindex - 1].comment, "%s : gameover claimed", statusbar_txt);
-			gameover = TRUE;
+		if (CBstate == ENGINEMATCH) {
+			if (result == CB_DRAW)
+				gameover = TRUE;
+			else {
+				if (!play_to_end && result != CB_UNKNOWN) {
+					if (cbgame.movesindex > 0)
+						sprintf(cbgame.moves[cbgame.movesindex - 1].comment, "%s : gameover claimed", statusbar_txt);
+					gameover = TRUE;
+				}
+			}
 		}
 
 		// got board8 & a copy before move was made
@@ -3693,7 +3709,6 @@ DWORD AutoThreadFunc(LPVOID param)
 	static int gamenumber;
 	static int movecount;
 	int i;
-	const int maxmovecount = 200;
 	static char FEN[256];
 	char engine1[MAXNAME], engine2[MAXNAME];	// holds engine names
 	int matchcontinues = 0;
@@ -3989,7 +4004,14 @@ DWORD AutoThreadFunc(LPVOID param)
 					sprintf(cbgame.resultstring, "?");
 					round_gamenumber = gamenumber % (2 * num_ballots());
 					if (!((round_gamenumber - 1) % 20)) {
-						if (gamenumber != 1) {
+						if (cboptions.match_repeat_count > 1 && round_gamenumber == 1) {
+							emprogress_filename(statsfilename);
+							if (gamenumber != 1)
+								writefile(statsfilename, "a", "\n");
+
+							writefile(statsfilename, "a", "Match %d", 1 + (gamenumber - 1) / (2 * num_ballots()));
+						}
+						if (gamenumber != 1 || cboptions.match_repeat_count > 1) {
 							emprogress_filename(statsfilename);
 							writefile(statsfilename, "a", "\n");
 						}
@@ -4128,7 +4150,6 @@ DWORD AutoThreadFunc(LPVOID param)
 int dostats(int result, int movecount, int gamenumber, emstats_t *stats)
 {
 	// handles statistics during an engine match
-	const int maxmovecount = 200;
 	char progress_filename[MAX_PATH];
 
 	emprogress_filename(progress_filename);
