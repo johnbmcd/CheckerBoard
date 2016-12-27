@@ -4136,6 +4136,9 @@ DWORD AutoThreadFunc(LPVOID param)
 				else
 					setcurrentengine(2);
 
+				if (movecount <= 2)
+					reset_move_history = true;
+
 				PostMessage(hwnd, WM_COMMAND, MOVESPLAY, 0);
 				setenginestarting(TRUE);
 
