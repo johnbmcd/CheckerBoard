@@ -236,7 +236,7 @@ int PDNparseGetnextheader(const char **start, char *header)
 	to the next character after the header.
 	the header is returned in *header */
 	const char *p, *q;
-	int i;
+	int i, quotecount;
 
 	if (*start == 0)
 		return 0;
@@ -250,10 +250,15 @@ int PDNparseGetnextheader(const char **start, char *header)
 
 	q = p + 1;
 	i = 0;
-	while (*q != ']' && *q != 0) {
+	quotecount = 0;
+	while ((quotecount < 2 || *q != ']') && *q != 0) {
 		header[i] = *q;
+		if (*q == '"')
+			++quotecount;
 		q++;
 		i++;
+		if (i >= MAXNAME)
+			return(0);
 	}
 
 	// terminate header with a 0
