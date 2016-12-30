@@ -3150,11 +3150,21 @@ void format_time_args(double increment, double remaining, uint32_t *info, uint32
  */
 double maxtime_for_incremental_tc(double remaining)
 {
-	if (remaining < 0.3 * cboptions.time_increment)
-		return(0.3 * cboptions.time_increment);
+	double divisor;
+
+	if (remaining < 0.25 * cboptions.time_increment)
+		return(0.25 * cboptions.time_increment);
 	if (remaining <= cboptions.time_increment)
 		return(remaining);
-	return(min(remaining, cboptions.time_increment + remaining / 10));
+	if (cboptions.time_increment == 0)
+		divisor = 11;
+	else if (cboptions.initial_time / cboptions.time_increment > 50)
+		divisor = 10;
+	else if (cboptions.initial_time / cboptions.time_increment > 20)
+		divisor = 9;
+	else
+		divisor = 8;
+	return(min(remaining, cboptions.time_increment + remaining / divisor));
 }
 
 
