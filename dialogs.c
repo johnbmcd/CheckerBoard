@@ -890,13 +890,13 @@ int getoptionsfromdialog(HWND hdwnd, ENGINE_OPTIONS *options)
 
 	// set opening book on/off
 	if (SendDlgItemMessage(hdwnd, IDC_BOOKOFF, BM_GETCHECK, 0, 0))
-		options->book = 0;
+		options->book = CB_BOOK_NONE;
 	if (SendDlgItemMessage(hdwnd, IDC_BOOKALLKINDS, BM_GETCHECK, 0, 0))
-		options->book = 1;
+		options->book = CB_BOOK_ALL_KINDS_MOVES;
 	if (SendDlgItemMessage(hdwnd, IDC_BOOKGOOD, BM_GETCHECK, 0, 0))
-		options->book = 2;
+		options->book = CB_BOOK_GOOD_MOVES;
 	if (SendDlgItemMessage(hdwnd, IDC_BOOKBEST, BM_GETCHECK, 0, 0))
-		options->book = 3;
+		options->book = CB_BOOK_BEST_MOVES;
 
 	// set all scores on/off
 	options->allscores = (int)SendDlgItemMessage(hdwnd, IDC_ALLSCORES, BM_GETCHECK, 0, 0);
@@ -1012,19 +1012,19 @@ int getengineoptions(HWND hdwnd, ENGINE_OPTIONS *options)
 	SendDlgItemMessage(hdwnd, IDC_BOOKBEST, BM_SETCHECK, 0, 0);
 	switch (options->book) {
 	// can be 0 (off) ... 3 (best moves)
-	case 0:
+	case CB_BOOK_NONE:
 		SendDlgItemMessage(hdwnd, IDC_BOOKOFF, BM_SETCHECK, 1, 0);
 		break;
 
-	case 1:
+	case CB_BOOK_ALL_KINDS_MOVES:
 		SendDlgItemMessage(hdwnd, IDC_BOOKALLKINDS, BM_SETCHECK, 1, 0);
 		break;
 
-	case 2:
+	case CB_BOOK_GOOD_MOVES:
 		SendDlgItemMessage(hdwnd, IDC_BOOKGOOD, BM_SETCHECK, 1, 0);
 		break;
 
-	case 3:
+	case CB_BOOK_BEST_MOVES:
 		SendDlgItemMessage(hdwnd, IDC_BOOKBEST, BM_SETCHECK, 1, 0);
 		break;
 	}

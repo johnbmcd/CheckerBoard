@@ -21,11 +21,17 @@
 #define CB_LOSS 2
 #define CB_UNKNOWN 3
 
-/* getmove() info argument bit definitions. */
+/* enginecommand "get book", and "set book" values. */
+#define CB_BOOK_NONE 0
+#define CB_BOOK_ALL_KINDS_MOVES 1
+#define CB_BOOK_GOOD_MOVES 2
+#define CB_BOOK_BEST_MOVES 3
+
+/* getmove() 'info' argument bit definitions. */
 #define CB_RESET_MOVES 1
 #define CB_EXACT_TIME 2
 
-/* Bits 2 and 3 define the incremental time control mode and units.
+/* Bits 2 and 3 of 'info' argument define the incremental time control mode and units.
  * When shifted to a range from 0 to 3, their meanings are:
  *	0	incremental time is disabled
  *	1	incremental time is in units of 0.001 sec
