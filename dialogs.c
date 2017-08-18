@@ -1408,18 +1408,14 @@ BOOL DialogIncrementalTimesFunc(HWND hwnd, UINT message, WPARAM wparam, LPARAM l
 		case ID_OK:
 			GetDlgItemText(hwnd, IDC_INITIAL_TIME, buf, sizeof(buf));
 			sscanf(buf, "%lf", &initial);
-			if (initial < 0.1 || initial > 6553) {
-				MessageBox(hwnd, "Initial time must be between 0.1 and 6553 seconds", NULL, MB_OK);
+			if (initial < 0.0 || initial > 6553) {
+				MessageBox(hwnd, "Initial time must be between 0 and 6553 seconds", NULL, MB_OK);
 				return(FALSE);
 			}
 			GetDlgItemText(hwnd, IDC_TIME_INCREMENT, buf, sizeof(buf));
 			sscanf(buf, "%lf", &increment);
 			if (increment < 0 || increment > 6553) {
 				MessageBox(hwnd, "Increment must be between 0 and 6553 seconds", NULL, MB_OK);
-				return(FALSE);
-			}
-			if (initial < increment) {
-				MessageBox(hwnd, "Initial time must be >= increment", NULL, MB_OK);
 				return(FALSE);
 			}
 			cboptions.initial_time = initial;

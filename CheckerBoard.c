@@ -340,8 +340,8 @@ void reset_game_clocks()
 {
 	if (cboptions.use_incremental_time) {
 		time_ctrl.clock_paused = true;
-		time_ctrl.black_time_remaining = cboptions.initial_time;
-		time_ctrl.white_time_remaining = cboptions.initial_time;
+		time_ctrl.black_time_remaining = max(cboptions.initial_time, cboptions.time_increment);
+		time_ctrl.white_time_remaining = max(cboptions.initial_time, cboptions.time_increment);
 		time_ctrl.starttime = clock();
 	}
 }
