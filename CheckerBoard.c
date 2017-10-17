@@ -3068,7 +3068,7 @@ int start3move(int opening_index)
 	// is a global which is set by random if the user chooses
 	// 3-move, or it can be set controlled by engine match
 	int iscapture;
-	CBmove movelist[28];
+	CBmove movelist[MAXMOVES];
 
 	extern int three[174][4];			// describes 3-move-openings
 	InitCheckerBoard(cbboard8);
@@ -4741,6 +4741,15 @@ void pdntogame(int startposition[8][8], int startcolor)
 			color = CB_CHANGECOLOR(color);
 			domove(legalmove, b8);
 		}
+		else {
+			char buf[250];
+			sprintf(buf, "Illegal move, \"%s\" in pdn game.", cbgame.moves[i].PDN);
+			MessageBox(hwnd, buf, "Error", MB_OK);
+
+			/* Delete every move from bad move to end of game. */
+			cbgame.moves.erase(cbgame.moves.begin() + i, cbgame.moves.end());
+			return;
+		}
 	}
 }
 
@@ -4751,7 +4760,7 @@ int builtinislegal(int board8[8][8], int color, int from, int to, struct CBmove 
 	struct coor c;
 	int Lfrom, Lto;
 	int isjump;
-	CBmove movelist[28];
+	CBmove movelist[MAXMOVES];
 
 	n = getmovelist(color, movelist, board8, &isjump);
 	for (i = 0; i < n; i++) {
