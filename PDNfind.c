@@ -214,7 +214,7 @@ int pdnopen(char filename[256], int gametype)
 	// be retrieved from a position
 	int games_in_pdn;
 	int maxpos;
-	int i, ply, gamenumber;
+	int ply, gamenumber;
 	FILE *fp;
 	std::string game;
 	char *start, *buffer, header[256], token[1024];
@@ -282,8 +282,7 @@ int pdnopen(char filename[256], int gametype)
 			tag = header;
 			PDNparseGetnexttoken(&tag, headername);
 			PDNparseGetnexttag(&tag, headervalue);
-			for (i = 0; i < (int)strlen(headername); i++)
-				headername[i] = (char)tolower(headername[i]);
+			_strlwr(headername);
 
 			if (strcmp(headername, "result") == 0) {
 				if (strcmp(headervalue, "1/2-1/2") == 0) {

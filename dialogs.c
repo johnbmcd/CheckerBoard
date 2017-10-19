@@ -1437,6 +1437,7 @@ BOOL DialogStartEngineMatchFunc(HWND hwnd, UINT message, WPARAM wparam, LPARAM l
 {
 	HWND hctrl;
 	BOOL status;
+	LRESULT lstatus;
 	extern int iselevenman;
 
 	switch (message) {
@@ -1452,6 +1453,10 @@ BOOL DialogStartEngineMatchFunc(HWND hwnd, UINT message, WPARAM wparam, LPARAM l
 
 		/* Set the initial selection. */
 		SendDlgItemMessage(hwnd, IDC_START_POSITIONS, CB_SETCURSEL, iselevenman ? 1 : 0, 0);
+
+		/* Init the early game adjudication check box. */
+		hctrl = GetDlgItem(hwnd, IDC_EARLY_GAME_ADJ_CHECK);
+		SendMessage(hctrl, BM_SETCHECK, cboptions.early_game_adjudication, 0);
 
 		hctrl = GetDlgItem(hwnd, ID_RESUME_MATCH);
 		if (match_is_resumable())
@@ -1477,6 +1482,9 @@ BOOL DialogStartEngineMatchFunc(HWND hwnd, UINT message, WPARAM wparam, LPARAM l
 			cboptions.match_repeat_count = GetDlgItemInt(hwnd, IDC_MATCH_REPEAT_COUNT, &status, FALSE);
 			cboptions.match_repeat_count = max(1, cboptions.match_repeat_count);
 			iselevenman = (int)SendDlgItemMessage(hwnd, IDC_START_POSITIONS, CB_GETCURSEL, 0, 0L);
+			hctrl = GetDlgItem(hwnd, IDC_EARLY_GAME_ADJ_CHECK);
+			lstatus = SendMessage(hctrl, BM_GETCHECK, 0, 0);
+			cboptions.early_game_adjudication = lstatus ? true : false;
 			EndDialog(hwnd, TRUE);
 			return(TRUE);
 
@@ -1484,6 +1492,9 @@ BOOL DialogStartEngineMatchFunc(HWND hwnd, UINT message, WPARAM wparam, LPARAM l
 			cboptions.match_repeat_count = GetDlgItemInt(hwnd, IDC_MATCH_REPEAT_COUNT, &status, FALSE);
 			cboptions.match_repeat_count = max(1, cboptions.match_repeat_count);
 			iselevenman = (int)SendDlgItemMessage(hwnd, IDC_START_POSITIONS, CB_GETCURSEL, 0, 0L);
+			hctrl = GetDlgItem(hwnd, IDC_EARLY_GAME_ADJ_CHECK);
+			lstatus = SendMessage(hctrl, BM_GETCHECK, 0, 0);
+			cboptions.early_game_adjudication = lstatus ? true : false;
 			reset_match_stats();
 			EndDialog(hwnd, TRUE);
 			return(TRUE);

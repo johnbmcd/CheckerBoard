@@ -18,6 +18,7 @@
 #define IDC_CHECK_WLD_DIR_BUTTON        1001
 #define IDC_CHECK1                      1002
 #define IDC_WLD_ENAB_CHECK              1002
+#define IDC_EARLY_GAME_ADJ_CHECK        1002
 #define IDC_MAX_PIECES_COMBO            1003
 #define IDC_WLD_DIR_EDIT                1004
 #define IDC_CHECK_MTC_DIR_BUTTON        1005

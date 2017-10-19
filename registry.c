@@ -153,6 +153,7 @@ void loadsettings(struct CBoptions *options, char CBdirectory[256])
 		options->invert = 0;
 		options->exact_time = false;
 		options->use_incremental_time = false;
+		options->early_game_adjudication = true;
 		options->level = timetoken_to_level(LEVEL2S);
 		options->initial_time = 300;
 		options->time_increment = 15;

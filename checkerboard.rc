@@ -7,8 +7,7 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "afxres.h"
-
+#include "afxres.h"
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
@@ -985,18 +984,20 @@ BEGIN
     LTEXT           "Increment (secs)",IDC_STATIC,21,52,84,8,0,WS_EX_RIGHT
 END
 
-IDD_START_ENGINE_MATCH DIALOGEX 0, 0, 229, 110
+IDD_START_ENGINE_MATCH DIALOGEX 0, 0, 229, 132
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Start Engine Match"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "Start",ID_START_MATCH,113,88,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,171,88,50,14
-    COMBOBOX        IDC_START_POSITIONS,111,21,53,34,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Start positions",IDC_STATIC,39,24,66,8
-    DEFPUSHBUTTON   "Resume",ID_RESUME_MATCH,55,88,50,14
-    EDITTEXT        IDC_MATCH_REPEAT_COUNT,132,50,32,14,ES_RIGHT | ES_AUTOHSCROLL
-    RTEXT           "Match repeat count",IDC_STATIC,56,52,72,8
+    DEFPUSHBUTTON   "Start",ID_START_MATCH,114,111,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,172,111,50,14
+    COMBOBOX        IDC_START_POSITIONS,127,16,53,34,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Start positions",IDC_STATIC,56,18,66,8
+    DEFPUSHBUTTON   "Resume",ID_RESUME_MATCH,56,111,50,14
+    EDITTEXT        IDC_MATCH_REPEAT_COUNT,148,42,32,14,ES_RIGHT | ES_AUTOHSCROLL
+    RTEXT           "Match repeat count",IDC_STATIC,74,44,72,8
+    CONTROL         "Allow early game adjudication",IDC_EARLY_GAME_ADJ_CHECK,
+                    "Button",BS_AUTOCHECKBOX | BS_LEFTTEXT | WS_TABSTOP,38,71,142,10,WS_EX_RIGHT
 END
 
 
@@ -1109,7 +1110,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 222
         TOPMARGIN, 7
-        BOTTOMMARGIN, 103
+        BOTTOMMARGIN, 125
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -1158,8 +1159,7 @@ END
 //
 // Generated from the TEXTINCLUDE 3 resource.
 //
-
-
+
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
 

@@ -72,7 +72,6 @@
 #pragma message("_WIN64 is defined.")
 #endif
 
-#define EARLY_DECISION	/* Remove this to allow engine matches to completely finish decisive games. */
 
 //---------------------------------------------------------------------
 // globals - should be identified in code by g_varname but aren't all...
@@ -178,13 +177,7 @@ emstats_t emstats;						// engine match stats and state
 int togglemode;							// 1-2-player toggle state
 int togglebook;							// engine book state (0/1/2/3)
 int toggleengine = 1;					// primary/secondary engine (1/2)
-#ifndef EARLY_DECISION
-const bool play_to_end = true;
-const int maxmovecount = 300;
-#else
-const bool play_to_end = false;
-const int maxmovecount = 200;
-#endif
+int maxmovecount = 300;					// engine match limit; use 200 if early_game_adjudication is enabled.
 
 // keep a small user book
 struct userbookentry userbook[MAXUSERBOOK];
@@ -3374,7 +3367,7 @@ DWORD SearchThreadFunc(LPVOID param)
 			if (result == CB_DRAW)
 				gameover = TRUE;
 			else {
-				if (!play_to_end && result != CB_UNKNOWN) {
+				if (cboptions.early_game_adjudication && result != CB_UNKNOWN) {
 					if (cbgame.movesindex > 0)
 						sprintf(cbgame.moves[cbgame.movesindex - 1].comment, "%s : gameover claimed", statusbar_txt);
 					gameover = TRUE;
@@ -3504,6 +3497,10 @@ int changeCBstate(int oldstate, int newstate)
 
 	/* Update animation state. */
 	if (CBstate == ENGINEMATCH) {
+		if (cboptions.early_game_adjudication)
+			maxmovecount = 200;
+		else
+			maxmovecount = 300;
 		if (cboptions.use_incremental_time) {
 			if (cboptions.initial_time / 30 + cboptions.time_increment <= 1.5)
 				set_animation(false);
@@ -4808,15 +4805,9 @@ void doload(PDNgame *game, const char *gamestring, int *color, int board8[8][8])
 	const char *p;
 	char header[MAXNAME], token[1024];
 	char headername[MAXNAME], headervalue[MAXNAME];
-	int i;
 	int issetup = 0;
 	PDN_PARSE_STATE state;
 	gamebody_entry entry;
-
-	// gamestring may terminate in a move, i.e. "1. 11-15 21-17". in this
-	// case the tokenizer will not find a space after "11-15 " and not
-	// parse the move 21-17. therefore:
-//	strcat(gamestring, " ");
 
 	reset_game(*game);
 	p = gamestring;
@@ -4828,8 +4819,7 @@ void doload(PDNgame *game, const char *gamestring, int *color, int board8[8][8])
 		PDNparseGetnexttag(&start, headervalue);
 
 		/* make header lowercase, so that 'event' and 'Event' will be recognized */
-		for (i = 0; i < (int)strlen(headername); i++)
-			headername[i] = (char)tolower(headername[i]);
+		_strlwr(headername);
 
 		if (strcmp(headername, "event") == 0)
 			sprintf(game->event, "%s", headervalue);
