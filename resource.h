@@ -7,6 +7,7 @@
 #define ID_CANCEL                       2
 #define ID_RESUME_MATCH                 3
 #define IDC_BROWSE_WLD_DIR_BUTTON       4
+#define ID_BROWSE                       4
 #define IDC_MORE_OPTIONS_BUTTON         5
 #define IDC_BROWSE_MTC_DIR_BUTTON       6
 #define IDC_BOOKFILE_BROWSE_BUTTON      7
@@ -35,6 +36,8 @@
 #define ID_START_MATCH                  1017
 #define IDC_EDIT1                       1018
 #define IDC_MATCH_REPEAT_COUNT          1018
+#define IDC_EDIT2                       1019
+#define IDC_START_POS_FILENAME          1019
 #define ID_LANGAGE_FRANCAIS             40039
 #define ID_SPRACHE_FRANCAIS             40040
 #define ID_LANGUAGE_FRANCAIS            40041
@@ -46,7 +49,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        110
 #define _APS_NEXT_COMMAND_VALUE         40046
-#define _APS_NEXT_CONTROL_VALUE         1019
+#define _APS_NEXT_CONTROL_VALUE         1020
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -7,6 +7,10 @@
 #define COMMENTLENGTH 1024
 #define MAXNAME 256
 
+enum EM_START_POSITIONS {
+	START_POS_3MOVE, START_POS_FROM_FILE
+};
+
 struct CBoptions {
 	// holds all options of CB.
 	// the point is that it is much easier to store one struct in the registry
@@ -17,6 +21,7 @@ struct CBoptions {
 	char EGTBdirectory[256];
 	char primaryenginestring[64];
 	char secondaryenginestring[64];
+	char start_pos_filename[MAX_PATH];
 	COLORREF colors[5];
 	int userbook;
 	int sound;
@@ -28,6 +33,7 @@ struct CBoptions {
 	bool exact_time;
 	bool use_incremental_time;
 	bool early_game_adjudication;
+	EM_START_POSITIONS em_start_positions;
 	int level;
 	double initial_time;		/* incremental time control settings. */
 	double time_increment;
@@ -42,6 +48,12 @@ struct CBoptions {
 	int addoffset;
 	int language;
 	int piecesetindex;
+};
+
+struct BALLOT_INFO {
+	int color;
+	int board8[8][8];
+	std::string event;
 };
 
 typedef struct {

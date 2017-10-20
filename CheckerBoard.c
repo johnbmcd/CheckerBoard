@@ -172,8 +172,9 @@ char userbookname[MAX_PATH];			// current userbook
 CBmove cbmove;
 char savegame_filename[MAX_PATH];
 int currentengine = 1;					// 1=primary, 2=secondary
-int iselevenman;
 emstats_t emstats;						// engine match stats and state
+std::vector<BALLOT_INFO>user_ballots;
+
 int togglemode;							// 1-2-player toggle state
 int togglebook;							// engine book state (0/1/2/3)
 int toggleengine = 1;					// primary/secondary engine (1/2)
@@ -2978,52 +2979,21 @@ int showfile(char *filename)
 	return 1;
 }
 
-int start11man(int number)
+int start_user_ballot(int bnum)
 {
-	// start a new 11-move game:
-	// number ranges from 0 to numgames - 1.
-	// read FEN for this 11 man from file
-	// returns 1 if a game with gamenumber could be started, 0 if there is no FEN left in the file.
-	int i = 0;
-	FILE *fp;
-	char str[256];
-
-	// set directory to CB directory
-	SetCurrentDirectory(CBdirectory);
-
-	fp = fopen("11man_FEN.txt", "r");
-	if (fp == NULL)
-		return 0;
-
-	while (!feof(fp) && i <= number) {
-
-		// read a line
-		fgets(str, 255, fp);
-		i++;
-	}
-
-	if (feof(fp)) {
-		fclose(fp);
-		return 0;
-	}
-
-	fclose(fp);
-
-	// now we have the right FEN in str
-	FENtoboard8(cbboard8, str, &cbcolor, GT_ENGLISH);
+	char fen[260];
 
 	cbgame.moves.clear();
-	board8toFEN(cbboard8, str, cbcolor, GT_ENGLISH);
-	sprintf(cbgame.FEN, "%s", str);
-	sprintf(cbgame.event, "11-man #%i", number + 1);
+	memcpy(cbboard8, user_ballots[bnum].board8, sizeof(cbboard8));
+	cbcolor = user_ballots[bnum].color;
+	board8toFEN(user_ballots[bnum].board8, fen, user_ballots[bnum].color, gametype());
+	sprintf(cbgame.FEN, "%s", fen);
 	sprintf(cbgame.setup, "1");
-
+	sprintf(cbgame.event, "ballot %d", bnum + 1);
 	updateboardgraphics(hwnd);
 	InvalidateRect(hwnd, NULL, 0);
-	sprintf(str, "11 man opening number %i", number + 1);
 	newposition = TRUE;
 	reset_move_history = true;
-
 	return 1;
 }
 
@@ -3462,6 +3432,68 @@ DWORD SearchThreadFunc(LPVOID param)
 	return 1;
 }
 
+void read_user_ballots_file(void)
+{
+	size_t size, bytesread;
+	char *pdnstring, *p;
+	FILE *fp;
+	PDNgame game;
+	BALLOT_INFO ballot;
+	std::string gamestring;
+
+	user_ballots.clear();
+	size = getfilesize(cboptions.start_pos_filename);
+	if (!size) {
+		MessageBox(hwnd, "Cannot open start positions file", "Error", MB_OK);
+		return;
+	}
+
+	pdnstring = (char *)malloc(size);
+	fp = fopen(cboptions.start_pos_filename, "r");
+	if (fp == NULL) {
+		MessageBox(hwnd, "Cannot open start positions file", "Error", MB_OK);
+		free(pdnstring);
+		return;
+	}
+
+	// read file into memory
+	bytesread = fread(pdnstring, 1, size, fp);
+	fclose(fp);
+
+	// Terminate the pdn string.
+	pdnstring[bytesread] = 0;
+
+	p = pdnstring;
+	while (1) {
+		if (!PDNparseGetnextgame(&p, gamestring))
+			break;
+
+		/* The game is in gamestring. Parse it into a CBgame. */
+		doload(&game, gamestring.c_str(), &ballot.color, ballot.board8);
+
+		/* Extract the Event header. */
+		ballot.event = game.event;
+
+		pdntogame(game, ballot.board8, ballot.color);
+
+		/* Move to the last position in the game. */
+		for (int i = 0; i < (int)game.moves.size(); ++i) {
+			int from, to;
+			CBmove move;
+
+			PDNparseTokentonumbers(game.moves[i].PDN, &from, &to);
+			if (islegal(ballot.board8, ballot.color, from, to, &move)) {
+				game.moves[i].move = move;
+				ballot.color = CB_CHANGECOLOR(ballot.color);
+				domove(move, ballot.board8);
+			}
+		}
+
+		user_ballots.push_back(ballot);
+	}
+	free(pdnstring);
+}
+
 int changeCBstate(int oldstate, int newstate)
 {
 	// changes the state of Checkerboard from old state to new state
@@ -3497,10 +3529,6 @@ int changeCBstate(int oldstate, int newstate)
 
 	/* Update animation state. */
 	if (CBstate == ENGINEMATCH) {
-		if (cboptions.early_game_adjudication)
-			maxmovecount = 200;
-		else
-			maxmovecount = 300;
 		if (cboptions.use_incremental_time) {
 			if (cboptions.initial_time / 30 + cboptions.time_increment <= 1.5)
 				set_animation(false);
@@ -3532,6 +3560,14 @@ int changeCBstate(int oldstate, int newstate)
 
 	case ENGINEMATCH:
 		CheckMenuItem(hmenu, CM_ENGINEMATCH, MF_CHECKED);
+		if (cboptions.early_game_adjudication)
+			maxmovecount = 200;
+		else
+			maxmovecount = 300;
+
+		/* Read ballots file if being used. */
+		if (cboptions.em_start_positions == START_POS_FROM_FILE)
+			read_user_ballots_file();
 		break;
 
 	case ENTERGAME:
@@ -3626,36 +3662,10 @@ int read_match_stats(void)
 	return(emstats.games);
 }
 
-/*
- * Return the number of ballots in the 11-man file.
- */
-int num_11man_ballots(void)
-{
-	int count;
-	FILE *fp;
-	char linebuf[256];
-
-	// set directory to CB directory
-	SetCurrentDirectory(CBdirectory);
-	fp = fopen("11man_FEN.txt", "r");
-	if (fp == NULL)
-		return 0;
-
-	for (count = 0; !feof(fp); ++count)
-		fgets(linebuf, sizeof(linebuf), fp);
-
-	/* The count is off by 1 because we had to do one extra read to set eof. */
-	-- count;
-
-	fclose(fp);
-	return(count);
-}
-
-
 int num_ballots(void)
 {
-	if (iselevenman)
-		return(num_11man_ballots());
+	if (cboptions.em_start_positions == START_POS_FROM_FILE)
+		return((int)user_ballots.size());
 	else
 		return(num_3move_ballots(&cboptions));
 }
@@ -3668,7 +3678,7 @@ bool match_is_resumable(void)
 	if (ngames <= 0)
 		return(false);
 
-	if (ngames < 2 * num_ballots() * cboptions.match_repeat_count)
+	if (cboptions.em_start_positions == START_POS_FROM_FILE || ngames < 2 * num_ballots() * cboptions.match_repeat_count)
 		return(true);
 	else
 		return(false);
@@ -3693,6 +3703,18 @@ void reset_match_stats(void)
 	emstats.losses = 0;
 	emstats.unknowns = 0;
 	emstats.wins = 0;
+}
+
+/* Given a 0-based game number, return a 0-based ballot number. */
+int game0_to_ballot0(int game0)
+{
+	return((game0 / 2) % num_ballots());
+}
+
+/* Given a 0-based game number, return a 0-based match number. */
+int game0_to_match0(int game0)
+{
+	return(game0 / (2 * num_ballots()));
 }
 
 DWORD AutoThreadFunc(LPVOID param)
@@ -4026,7 +4048,7 @@ DWORD AutoThreadFunc(LPVOID param)
 
 					if (gamenumber % 2) {
 						emprogress_filename(statsfilename);
-						if (iselevenman == 1)
+						if (cboptions.em_start_positions == START_POS_FROM_FILE)
 							writefile(statsfilename, "a", "%4i:", round_gamenumber / 2 + 1);
 						else
 							writefile(statsfilename, "a", "%3i:", emstats.opening_index + 1);
@@ -4062,12 +4084,16 @@ DWORD AutoThreadFunc(LPVOID param)
 					}
 
 					// save the game
+					// gamenumber is base 1 here.
 					char matchstr[20];
 					matchstr[0] = 0;
 					if (cboptions.match_repeat_count > 1)
-						sprintf(matchstr, "match %d, ", 1 + (gamenumber - 1) / (2 * num_ballots()));
-					if (iselevenman)
-						sprintf(cbgame.event, "%s11-man #%i", matchstr, 1 + ((gamenumber - 1) % (2 * num_ballots())) / 2);
+						sprintf(matchstr, "match %d, ", 1 + game0_to_match0(gamenumber - 1));
+					if (cboptions.em_start_positions == START_POS_FROM_FILE)
+						sprintf(cbgame.event, "%sballot %d, %s", 
+							matchstr,
+							1 + game0_to_ballot0(gamenumber - 1),
+							user_ballots[game0_to_ballot0(gamenumber - 1)].event.c_str());
 					else
 						sprintf(cbgame.event, "%sACF #%i", matchstr, emstats.opening_index + 1);
 
@@ -4086,14 +4112,15 @@ DWORD AutoThreadFunc(LPVOID param)
 				startmatch = FALSE;
 
 				// get the opening for the gamenumber, and check whether the match is over
+				// gamenumber is base 0 here.
 				if (gamenumber >= 2 * num_ballots() * cboptions.match_repeat_count)
 					matchcontinues = 0;
 				else {
 					matchcontinues = 1;
-					if (iselevenman == 1)
-						start11man((gamenumber % (2 * num_ballots())) / 2);
+					if (cboptions.em_start_positions == START_POS_FROM_FILE)
+						start_user_ballot(game0_to_ballot0(gamenumber));
 					else {
-						emstats.opening_index = getthreeopening(gamenumber % (2 * num_ballots()), &cboptions);
+						emstats.opening_index = getthreeopening(game0_to_ballot0(gamenumber), &cboptions);
 						assert(emstats.opening_index >= 0);
 					}
 				}
@@ -4123,7 +4150,7 @@ DWORD AutoThreadFunc(LPVOID param)
 
 				// The main thread handles the 3-move ballot setup
 				if (CBstate != NORMAL) {
-					if (iselevenman == 0)
+					if (cboptions.em_start_positions == START_POS_3MOVE)
 						PostMessage(hwnd, WM_COMMAND, START3MOVE, emstats.opening_index);
 
 					// give main thread some time to handle this message
@@ -4717,7 +4744,7 @@ int getfilename(char filename[255], int what)
 	return 0;
 }
 
-void pdntogame(int startposition[8][8], int startcolor)
+void pdntogame(PDNgame &game, int startposition[8][8], int startcolor)
 {
 	/* pdntogame takes a starting position, a side to move next as parameters. 
 	it uses cbgame, which has to be initialized with pdn-text to generate the CBmoves. */
@@ -4731,20 +4758,20 @@ void pdntogame(int startposition[8][8], int startcolor)
 	/* set the starting values */
 	color = startcolor;
 	memcpy(b8, startposition, sizeof(b8));
-	for (i = 0; i < (int)cbgame.moves.size(); ++i) {
-		PDNparseTokentonumbers(cbgame.moves[i].PDN, &from, &to);
+	for (i = 0; i < (int)game.moves.size(); ++i) {
+		PDNparseTokentonumbers(game.moves[i].PDN, &from, &to);
 		if (islegal(b8, color, from, to, &legalmove)) {
-			cbgame.moves[i].move = legalmove;
+			game.moves[i].move = legalmove;
 			color = CB_CHANGECOLOR(color);
 			domove(legalmove, b8);
 		}
 		else {
 			char buf[250];
-			sprintf(buf, "Illegal move, \"%s\" in pdn game.", cbgame.moves[i].PDN);
+			sprintf(buf, "Illegal move, \"%s\" in pdn game.", game.moves[i].PDN);
 			MessageBox(hwnd, buf, "Error", MB_OK);
 
 			/* Delete every move from bad move to end of game. */
-			cbgame.moves.erase(cbgame.moves.begin() + i, cbgame.moves.end());
+			game.moves.erase(game.moves.begin() + i, game.moves.end());
 			return;
 		}
 	}
@@ -4931,7 +4958,7 @@ void doload(PDNgame *game, const char *gamestring, int *color, int board8[8][8])
 	}
 
 	// fill in the move information.
-	pdntogame(board8, *color);
+	pdntogame(*game, board8, *color);
 	reset_move_history = true;
 	newposition = TRUE;
 }

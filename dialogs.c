@@ -1438,7 +1438,7 @@ BOOL DialogStartEngineMatchFunc(HWND hwnd, UINT message, WPARAM wparam, LPARAM l
 	HWND hctrl;
 	BOOL status;
 	LRESULT lstatus;
-	extern int iselevenman;
+	char buf[MAX_PATH];
 
 	switch (message) {
 	case WM_INITDIALOG:
@@ -1446,13 +1446,15 @@ BOOL DialogStartEngineMatchFunc(HWND hwnd, UINT message, WPARAM wparam, LPARAM l
 		CenterDialog(hwnd);
 		hctrl = GetDlgItem(hwnd, IDC_START_POSITIONS);
 		SendDlgItemMessage(hwnd, IDC_START_POSITIONS, CB_ADDSTRING, 0, (LPARAM)"3-move");
-		SendDlgItemMessage(hwnd, IDC_START_POSITIONS, CB_ADDSTRING, 0, (LPARAM)"11-man");
+		SendDlgItemMessage(hwnd, IDC_START_POSITIONS, CB_ADDSTRING, 0, (LPARAM)"from a PDN file");
+
+		SetDlgItemText(hwnd, IDC_START_POS_FILENAME, (LPSTR)cboptions.start_pos_filename);
 
 		/* Init the 'Match repeat count' edit box. */
 		SetDlgItemInt(hwnd, IDC_MATCH_REPEAT_COUNT, cboptions.match_repeat_count, FALSE);
 
 		/* Set the initial selection. */
-		SendDlgItemMessage(hwnd, IDC_START_POSITIONS, CB_SETCURSEL, iselevenman ? 1 : 0, 0);
+		SendDlgItemMessage(hwnd, IDC_START_POSITIONS, CB_SETCURSEL, cboptions.em_start_positions, 0);
 
 		/* Init the early game adjudication check box. */
 		hctrl = GetDlgItem(hwnd, IDC_EARLY_GAME_ADJ_CHECK);
@@ -1469,7 +1471,7 @@ BOOL DialogStartEngineMatchFunc(HWND hwnd, UINT message, WPARAM wparam, LPARAM l
 		switch (LOWORD(wparam)) {
 		case IDC_START_POSITIONS:
 			if (HIWORD(wparam) == CBN_SELCHANGE) {
-				iselevenman = (int)SendDlgItemMessage(hwnd, IDC_START_POSITIONS, CB_GETCURSEL, 0, 0L);
+				cboptions.em_start_positions = (EM_START_POSITIONS)SendDlgItemMessage(hwnd, IDC_START_POSITIONS, CB_GETCURSEL, 0, 0L);
 				hctrl = GetDlgItem(hwnd, ID_RESUME_MATCH);
 				if (match_is_resumable())
 					EnableWindow(hctrl, 1);
@@ -1481,17 +1483,37 @@ BOOL DialogStartEngineMatchFunc(HWND hwnd, UINT message, WPARAM wparam, LPARAM l
 		case ID_RESUME_MATCH:
 			cboptions.match_repeat_count = GetDlgItemInt(hwnd, IDC_MATCH_REPEAT_COUNT, &status, FALSE);
 			cboptions.match_repeat_count = max(1, cboptions.match_repeat_count);
-			iselevenman = (int)SendDlgItemMessage(hwnd, IDC_START_POSITIONS, CB_GETCURSEL, 0, 0L);
+			cboptions.em_start_positions = (EM_START_POSITIONS)SendDlgItemMessage(hwnd, IDC_START_POSITIONS, CB_GETCURSEL, 0, 0L);
 			hctrl = GetDlgItem(hwnd, IDC_EARLY_GAME_ADJ_CHECK);
 			lstatus = SendMessage(hctrl, BM_GETCHECK, 0, 0);
 			cboptions.early_game_adjudication = lstatus ? true : false;
 			EndDialog(hwnd, TRUE);
 			return(TRUE);
 
+		case ID_BROWSE:
+			SetCurrentDirectory(cboptions.userdirectory);
+			SendDlgItemMessage(hwnd,
+							   IDC_START_POS_FILENAME,
+							   WM_GETTEXT,
+							   sizeof(cboptions.start_pos_filename),
+							   (LPARAM)cboptions.start_pos_filename);
+			if (getfilename(buf, OF_LOADGAME)) {
+				strcpy(cboptions.start_pos_filename, buf);
+				SendDlgItemMessage(hwnd, IDC_START_POS_FILENAME, WM_SETTEXT, 0, (LPARAM)cboptions.start_pos_filename);
+				hctrl = GetDlgItem(hwnd, ID_RESUME_MATCH);
+				if (match_is_resumable())
+					EnableWindow(hctrl, 1);
+				else
+					EnableWindow(hctrl, 0);
+			}
+
+			SetCurrentDirectory(CBdirectory);
+			break;
+
 		case ID_START_MATCH:
 			cboptions.match_repeat_count = GetDlgItemInt(hwnd, IDC_MATCH_REPEAT_COUNT, &status, FALSE);
 			cboptions.match_repeat_count = max(1, cboptions.match_repeat_count);
-			iselevenman = (int)SendDlgItemMessage(hwnd, IDC_START_POSITIONS, CB_GETCURSEL, 0, 0L);
+			cboptions.em_start_positions = (EM_START_POSITIONS)SendDlgItemMessage(hwnd, IDC_START_POSITIONS, CB_GETCURSEL, 0, 0L);
 			hctrl = GetDlgItem(hwnd, IDC_EARLY_GAME_ADJ_CHECK);
 			lstatus = SendMessage(hctrl, BM_GETCHECK, 0, 0);
 			cboptions.early_game_adjudication = lstatus ? true : false;
