@@ -182,7 +182,7 @@ int saveashtml(char *filename, PDNgame *game)
 
 	fprintf(fp, "<table border=\"1\" cellspacing=\"0\" cellpadding=\"0\"><tr><td>");
 
-	if (strcmp(game->setup, "") != 0) {
+	if (strcmp(game->FEN, "") != 0) {
 
 		// setup
 		for (i = 0; i < 64; i++) {
@@ -342,7 +342,7 @@ int PDNgametostartposition(PDNgame *game, int b[64])
 	for (i = 0; i < 64; i++)
 		b[i] = 0;
 
-	if (strcmp(game->setup, "") == 0) {
+	if (strcmp(game->FEN, "") == 0) {
 
 	// no setup
 		if (game->gametype == GT_ITALIAN) {
@@ -439,10 +439,8 @@ void PDNgametoPDNHTMLstring(PDNgame *game, std::string &pdnstring)
 	sprintf(s, "[Result \"%s\"]<BR>", game->resultstring);
 	pdnstring += s;
 
-	/* if this was after a setup, add FEN and setup header*/
-	if (strcmp(game->setup, "") != 0) {
-		sprintf(s, "[Setup \"%s\"]<BR>", game->setup);
-		pdnstring += s;
+	/* if this was after a setup, add FEN header*/
+	if (strcmp(game->FEN, "") != 0) {
 		sprintf(s, "[FEN \"%s\"]<BR>", game->FEN);
 		pdnstring += s;
 	}

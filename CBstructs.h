@@ -81,7 +81,6 @@ struct PDNgame {
 	char black[MAXNAME];
 	char white[MAXNAME];
 	char resultstring[MAXNAME];
-	char setup[MAXNAME];					/* support 2 more tags for setup */
 	char FEN[MAXNAME];
 	int result;								/* internal conversion to integers */
 	int gametype;

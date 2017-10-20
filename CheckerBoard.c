@@ -761,7 +761,6 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 					newposition = TRUE;
 					sprintf(statusbar_txt, "position copied");
 					PostMessage(hwnd, WM_COMMAND, GAMEINFO, 0);
-					sprintf(cbgame.setup, "1");
 					sprintf(cbgame.FEN, gamestring);
 				}
 				else
@@ -1462,7 +1461,6 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 				// get FEN string
 				reset_game(cbgame);
 				board8toFEN(cbboard8, cbgame.FEN, cbcolor, cbgame.gametype);
-				sprintf(cbgame.setup, "1");
 			}
 			break;
 
@@ -1629,7 +1627,6 @@ void reset_game(PDNgame &game)
 	sprintf(game.date, "");
 	sprintf(game.FEN, "");
 	sprintf(game.round, "");
-	sprintf(game.setup, "");
 	sprintf(game.site, "");
 	game.result = CB_UNKNOWN;
 	game.moves.clear();
@@ -1728,8 +1725,7 @@ int handlesetupcc(int *color)
 	reset_game(cbgame);
 	cboptions.mirror = is_mirror_gametype(cbgame.gametype);
 
-	// and the setup codes
-	sprintf(cbgame.setup, "1");
+	// and the FEN string
 	board8toFEN(cbboard8, str2, *color, cbgame.gametype);
 	sprintf(cbgame.FEN, str2);
 	return 1;
@@ -2988,7 +2984,6 @@ int start_user_ballot(int bnum)
 	cbcolor = user_ballots[bnum].color;
 	board8toFEN(user_ballots[bnum].board8, fen, user_ballots[bnum].color, gametype());
 	sprintf(cbgame.FEN, "%s", fen);
-	sprintf(cbgame.setup, "1");
 	sprintf(cbgame.event, "ballot %d", bnum + 1);
 	updateboardgraphics(hwnd);
 	InvalidateRect(hwnd, NULL, 0);
@@ -4574,11 +4569,7 @@ void PDNgametoPDNstring(PDNgame &game, std::string &pdnstring, char *lineterm)
 	pdnstring += lineterm;
 
 	// if this was after a setup, add FEN and setup header
-	if (strcmp(game.setup, "") != 0) {
-		sprintf(s, "[Setup \"%s\"]", game.setup);
-		pdnstring += s;
-		pdnstring += lineterm;
-
+	if (strcmp(game.FEN, "") != 0) {
 		sprintf(s, "[FEN \"%s\"]", game.FEN);
 		pdnstring += s;
 		pdnstring += lineterm;
@@ -4872,11 +4863,8 @@ void doload(PDNgame *game, const char *gamestring, int *color, int board8[8][8])
 				game->result = CB_UNKNOWN;
 		}
 
-		if (strcmp(headername, "setup") == 0)
-			sprintf(game->setup, "%s", headervalue);
 		if (strcmp(headername, "fen") == 0) {
 			sprintf(game->FEN, "%s", headervalue);
-			sprintf(game->setup, "1");
 			issetup = 1;
 		}
 	}
