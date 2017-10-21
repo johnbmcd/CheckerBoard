@@ -1833,10 +1833,9 @@ int handle_lbuttondown(int x, int y)
 				// is it the only legal move?
 				// if yes, do it!
 				// if we are in user book mode, add it to user book!
-				//if(islegal((int *)board8,color,coorstonumber(x1,y1,cbgame.gametype),legalmovenumber,&localmove)!=0)
 				if (islegal(cbboard8, cbcolor, from, to, &localmove) != 0) {
 
-				// a legal move!
+					// a legal move!
 					// insert move in the linked list
 					appendmovetolist(localmove);
 
@@ -1891,7 +1890,7 @@ int handle_lbuttondown(int x, int y)
 	}
 	else {
 
-	//then its the second click
+		//then its the second click
 		x2 = x;
 		y2 = y;
 		coorstocoors(&x2, &y2, cboptions.invert, cboptions.mirror);
@@ -1947,7 +1946,7 @@ int handle_lbuttondown(int x, int y)
 							&localmove) != 0
 				) {
 
-				// a legal move!
+					// a legal move!
 					// insert move in the linked list
 					appendmovetolist(localmove);
 
@@ -4634,14 +4633,10 @@ void PDNgametoPDNstring(PDNgame &game, std::string &pdnstring, char *lineterm)
  */
 void appendmovetolist(CBmove &move)
 {
-	int i;
 	gamebody_entry entry;
 
-	/* Delete entries in cbgames.moves[] from end back to movesindex. Do it in reverse order
-	 * because it's more efficient to delete vector entries from the end than in the middle.
-	 */
-	for (i = (int)cbgame.moves.size() - 1; i >= cbgame.movesindex; --i)
-		cbgame.moves.erase(cbgame.moves.begin() + i);
+	/* Delete entries in cbgames.moves[] from movesindex to end. */
+	cbgame.moves.erase(cbgame.moves.begin() + cbgame.movesindex, cbgame.moves.end());
 
 	entry.analysis[0] = 0;
 	entry.comment[0] = 0;
@@ -4704,7 +4699,7 @@ int getfilename(char filename[255], int what)
 
 	if (what == OF_SAVEASHTML) {
 
-	// save game as html
+		// save game as html
 		(of).lpstrTitle = "Select filename of HTML output";
 		(of).lpstrFilter = "HTML files *.htm\0 *.htm\0 all files *.*\0 *.*\0\0";
 		sprintf(dir, "%s\\games", CBdocuments);
@@ -4715,7 +4710,7 @@ int getfilename(char filename[255], int what)
 
 	if (what == OF_USERBOOK) {
 
-	// select user book
+		// select user book
 		(of).lpstrTitle = "Select the user book to use";
 		(of).lpstrFilter = "user book files *.bin\0 *.bin\0 all files *.*\0 *.*\0\0";
 		(of).lpstrInitialDir = CBdocuments;
