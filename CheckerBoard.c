@@ -4114,7 +4114,7 @@ DWORD AutoThreadFunc(LPVOID param)
 					if (cboptions.em_start_positions == START_POS_FROM_FILE)
 						start_user_ballot(game0_to_ballot0(gamenumber));
 					else {
-						emstats.opening_index = getthreeopening(game0_to_ballot0(gamenumber), &cboptions);
+						emstats.opening_index = getthreeopening(gamenumber % (2 * num_ballots()), &cboptions);
 						assert(emstats.opening_index >= 0);
 					}
 				}
@@ -4635,8 +4635,9 @@ void appendmovetolist(CBmove &move)
 {
 	gamebody_entry entry;
 
-	/* Delete entries in cbgames.moves[] from movesindex to end. */
-	cbgame.moves.erase(cbgame.moves.begin() + cbgame.movesindex, cbgame.moves.end());
+	/* Delete entries in cbgame.moves[] from movesindex to end. */
+	if (cbgame.movesindex < (int)cbgame.moves.size())
+		cbgame.moves.erase(cbgame.moves.begin() + cbgame.movesindex, cbgame.moves.end());
 
 	entry.analysis[0] = 0;
 	entry.comment[0] = 0;
