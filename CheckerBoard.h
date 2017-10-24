@@ -67,7 +67,7 @@ int getfilename(char filename[255], int what);
 int getanimationbusy(void);
 int getenginebusy(void);
 int getenginestarting(void);
-int getmovelist(int color, struct CBmove m[MAXMOVES], int b[8][8], int *isjump);
+int getmovelist(int color, struct CBmove movelist[MAXMOVES], int b[8][8], int *isjump);
 int gametype(void);
 int handlegamereplace(int replaceindex, char *databasename);
 int handlesetupcc(int *color);

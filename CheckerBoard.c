@@ -3159,7 +3159,7 @@ DWORD SearchThreadFunc(LPVOID param)
 {
 	size_t i, nmoves;
 	int original8board[8][8], b8copy[8][8], originalcopy[8][8];
-	CBmove m[MAXMOVES];
+	CBmove movelist[MAXMOVES];
 	CBmove localmove;
 	char PDN[40];
 	int found = 0;
@@ -3187,7 +3187,7 @@ DWORD SearchThreadFunc(LPVOID param)
 	abortcalculation = 0;				// if this remains 0, we will execute the move - else not
 
 	// test if there is a move at all: if not, return and set state to NORMAL
-	nmoves = getmovelist(cbcolor, m, cbboard8, &iscapture);
+	nmoves = getmovelist(cbcolor, movelist, cbboard8, &iscapture);
 	if (nmoves == 0) {
 		sprintf(statusbar_txt, "there is no move in this position");
 
@@ -3345,16 +3345,16 @@ DWORD SearchThreadFunc(LPVOID param)
 			// determine the move that was made: we only do this if gametype is GT_ENGLISH,
 			//	else the engine must return the appropriate information in localmove
 			if (gametype() == GT_ENGLISH) {
-				nmoves = getmovelist(cbcolor, m, b8copy, &iscapture);
-				cbmove = m[0];
+				nmoves = getmovelist(cbcolor, movelist, b8copy, &iscapture);
+				cbmove = movelist[0];
 				for (i = 0; i < nmoves; i++) {
 
 					//put original board8 in b8copy, execute move and compare with returned board8...
 					memcpy(b8copy, original8board, sizeof(b8copy));
-					domove(m[i], b8copy);
+					domove(movelist[i], b8copy);
 					if (memcmp(cbboard8, b8copy, sizeof(cbboard8)) == 0) {
-						move4tonotation(m[i], PDN);
-						cbmove = m[i];
+						move4tonotation(movelist[i], PDN);
+						cbmove = movelist[i];
 						found = 1;
 						break;
 					}

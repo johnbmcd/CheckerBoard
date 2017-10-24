@@ -12,10 +12,10 @@
 #include "min_movegen.h"
 
 /* exported functions */
-int getmovelist(int color, struct CBmove m[MAXMOVES], int b[8][8], int *isjump);
+int getmovelist(int color, struct CBmove movelist[MAXMOVES], int b[8][8], int *isjump);
 
 /* internal functions */
-static int makemovelist(int color, struct CBmove m[MAXMOVES], int b[12][12], int *isjump);
+static int makemovelist(int color, struct CBmove movelist[MAXMOVES], int b[12][12], int *isjump);
 static void board8toboard12(int board8[8][8], int board12[12][12]);
 static void whitecapture(int board[12][12], struct CBmove movelist[MAXMOVES], struct CBmove m, int x, int y, int d);
 static void blackcapture(int board[12][12], struct CBmove movelist[MAXMOVES], struct CBmove m, int x, int y, int d);
