@@ -3109,18 +3109,22 @@ double maxtime_for_incremental_tc(double remaining)
 {
 	double divisor;
 
-	if (remaining < 0.25 * cboptions.time_increment)
-		return(0.25 * cboptions.time_increment);
+	if (remaining < 0.4 * cboptions.time_increment)
+		return(0.4 * cboptions.time_increment);
 	if (remaining <= cboptions.time_increment)
 		return(remaining);
 	if (cboptions.time_increment == 0)
 		divisor = 11;
-	else if (cboptions.initial_time / cboptions.time_increment > 50)
+	else if (cboptions.initial_time / cboptions.time_increment >= 50)
 		divisor = 10;
-	else if (cboptions.initial_time / cboptions.time_increment > 20)
+	else if (cboptions.initial_time / cboptions.time_increment >= 20)
 		divisor = 9;
-	else
-		divisor = 8;
+	else if (cboptions.initial_time / cboptions.time_increment >= 10)
+		divisor = 7;
+	else if (cboptions.initial_time / cboptions.time_increment >= 5)
+		divisor = 5;
+	else 
+		divisor = 4;
 	return(min(remaining, cboptions.time_increment + remaining / divisor));
 }
 
@@ -4114,7 +4118,7 @@ DWORD AutoThreadFunc(LPVOID param)
 					if (cboptions.em_start_positions == START_POS_FROM_FILE)
 						start_user_ballot(game0_to_ballot0(gamenumber));
 					else {
-						emstats.opening_index = getthreeopening(game0_to_ballot0(gamenumber), &cboptions);
+						emstats.opening_index = getthreeopening(gamenumber % (2 * num_ballots()), &cboptions);
 						assert(emstats.opening_index >= 0);
 					}
 				}
@@ -4635,8 +4639,9 @@ void appendmovetolist(CBmove &move)
 {
 	gamebody_entry entry;
 
-	/* Delete entries in cbgames.moves[] from movesindex to end. */
-	cbgame.moves.erase(cbgame.moves.begin() + cbgame.movesindex, cbgame.moves.end());
+	/* Delete entries in cbgame.moves[] from movesindex to end. */
+	if (cbgame.movesindex < (int)cbgame.moves.size())
+		cbgame.moves.erase(cbgame.moves.begin() + cbgame.movesindex, cbgame.moves.end());
 
 	entry.analysis[0] = 0;
 	entry.comment[0] = 0;
