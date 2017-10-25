@@ -3049,7 +3049,7 @@ int start3move(int opening_index)
 
 	cbcolor = CB_CHANGECOLOR(cbcolor);
 
-	if (gametype() == GT_ITALIAN) {
+	if (is_mirror_gametype(gametype())) {
 		char pdn[80];
 
 		game_to_colors_reversed_pdn(pdn);
