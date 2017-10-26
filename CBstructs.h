@@ -118,6 +118,8 @@ struct time_ctrl_t {
 	clock_t starttime;
 	double black_time_remaining;
 	double white_time_remaining;
+	double cumulative_time_used[3];		/* Indexed by engine number, 1 or 2. */
+	int searchcount;
 };
 
 struct emstats_t {

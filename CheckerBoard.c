@@ -338,6 +338,10 @@ void reset_game_clocks()
 		time_ctrl.white_time_remaining = max(cboptions.initial_time, cboptions.time_increment);
 		time_ctrl.starttime = clock();
 	}
+	else {
+		time_ctrl.black_time_remaining = 0;
+		time_ctrl.white_time_remaining = 0;
+	}
 }
 
 void start_clock()
@@ -3130,6 +3134,20 @@ double maxtime_for_incremental_tc(double remaining)
 
 
 /*
+ * Return the maxtime argument to send to the engine when fixed time per move is used in
+ * an engine match. 
+ */
+double maxtime_for_non_incremental_tc(double remaining, double increment)
+{
+	if (remaining < 0.4 * increment)
+		return(0.4 * increment);
+	if (remaining > increment)
+		return(increment + (remaining - increment) / 3);
+	return(remaining);
+}
+
+
+/*
  * Keep track of the ratio of maxtime to actual search time for each engine's searches.
  * Write the average ratio to cblog every 25 searches.
  */
@@ -3266,15 +3284,27 @@ DWORD SearchThreadFunc(LPVOID param)
 					maxtime = maxtime_for_incremental_tc(time_ctrl.white_time_remaining);
 				}
 			}
+			else if (CBstate == ENGINEMATCH) {
+				maxtime = timelevel_to_time(cboptions.level);
+
+				// if in engine match handicap mode, give primary engine half the time of secondary engine.
+				if (handicap && currentengine == 1)
+					maxtime /= 2;
+
+				if (cbcolor == CB_BLACK) {
+					time_ctrl.black_time_remaining += maxtime;
+					maxtime = maxtime_for_non_incremental_tc(time_ctrl.black_time_remaining, maxtime);
+				}
+				else {
+					time_ctrl.white_time_remaining += maxtime;
+					maxtime = maxtime_for_non_incremental_tc(time_ctrl.white_time_remaining, maxtime);
+				}
+			}
 			else {
 				if (cboptions.exact_time)
 					info |= CB_EXACT_TIME;
 
 				maxtime = timelevel_to_time(cboptions.level);
-
-				// if in engine match handicap mode, give primary engine half the time of secondary engine.
-				if (CBstate == ENGINEMATCH && handicap && currentengine == 1)
-					maxtime /= 2;
 			}
 
 			start_clock();
@@ -3283,6 +3313,14 @@ DWORD SearchThreadFunc(LPVOID param)
 
 			/* Display the Play! bitmap with black foreground when the engine is not searching. */
 			PostMessage(tbwnd, TB_CHANGEBITMAP, (WPARAM) MOVESPLAY, MAKELPARAM(2, 0));
+
+			if (CBstate == ENGINEMATCH) {
+				time_ctrl.cumulative_time_used[currentengine] += elapsed;
+				++time_ctrl.searchcount;
+				if ((time_ctrl.searchcount & 127) == 0)
+					cblog("Total time used (engine 1, engine 2): %.2f min, %.2f min\n",
+						time_ctrl.cumulative_time_used[1] / 60, time_ctrl.cumulative_time_used[2] / 60);
+			}
 
 			if (cboptions.use_incremental_time) {
 				if (cbcolor == CB_BLACK) {
@@ -3301,9 +3339,15 @@ DWORD SearchThreadFunc(LPVOID param)
 				 */
 				time_ctrl.starttime = clock();
 			}
-			else
+			else if (CBstate == ENGINEMATCH) {
+				if (cbcolor == CB_BLACK)
+					time_ctrl.black_time_remaining -= elapsed;
+				else
+					time_ctrl.white_time_remaining -= elapsed;
+
 				/* Keep track of how well the engine's average search time tracks the maxtime param. */
 				save_time_stats(currentengine, maxtime, elapsed);
+			}
 		}
 		else
 			sprintf(statusbar_txt, "error: no engine defined!");
@@ -3399,6 +3443,7 @@ DWORD SearchThreadFunc(LPVOID param)
 								  &g_AniThreadId);
 	}
 
+	// Update logfiles.
 	// if CBstate is ANALYZEGAME, we have to print the analysis to a logfile,
 	// make the move played in the game & also print it into the logfile
 	switch (CBstate) {
@@ -3419,7 +3464,18 @@ DWORD SearchThreadFunc(LPVOID param)
 
 			emlog_filename(filename);
 			enginename(name);
-			writefile(filename, "a", "%s played %s\nanalysis: %s\n", name, PDN, statusbar_txt);
+			if (cboptions.use_incremental_time)
+				writefile(filename, "a", "%s played %s\nanalysis: %s\n", name, PDN, statusbar_txt);
+			else {
+				double total;
+
+				if (cbcolor == CB_BLACK)
+					total = time_ctrl.black_time_remaining + elapsed;
+				else
+					total = time_ctrl.white_time_remaining + elapsed;
+				writefile(filename, "a", "%s played %s; Times (total, given to engine, used): %.3f, %.3f, %.3f\nanalysis: %s\n",
+					name, PDN, total, maxtime, elapsed, statusbar_txt);
+			}
 		}
 		break;
 	}
@@ -3654,8 +3710,15 @@ int read_match_stats(void)
 		fclose(fp);
 		if (count == 6)
 			emstats.games = emstats.wins + emstats.losses + emstats.draws + emstats.unknowns;
-		else
+		else {
 			emstats.games = 0;
+			emstats.wins = 0;
+			emstats.losses = 0;
+			emstats.draws = 0;
+			emstats.unknowns = 0;
+			emstats.blackwins = 0;
+			emstats.blacklosses = 0;
+		}
 	}
 	return(emstats.games);
 }
@@ -3701,6 +3764,9 @@ void reset_match_stats(void)
 	emstats.losses = 0;
 	emstats.unknowns = 0;
 	emstats.wins = 0;
+	time_ctrl.cumulative_time_used[1] = 0;
+	time_ctrl.cumulative_time_used[2] = 0;
+	time_ctrl.searchcount = 0;
 }
 
 /* Given a 0-based game number, return a 0-based ballot number. */
