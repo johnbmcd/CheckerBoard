@@ -23,7 +23,7 @@
 
 // disable the signed/unsigned warning that gets thrown in this file dozens of times
 #pragma warning(disable : 4146)
-int makemovelist(struct pos *p, struct move movelist[MAXMOVES], int color)
+int makemovelist(pos *p, move movelist[MAXMOVES], int color)
 {
 	uint32_t n = 0, free;
 	uint32_t m, tmp;
@@ -427,12 +427,12 @@ int makemovelist(struct pos *p, struct move movelist[MAXMOVES], int color)
 /* used to be captgen.c */
 
 /* generates the capture moves */
-int makecapturelist(struct pos *p, struct move movelist[MAXMOVES], int color)
+int makecapturelist(pos *p, move movelist[MAXMOVES], int color)
 {
 	uint32_t free, free2, m, tmp, white, black, white2, black2;
 	int n = 0;
-	struct move partial;
-	struct pos q;
+	move partial;
+	pos q;
 
 	/*
 	CB_WHITE
@@ -1013,18 +1013,18 @@ int makecapturelist(struct pos *p, struct move movelist[MAXMOVES], int color)
 
 static void blackmancapture1
 			(
-				struct pos *p,
-				struct move movelist[MAXMOVES],
+				pos *p,
+				move movelist[MAXMOVES],
 				int *n,
-				struct move *partial,
+				move *partial,
 				uint32_t square
 			)
 {
 	/* partial move has already been executed. seek LFJ1 and RFJ1 */
 	uint32_t m, free, white;
 	int found = 0;
-	struct move next_partial, whole_partial;
-	struct pos q;
+	move next_partial, whole_partial;
+	pos q;
 
 	free = ~(p->bm | p->bk | p->wm | p->wk);
 	white = p->wm | p->wk;
@@ -1082,10 +1082,10 @@ static void blackmancapture1
 
 static void blackmancapture2
 			(
-				struct pos *p,
-				struct move movelist[MAXMOVES],
+				pos *p,
+				move movelist[MAXMOVES],
 				int *n,
-				struct move *partial,
+				move *partial,
 				uint32_t square
 			)
 {
@@ -1093,9 +1093,9 @@ static void blackmancapture2
 
 	/* additional complication: black stone might crown here */
 	uint32_t m, free, white;
-	struct move next_partial, whole_partial;
+	move next_partial, whole_partial;
 	int found = 0;
-	struct pos q;
+	pos q;
 
 	free = ~(p->bm | p->bk | p->wm | p->wk);
 	white = p->wm | p->wk;
@@ -1152,18 +1152,18 @@ static void blackmancapture2
 
 static void blackkingcapture1
 			(
-				struct pos *p,
-				struct move movelist[MAXMOVES],
+				pos *p,
+				move movelist[MAXMOVES],
 				int *n,
-				struct move *partial,
+				move *partial,
 				uint32_t square
 			)
 {
 	/* partial move has already been executed. seek LFJ1 RFJ1 LBJ1 RBJ1*/
 	uint32_t m, free, white;
-	struct move next_partial, whole_partial;
+	move next_partial, whole_partial;
 	int found = 0;
-	struct pos q;
+	pos q;
 
 	free = ~(p->bm | p->bk | p->wm | p->wk);
 	white = p->wm | p->wk;
@@ -1262,18 +1262,18 @@ static void blackkingcapture1
 
 static void blackkingcapture2
 			(
-				struct pos *p,
-				struct move movelist[MAXMOVES],
+				pos *p,
+				move movelist[MAXMOVES],
 				int *n,
-				struct move *partial,
+				move *partial,
 				uint32_t square
 			)
 {
 	/* partial move has already been executed. seek LFJ1 RFJ1 LBJ1 RBJ1*/
 	uint32_t m, free, white;
-	struct move next_partial, whole_partial;
+	move next_partial, whole_partial;
 	int found = 0;
-	struct pos q;
+	pos q;
 
 	free = ~(p->bm | p->bk | p->wm | p->wk);
 	white = p->wm | p->wk;
@@ -1372,18 +1372,18 @@ static void blackkingcapture2
 
 static void whitemancapture1
 			(
-				struct pos *p,
-				struct move movelist[MAXMOVES],
+				pos *p,
+				move movelist[MAXMOVES],
 				int *n,
-				struct move *partial,
+				move *partial,
 				uint32_t square
 			)
 {
 	/* partial move has already been executed. seek LBJ1 and RBJ1 */
 	uint32_t m, free, black;
-	struct move next_partial, whole_partial;
+	move next_partial, whole_partial;
 	int found = 0;
-	struct pos q;
+	pos q;
 
 	free = ~(p->bm | p->bk | p->wm | p->wk);
 	black = p->bm | p->bk;
@@ -1440,18 +1440,18 @@ static void whitemancapture1
 
 static void whitemancapture2
 			(
-				struct pos *p,
-				struct move movelist[MAXMOVES],
+				pos *p,
+				move movelist[MAXMOVES],
 				int *n,
-				struct move *partial,
+				move *partial,
 				uint32_t square
 			)
 {
 	/* partial move has already been executed. seek LBJ1 and RBJ1 */
 	uint32_t m, free, black;
-	struct move next_partial, whole_partial;
+	move next_partial, whole_partial;
 	int found = 0;
-	struct pos q;
+	pos q;
 
 	free = ~(p->bm | p->bk | p->wm | p->wk);
 	black = p->bm | p->bk;
@@ -1508,18 +1508,18 @@ static void whitemancapture2
 
 static void whitekingcapture1
 			(
-				struct pos *p,
-				struct move movelist[MAXMOVES],
+				pos *p,
+				move movelist[MAXMOVES],
 				int *n,
-				struct move *partial,
+				move *partial,
 				uint32_t square
 			)
 {
 	/* partial move has already been executed. seek LFJ1 RFJ1 LBJ1 RBJ1*/
 	uint32_t m, free, black;
-	struct move next_partial, whole_partial;
+	move next_partial, whole_partial;
 	int found = 0;
-	struct pos q;
+	pos q;
 
 	free = ~(p->bm | p->bk | p->wm | p->wk);
 	black = p->bm | p->bk;
@@ -1618,18 +1618,18 @@ static void whitekingcapture1
 
 static void whitekingcapture2
 			(
-				struct pos *p,
-				struct move movelist[MAXMOVES],
+				pos *p,
+				move movelist[MAXMOVES],
 				int *n,
-				struct move *partial,
+				move *partial,
 				uint32_t square
 			)
 {
 	/* partial move has already been executed. seek LFJ1 RFJ1 LBJ1 RBJ1*/
 	uint32_t m, free, black;
-	struct move next_partial, whole_partial;
+	move next_partial, whole_partial;
 	int found = 0;
-	struct pos q;
+	pos q;
 
 	free = ~(p->bm | p->bk | p->wm | p->wk);
 	black = p->bm | p->bk;

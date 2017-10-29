@@ -60,72 +60,72 @@ struct move {
 	uint32_t wk;
 };
 
-int makemovelist(struct pos *p, struct move movelist[MAXMOVES], int color);
+int makemovelist(pos *p, move movelist[MAXMOVES], int color);
 
 /* captgen.h: function prototypes for captgen.c */
-int makecapturelist(struct pos *p, struct move movelist[MAXMOVES], int color);
+int makecapturelist(pos *p, move movelist[MAXMOVES], int color);
 
 static void blackmancapture1
 			(
-				struct pos *p,
-				struct move movelist[MAXMOVES],
+				pos *p,
+				move movelist[MAXMOVES],
 				int *n,
-				struct move *partial,
+				move *partial,
 				uint32_t square
 			);
 static void blackkingcapture1
 			(
-				struct pos *p,
-				struct move movelist[MAXMOVES],
+				pos *p,
+				move movelist[MAXMOVES],
 				int *n,
-				struct move *partial,
+				move *partial,
 				uint32_t square
 			);
 static void whitemancapture1
 			(
-				struct pos *p,
-				struct move movelist[MAXMOVES],
+				pos *p,
+				move movelist[MAXMOVES],
 				int *n,
-				struct move *partial,
+				move *partial,
 				uint32_t square
 			);
 static void whitekingcapture1
 			(
-				struct pos *p,
-				struct move movelist[MAXMOVES],
+				pos *p,
+				move movelist[MAXMOVES],
 				int *n,
-				struct move *partial,
+				move *partial,
 				uint32_t square
 			);
 static void blackmancapture2
 			(
-				struct pos *p,
-				struct move movelist[MAXMOVES],
+				pos *p,
+				move movelist[MAXMOVES],
 				int *n,
-				struct move *partial,
+				move *partial,
 				uint32_t square
 			);
 static void blackkingcapture2
 			(
-				struct pos *p,
-				struct move movelist[MAXMOVES],
+				pos *p,
+				move movelist[MAXMOVES],
 				int *n,
-				struct move *partial,
+				move *partial,
 				uint32_t square
 			);
 static void whitemancapture2
 			(
-				struct pos *p,
-				struct move movelist[MAXMOVES],
+				pos *p,
+				move movelist[MAXMOVES],
 				int *n,
-				struct move *partial,
+				move *partial,
 				uint32_t square
 			);
 static void whitekingcapture2
 			(
-				struct pos *p,
-				struct move movelist[MAXMOVES],
+				pos *p,
+				move movelist[MAXMOVES],
 				int *n,
-				struct move *partial,
+				move *partial,
 				uint32_t square
 			);

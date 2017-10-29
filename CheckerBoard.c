@@ -13,7 +13,7 @@
 // 	if you want your checkers engine to use checkerboard as a front-end, 	
 // 	you must compile your engine as a dll, and provide the following 2
 // 	functions:		
-//  int WINAPI getmove(int board[8][8], int color, double maxtime, char str[1024], int *playnow, int info, int moreinfo, struct CBmove *move);
+//  int WINAPI getmove(int board[8][8], int color, double maxtime, char str[1024], int *playnow, int info, int moreinfo, CBmove *move);
 //  int WINAPI enginecommand(char command[256], char reply[1024]);
 // TODO: bug report: if you hit takeback while CB is animating a move, you get an undefined state
 
@@ -181,7 +181,7 @@ int toggleengine = 1;					// primary/secondary engine (1/2)
 int maxmovecount = 300;					// engine match limit; use 200 if early_game_adjudication is enabled.
 
 // keep a small user book
-struct userbookentry userbook[MAXUSERBOOK];
+userbookentry userbook[MAXUSERBOOK];
 size_t userbooknum;
 size_t userbookcur;
 static CHOOSECOLOR ccs;
@@ -334,8 +334,8 @@ void reset_game_clocks()
 {
 	if (cboptions.use_incremental_time) {
 		time_ctrl.clock_paused = true;
-		time_ctrl.black_time_remaining = max(cboptions.initial_time, cboptions.time_increment);
-		time_ctrl.white_time_remaining = max(cboptions.initial_time, cboptions.time_increment);
+		time_ctrl.black_time_remaining = cboptions.initial_time + cboptions.time_increment;
+		time_ctrl.white_time_remaining = cboptions.initial_time + cboptions.time_increment;
 		time_ctrl.starttime = clock();
 	}
 	else {
@@ -658,7 +658,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 				// load user book
 				fp = fopen(userbookname, "rb");
 				if (fp != NULL) {
-					userbooknum = fread(userbook, sizeof(struct userbookentry), MAXUSERBOOK, fp);
+					userbooknum = fread(userbook, sizeof(userbookentry), MAXUSERBOOK, fp);
 					fclose(fp);
 				}
 
@@ -790,12 +790,15 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 
 			// now that the game is in gamestring doload() on it
 			if (gamestring != NULL) {
+				std::string errormsg;
 				PostMessage(hwnd, WM_COMMAND, ABORTENGINE, 0);
 
 				/* Detect fen or game, load it in either case. */
 				if (is_fen(gamestring)) {
 					if (!FENtoboard8(cbboard8, gamestring, &cbcolor, cbgame.gametype)) {
-						doload(&cbgame, gamestring, &cbcolor, cbboard8);
+						if (doload(&cbgame, gamestring, &cbcolor, cbboard8, errormsg))
+							MessageBox(hwnd, errormsg.c_str(), "Error", MB_OK);
+
 						sprintf(statusbar_txt, "game copied");
 					}
 					else {
@@ -804,8 +807,10 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 					}
 				}
 				else {
-					doload(&cbgame, gamestring, &cbcolor, cbboard8);
-					sprintf(statusbar_txt, "position copied");
+					if (doload(&cbgame, gamestring, &cbcolor, cbboard8, errormsg))
+						MessageBox(hwnd, errormsg.c_str(), "Error", MB_OK);
+					else
+						sprintf(statusbar_txt, "position copied");
 				}
 
 				free(gamestring);
@@ -1289,7 +1294,7 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 				// save user book
 				fp = fopen(userbookname, "wb");
 				if (fp != NULL) {
-					fwrite(userbook, sizeof(struct userbookentry), userbooknum, fp);
+					fwrite(userbook, sizeof(userbookentry), userbooknum, fp);
 					fclose(fp);
 				}
 				else
@@ -2126,11 +2131,11 @@ int handletimer(void)
 	return 1;
 }
 
-int addmovetouserbook(int b[8][8], struct CBmove *move)
+int addmovetouserbook(int b[8][8], CBmove *move)
 {
 	size_t i, n;
 	FILE *fp;
-	struct pos userbookpos;
+	pos userbookpos;
 
 	// if we have too many moves, stop!
 	// userbooknum is a global, as it is also used in removing stuff from book
@@ -2171,7 +2176,7 @@ int addmovetouserbook(int b[8][8], struct CBmove *move)
 	// save user book
 	fp = fopen(userbookname, "wb");
 	if (fp != NULL) {
-		fwrite(userbook, sizeof(struct userbookentry), userbooknum, fp);
+		fwrite(userbook, sizeof(userbookentry), userbooknum, fp);
 		fclose(fp);
 	}
 	else
@@ -2712,6 +2717,7 @@ int loadgamefromPDNstring(int gameindex, char *dbstring)
 	char *p;
 	int i;
 	std::string gamestring;
+	std::string errormsg;
 
 	p = dbstring;
 	i = gameindex + 1;
@@ -2723,7 +2729,9 @@ int loadgamefromPDNstring(int gameindex, char *dbstring)
 
 	// now the game is in gamestring. use pdnparser routines to convert
 	//	it into a cbgame
-	doload(&cbgame, gamestring.c_str(), &cbcolor, cbboard8);
+	if (doload(&cbgame, gamestring.c_str(), &cbcolor, cbboard8, errormsg))
+		MessageBox(hwnd, errormsg.c_str(), "Error", MB_OK);
+
 
 	// game is fully loaded, clean up
 	updateboardgraphics(hwnd);
@@ -2919,7 +2927,7 @@ int createcheckerboard(HWND hwnd)
 	PathAppend(userbookname, "userbook.bin");
 	fp = fopen(userbookname, "rb");
 	if (fp != 0) {
-		userbooknum = fread(userbook, sizeof(struct userbookentry), MAXUSERBOOK, fp);
+		userbooknum = fread(userbook, sizeof(userbookentry), MAXUSERBOOK, fp);
 		fclose(fp);
 	}
 
@@ -3055,9 +3063,10 @@ int start3move(int opening_index)
 
 	if (is_mirror_gametype(gametype())) {
 		char pdn[80];
+		std::string errormsg;
 
 		game_to_colors_reversed_pdn(pdn);
-		doload(&cbgame, pdn, &cbcolor, cbboard8);
+		doload(&cbgame, pdn, &cbcolor, cbboard8, errormsg);
 		forward_to_game_end();
 	}
 
@@ -3186,7 +3195,7 @@ DWORD SearchThreadFunc(LPVOID param)
 	char PDN[40];
 	int found = 0;
 	int iscapture;
-	struct pos userbookpos;
+	pos userbookpos;
 	int founduserbookmove = 0;
 	double elapsed, maxtime;
 
@@ -3486,7 +3495,7 @@ DWORD SearchThreadFunc(LPVOID param)
 	return 1;
 }
 
-void read_user_ballots_file(void)
+bool read_user_ballots_file(void)
 {
 	size_t size, bytesread;
 	char *pdnstring, *p;
@@ -3494,12 +3503,13 @@ void read_user_ballots_file(void)
 	PDNgame game;
 	BALLOT_INFO ballot;
 	std::string gamestring;
+	std::string errormsg;
 
 	user_ballots.clear();
 	size = getfilesize(cboptions.start_pos_filename);
 	if (!size) {
 		MessageBox(hwnd, "Cannot open start positions file", "Error", MB_OK);
-		return;
+		return(true);
 	}
 
 	pdnstring = (char *)malloc(size);
@@ -3507,7 +3517,7 @@ void read_user_ballots_file(void)
 	if (fp == NULL) {
 		MessageBox(hwnd, "Cannot open start positions file", "Error", MB_OK);
 		free(pdnstring);
-		return;
+		return(true);
 	}
 
 	// read file into memory
@@ -3522,13 +3532,17 @@ void read_user_ballots_file(void)
 		if (!PDNparseGetnextgame(&p, gamestring))
 			break;
 
-		/* The game is in gamestring. Parse it into a CBgame. */
-		doload(&game, gamestring.c_str(), &ballot.color, ballot.board8);
+		/* The game is in gamestring. Parse it into a PDNgame. */
+		if (doload(&game, gamestring.c_str(), &ballot.color, ballot.board8, errormsg)) {
+			errormsg = "Start position #" + std::to_string(1 + user_ballots.size()) + "\n" + errormsg;
+			errormsg += "\n\nEngine match will be aborted.";
+			MessageBox(hwnd, errormsg.c_str(), "Error", MB_OK);
+			free(pdnstring);
+			return(true);
+		}
 
 		/* Extract the Event header. */
 		ballot.event = game.event;
-
-		pdntogame(game, ballot.board8, ballot.color);
 
 		/* Move to the last position in the game. */
 		for (int i = 0; i < (int)game.moves.size(); ++i) {
@@ -3546,6 +3560,7 @@ void read_user_ballots_file(void)
 		user_ballots.push_back(ballot);
 	}
 	free(pdnstring);
+	return(false);
 }
 
 int changeCBstate(int oldstate, int newstate)
@@ -3613,15 +3628,20 @@ int changeCBstate(int oldstate, int newstate)
 		break;
 
 	case ENGINEMATCH:
+		/* Read ballots file if being used. */
+		if (cboptions.em_start_positions == START_POS_FROM_FILE) {
+			if (read_user_ballots_file()) {
+				changeCBstate(NORMAL, NORMAL);
+				break;
+			}
+		}
+
 		CheckMenuItem(hmenu, CM_ENGINEMATCH, MF_CHECKED);
 		if (cboptions.early_game_adjudication)
 			maxmovecount = 200;
 		else
 			maxmovecount = 300;
 
-		/* Read ballots file if being used. */
-		if (cboptions.em_start_positions == START_POS_FROM_FILE)
-			read_user_ballots_file();
 		break;
 
 	case ENTERGAME:
@@ -4537,7 +4557,7 @@ int enginename(char Lstr[MAXNAME])
 	return 0;
 }
 
-int domove(struct CBmove m, int b[8][8])
+int domove(CBmove m, int b[8][8])
 {
 	// do move m on board b
 	int i, x, y;
@@ -4558,7 +4578,7 @@ int domove(struct CBmove m, int b[8][8])
 	return 1;
 }
 
-int undomove(struct CBmove m, int b[8][8])
+int undomove(CBmove m, int b[8][8])
 {
 	// take back move m on board b
 	int i, x, y;
@@ -4580,7 +4600,7 @@ int undomove(struct CBmove m, int b[8][8])
 	return 1;
 }
 
-void move4tonotation(struct CBmove m, char s[80])
+void move4tonotation(CBmove m, char s[80])
 // takes a move in coordinates, and transforms it to numbers.
 {
 	int from, to;
@@ -4801,7 +4821,7 @@ int getfilename(char filename[255], int what)
 	return 0;
 }
 
-void pdntogame(PDNgame &game, int startposition[8][8], int startcolor)
+bool pdntogame(PDNgame &game, int startposition[8][8], int startcolor, std::string &errormsg)
 {
 	/* pdntogame takes a starting position, a side to move next as parameters. 
 	it uses cbgame, which has to be initialized with pdn-text to generate the CBmoves. */
@@ -4823,22 +4843,24 @@ void pdntogame(PDNgame &game, int startposition[8][8], int startcolor)
 			domove(legalmove, b8);
 		}
 		else {
-			char buf[250];
-			sprintf(buf, "Illegal move, \"%s\" in pdn game.", game.moves[i].PDN);
-			MessageBox(hwnd, buf, "Error", MB_OK);
+			errormsg = "[Event \"" + std::string(game.event) + "\"]\n";
+			errormsg += "Illegal move " + std::string(game.moves[i].PDN);
+			errormsg += ", near move " + std::to_string(1 + i / 2);
+			errormsg += "\nGame was truncated at that point.";
 
 			/* Delete every move from bad move to end of game. */
 			game.moves.erase(game.moves.begin() + i, game.moves.end());
-			return;
+			return(true);
 		}
 	}
+	return(false);
 }
 
-int builtinislegal(int board8[8][8], int color, int from, int to, struct CBmove *move)
+int builtinislegal(int board8[8][8], int color, int from, int to, CBmove *move)
 {
 	// make all moves and try to find out if this move is legal
 	int i, n;
-	struct coor c;
+	coor c;
 	int Lfrom, Lto;
 	int isjump;
 	CBmove movelist[MAXMOVES];
@@ -4880,11 +4902,12 @@ void newgame(void)
 	reset_game_clocks();
 }
 
-void doload(PDNgame *game, const char *gamestring, int *color, int board8[8][8])
+bool doload(PDNgame *game, const char *gamestring, int *color, int board8[8][8], std::string &errormsg)
 {
 	// game is in gamestring. use pdnparser routines to convert
 	// it into a game
 	// read headers
+	bool result;
 	const char *start;
 	const char *p;
 	char header[MAXNAME], token[1024];
@@ -5012,9 +5035,10 @@ void doload(PDNgame *game, const char *gamestring, int *color, int board8[8][8])
 	}
 
 	// fill in the move information.
-	pdntogame(*game, board8, *color);
+	result = pdntogame(*game, board8, *color, errormsg);
 	reset_move_history = true;
 	newposition = TRUE;
+	return(result);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

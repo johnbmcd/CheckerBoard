@@ -13,8 +13,8 @@ struct PDN_position {
 	unsigned int color:2;	
 };
 
-int pdnfind(struct pos *position, int color, std::vector<int> &preview_to_game_index_map);
-int pdnfindtheme(struct pos *position, std::vector<int> &preview_to_game_index_map);
+int pdnfind(pos *position, int color, std::vector<int> &preview_to_game_index_map);
+int pdnfindtheme(pos *position, std::vector<int> &preview_to_game_index_map);
 int pdnopen(char filename[MAX_PATH], int gametype);
 
 

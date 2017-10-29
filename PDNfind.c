@@ -5,7 +5,7 @@
 // pdnopen(filename, gametype)
 //	indexes a pdn database
 //
-// int pdnfind(struct pos position, std::vector<int> &matching_games);
+// int pdnfind(pos position, std::vector<int> &matching_games);
 //	returns the number of games found, and returns the indices of these games in the pdn database in the array list
 #include <windows.h>
 #include <stdio.h>
@@ -37,7 +37,7 @@ inline int bitnum_to_square(int bitnum, int gametype)
 	return(1 + 4 * (bitnum / 4) + 3 - (bitnum & 3));
 }
 
-void get_fromto_squares(struct pos *pos, struct move *m, int color, int *fromsq, int *tosq)
+void get_fromto_squares(pos *pos, move *m, int color, int *fromsq, int *tosq)
 {
 	uint32_t frombb, tobb;
 
@@ -54,7 +54,7 @@ void get_fromto_squares(struct pos *pos, struct move *m, int color, int *fromsq,
 	*tosq = bitnum_to_square(LSB(tobb), gametype());
 }
 
-void print_fen(struct pos *p, int color, char *buf)
+void print_fen(pos *p, int color, char *buf)
 {
 	unsigned int mask, sq;
 
@@ -93,7 +93,7 @@ void print_fen(struct pos *p, int color, char *buf)
 	sprintf(buf + strlen(buf), ".\"]");
 }
 
-void log_fen(struct pos *p, int color)
+void log_fen(pos *p, int color)
 {
 	char buf[150];
 
@@ -101,7 +101,7 @@ void log_fen(struct pos *p, int color)
 	CBlog(buf);
 }
 
-void log_moves(struct pos *p, int color, struct move *movelist, int nmoves)
+void log_moves(pos *p, int color, move *movelist, int nmoves)
 {
 	int i, fromsq, tosq;
 	char buf[50];
@@ -113,7 +113,7 @@ void log_moves(struct pos *p, int color, struct move *movelist, int nmoves)
 	}
 }
 
-int pdnfind(struct pos *p, int color, std::vector<int> &matching_games)
+int pdnfind(pos *p, int color, std::vector<int> &matching_games)
 {
 	// pdnfind populates a list of game indexes in the pdn database which
 	// contain the current position, i.e. matching_games[0] is the first game index
@@ -158,7 +158,7 @@ int pdnfind(struct pos *p, int color, std::vector<int> &matching_games)
 	return nfound;
 }
 
-int pdnfindtheme(struct pos *p, std::vector<int> &matching_games)
+int pdnfindtheme(pos *p, std::vector<int> &matching_games)
 {
 	// finds a "theme" in a game.
 	// only if the "theme" is on the board for at least minplies.
@@ -222,7 +222,7 @@ int pdnopen(char filename[256], int gametype)
 	const char *starttoken;
 	int from, to;
 	size_t bytesread;
-	struct pos p;
+	pos p;
 	int color = CB_BLACK;
 	char headername[MAXNAME], headervalue[MAXNAME];
 	int result;
@@ -361,7 +361,7 @@ int pdnopen(char filename[256], int gametype)
 			// we now have the from and to squares of the move in
 			// the variables from, to
 			// find the move which corresponds to this
-			struct CBmove move;
+			CBmove move;
 			extern CB_ISLEGAL islegal;
 			if (islegal(board8, color, from, to, &move)) {
 				domove(move, board8);

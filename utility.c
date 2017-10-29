@@ -227,7 +227,7 @@ extern char g_app_instance_suffix[10];
 int initcolorstruct(HWND hwnd, CHOOSECOLOR *ccs, int index)
 {
 	COLORREF dCustomColors[16];
-	extern struct CBoptions cboptions;
+	extern CBoptions cboptions;
 	ccs->lStructSize = (DWORD) sizeof(CHOOSECOLOR);
 	ccs->hwndOwner = (HWND) hwnd;
 	ccs->hInstance = (HWND) NULL;
@@ -448,7 +448,7 @@ void checklevelmenu(CBoptions *options, HMENU hmenu, int resource)
 	}
 }
 
-void setmenuchecks(struct CBoptions *CBoptions, HMENU hmenu)
+void setmenuchecks(CBoptions *CBoptions, HMENU hmenu)
 {
 	// set menu checks
 	if (CBoptions->priority)
@@ -593,7 +593,7 @@ int num_3move_ballots(CBoptions *options)
 	return(count);
 }
 
-int getthreeopening(int n, struct CBoptions *CBoptions)
+int getthreeopening(int n, CBoptions *CBoptions)
 {
 	/* n is the number of the game in the engine match, 0 through numopenings - 1. 
 		getthreeopening returns the number of the opening that should

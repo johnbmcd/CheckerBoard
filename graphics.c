@@ -25,10 +25,10 @@
 
 // lots of external variables from checkerboard.c - very ugly
 extern CBmove cbmove;
-extern struct CBoptions cboptions;
+extern CBoptions cboptions;
 extern int cbboard8[8][8];
 extern int cbcolor;
-extern struct PDNgame cbgame;
+extern PDNgame cbgame;
 
 // disable double-to-int warning in this file to avoid getting dozens of warnings
 #pragma warning(disable : 4244)

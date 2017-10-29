@@ -27,7 +27,7 @@
 #endif
 
 // VERSION will be appended to this name
-void savesettings(struct CBoptions *options)
+void savesettings(CBoptions *options)
 {
 	// save settings in the registry 	
 	HKEY hKey;
@@ -41,15 +41,15 @@ void savesettings(struct CBoptions *options)
 	RegCreateKeyEx(HKEY_CURRENT_USER, subkey, 0, "CB_Key", 0, KEY_WRITE, NULL, &hKey, &result);
 
 	// save options struct
-	options->crc = sizeof(struct CBoptions);
-	options->crc = crc_calc((char *)options, sizeof(struct CBoptions));
-	RegSetValueEx(hKey, "options structure", 0, REG_BINARY, (LPBYTE) options, sizeof(struct CBoptions));
+	options->crc = sizeof(CBoptions);
+	options->crc = crc_calc((char *)options, sizeof(CBoptions));
+	RegSetValueEx(hKey, "options structure", 0, REG_BINARY, (LPBYTE) options, sizeof(CBoptions));
 
 	// close registry
 	RegCloseKey(hKey);
 }
 
-void loadsettings(struct CBoptions *options, char CBdirectory[256])
+void loadsettings(CBoptions *options, char CBdirectory[256])
 {
 	// load settings from the registry
 	char lstr[MAX_PATH];
@@ -118,7 +118,7 @@ void loadsettings(struct CBoptions *options, char CBdirectory[256])
 		}
 
 		// get CB options struct
-		datasize = sizeof(struct CBoptions);
+		datasize = sizeof(CBoptions);
 		result = RegQueryValueEx(hKey, "options structure", NULL, &datatype, (LPBYTE) options, &datasize);
 		if (result != ERROR_SUCCESS)
 			defaultvalues = 1;	// could not read options - use defaults again.
@@ -128,8 +128,8 @@ void loadsettings(struct CBoptions *options, char CBdirectory[256])
 			 * CRC is calculated on the whole struct using its size in the crc field.
  			 */
 			reg_crc = options->crc;
-			options->crc = sizeof(struct CBoptions);
-			options->crc = crc_calc((char *)options, sizeof(struct CBoptions));
+			options->crc = sizeof(CBoptions);
+			options->crc = crc_calc((char *)options, sizeof(CBoptions));
 			if (options->crc != reg_crc)
 				defaultvalues = 1;
 		}
@@ -155,6 +155,7 @@ void loadsettings(struct CBoptions *options, char CBdirectory[256])
 		options->use_incremental_time = false;
 		options->early_game_adjudication = true;
 		options->em_start_positions = START_POS_3MOVE;
+		options->start_pos_filename[0] = 0;
 		options->level = timetoken_to_level(LEVEL2S);
 		options->initial_time = 300;
 		options->time_increment = 15;
@@ -180,7 +181,7 @@ void loadsettings(struct CBoptions *options, char CBdirectory[256])
 		options->addoffset = 0;
 		options->language = ENGLISH;
 		options->piecesetindex = 0;
-		RegSetValueEx(hKey, "options structure", 0, REG_BINARY, (LPBYTE) options, sizeof(struct CBoptions));
+		RegSetValueEx(hKey, "options structure", 0, REG_BINARY, (LPBYTE) options, sizeof(CBoptions));
 	}
 	else {
 

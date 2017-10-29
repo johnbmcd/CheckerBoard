@@ -392,7 +392,7 @@ int PDNgametostartposition(PDNgame *game, int b[64])
 	return 1;
 }
 
-int coortohtml(struct coor c, int gametype)
+int coortohtml(coor c, int gametype)
 {
 	// return html number for a coordinate
 	// html:

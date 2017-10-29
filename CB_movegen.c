@@ -12,15 +12,15 @@
 #include "min_movegen.h"
 
 /* exported functions */
-int getmovelist(int color, struct CBmove movelist[MAXMOVES], int b[8][8], int *isjump);
+int getmovelist(int color, CBmove movelist[MAXMOVES], int b[8][8], int *isjump);
 
 /* internal functions */
-static int makemovelist(int color, struct CBmove movelist[MAXMOVES], int b[12][12], int *isjump);
+static int makemovelist(int color, CBmove movelist[MAXMOVES], int b[12][12], int *isjump);
 static void board8toboard12(int board8[8][8], int board12[12][12]);
-static void whitecapture(int board[12][12], struct CBmove movelist[MAXMOVES], struct CBmove m, int x, int y, int d);
-static void blackcapture(int board[12][12], struct CBmove movelist[MAXMOVES], struct CBmove m, int x, int y, int d);
-static void whitekingcapture(int board[12][12], struct CBmove movelist[MAXMOVES], struct CBmove m, int x, int y, int d);
-static void blackkingcapture(int board[12][12], struct CBmove movelist[MAXMOVES], struct CBmove m, int x, int y, int d);
+static void whitecapture(int board[12][12], CBmove movelist[MAXMOVES], CBmove m, int x, int y, int d);
+static void blackcapture(int board[12][12], CBmove movelist[MAXMOVES], CBmove m, int x, int y, int d);
+static void whitekingcapture(int board[12][12], CBmove movelist[MAXMOVES], CBmove m, int x, int y, int d);
+static void blackkingcapture(int board[12][12], CBmove movelist[MAXMOVES], CBmove m, int x, int y, int d);
 
 static int n;
 
@@ -32,7 +32,7 @@ static inline int cbcolor_to_getmovelistcolor(int cbcolor)
 		return(-1);
 }
 
-int getmovelist(int color, struct CBmove m[MAXMOVES], int b[8][8], int *isjump)
+int getmovelist(int color, CBmove m[MAXMOVES], int b[8][8], int *isjump)
 {
 	int i, j;
 	int n;
@@ -147,14 +147,14 @@ void board8toboard12(int board8[8][8], int board12[12][12])
 	}
 }
 
-int makemovelist(int color, struct CBmove movelist[MAXMOVES], int board[12][12], int *isjump)
+int makemovelist(int color, CBmove movelist[MAXMOVES], int board[12][12], int *isjump)
 {
 	// produces a movelist for color to move on board
-	struct coor wk[12], bk[12], ws[12], bs[12];
+	coor wk[12], bk[12], ws[12], bs[12];
 	int nwk = 0, nbk = 0, nws = 0, nbs = 0;
 	int i, j;
 	int x, y;
-	struct CBmove m;
+	CBmove m;
 	*isjump = 0;
 
 	for (i = 0; i < MAXMOVES; i++)
@@ -569,10 +569,10 @@ int makemovelist(int color, struct CBmove movelist[MAXMOVES], int board[12][12],
 	return(n);
 }
 
-void whitecapture(int board[12][12], struct CBmove movelist[MAXMOVES], struct CBmove m, int x, int y, int d)
+void whitecapture(int board[12][12], CBmove movelist[MAXMOVES], CBmove m, int x, int y, int d)
 {
 	int b[12][12];
-	struct CBmove mm;
+	CBmove mm;
 	int end = 1;
 
 	mm = m;
@@ -631,10 +631,10 @@ void whitecapture(int board[12][12], struct CBmove movelist[MAXMOVES], struct CB
 	}
 }
 
-void whitekingcapture(int board[12][12], struct CBmove movelist[MAXMOVES], struct CBmove m, int x, int y, int d)
+void whitekingcapture(int board[12][12], CBmove movelist[MAXMOVES], CBmove m, int x, int y, int d)
 {
 	int b[12][12];
-	struct CBmove mm;
+	CBmove mm;
 	int end = 1;
 
 	mm = m;
@@ -724,10 +724,10 @@ void whitekingcapture(int board[12][12], struct CBmove movelist[MAXMOVES], struc
 	}
 }
 
-void blackcapture(int board[12][12], struct CBmove movelist[MAXMOVES], struct CBmove m, int x, int y, int d)
+void blackcapture(int board[12][12], CBmove movelist[MAXMOVES], CBmove m, int x, int y, int d)
 {
 	int b[12][12];
-	struct CBmove mm;
+	CBmove mm;
 	int end = 1;
 
 	mm = m;
@@ -786,10 +786,10 @@ void blackcapture(int board[12][12], struct CBmove movelist[MAXMOVES], struct CB
 	}
 }
 
-void blackkingcapture(int board[12][12], struct CBmove movelist[MAXMOVES], struct CBmove m, int x, int y, int d)
+void blackkingcapture(int board[12][12], CBmove movelist[MAXMOVES], CBmove m, int x, int y, int d)
 {
 	int b[12][12];
-	struct CBmove mm;
+	CBmove mm;
 	int end = 1;
 
 	mm = m;

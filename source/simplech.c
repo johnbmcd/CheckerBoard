@@ -108,26 +108,26 @@ int WINAPI getmove
 			int *playnow,
 			int info,
 			int unused,
-			struct CBmove *move
+			CBmove *move
 		);
 
-void movetonotation(struct move2 move, char str[80]);
+void movetonotation(move2 move, char str[80]);
 
 /*----------> part II: search */
 int checkers(int b[46], int color, double maxtime, char *str);
 int alphabeta(int b[46], int depth, int alpha, int beta, int color);
-int firstalphabeta(int b[46], int depth, int alpha, int beta, int color, struct move2 *best);
-void domove(int b[46], struct move2 &move);
-void undomove(int b[46], struct move2 &move);
+int firstalphabeta(int b[46], int depth, int alpha, int beta, int color, move2 *best);
+void domove(int b[46], move2 &move);
+void undomove(int b[46], move2 &move);
 int evaluation(int b[46], int color);
 
 /*----------> part III: move generation */
-int generatemovelist(int b[46], struct move2 movelist[MAXMOVES], int color);
-int generatecapturelist(int b[46], struct move2 movelist[MAXMOVES], int color);
-void blackmancapture(int b[46], int *n, struct move2 movelist[MAXMOVES], int square);
-void blackkingcapture(int b[46], int *n, struct move2 movelist[MAXMOVES], int square);
-void whitemancapture(int b[46], int *n, struct move2 movelist[MAXMOVES], int square);
-void whitekingcapture(int b[46], int *n, struct move2 movelist[MAXMOVES], int square);
+int generatemovelist(int b[46], move2 movelist[MAXMOVES], int color);
+int generatecapturelist(int b[46], move2 movelist[MAXMOVES], int color);
+void blackmancapture(int b[46], int *n, move2 movelist[MAXMOVES], int square);
+void blackkingcapture(int b[46], int *n, move2 movelist[MAXMOVES], int square);
+void whitemancapture(int b[46], int *n, move2 movelist[MAXMOVES], int square);
+void whitekingcapture(int b[46], int *n, move2 movelist[MAXMOVES], int square);
 int testcapture(int b[46], int color);
 
 /*----------> globals  */
@@ -284,7 +284,7 @@ int WINAPI getmove
 			int *playnow,
 			int info,
 			int moreinfo,
-			struct CBmove *move
+			CBmove *move
 		)
 {
 	/* getmove is what checkerboard calls. you get 6 parameters:
@@ -302,7 +302,7 @@ int WINAPI getmove
    			would like your engine to play immediately, this value is nonzero,
             else zero. you should respond to a nonzero value of *playnow by
             interrupting your search IMMEDIATELY.
-   struct CBmove *move
+   CBmove *move
    			is unused here. this parameter would allow engines playing different
             versions of checkers to return a move to CB. for engines playing
             english checkers this is not necessary.
@@ -458,7 +458,7 @@ int WINAPI getmove
 	return CB_UNKNOWN;
 }
 
-void movetonotation(struct move2 move, char str[80])
+void movetonotation(move2 move, char str[80])
 {
 	int j, from, to;
 	char c;
@@ -497,7 +497,7 @@ int checkers(int b[46], int color, double maxtime, char *str)
 {
 	int i, numberofmoves;
 	int eval;
-	struct move2 best, lastbest, movelist[MAXMOVES];
+	move2 best, lastbest, movelist[MAXMOVES];
 	char str2[255];
 	alphabetas = 0;
 #ifdef STATISTICS
@@ -576,7 +576,7 @@ int checkers(int b[46], int color, double maxtime, char *str)
 	return eval;
 }
 
-int firstalphabeta(int b[46], int depth, int alpha, int beta, int color, struct move2 *best)
+int firstalphabeta(int b[46], int depth, int alpha, int beta, int color, move2 *best)
 /*----------> purpose: search the game tree and find the best move.
   ----------> version: 1.0
   ----------> date: 25th october 97 */
@@ -585,7 +585,7 @@ int firstalphabeta(int b[46], int depth, int alpha, int beta, int color, struct 
 	int value;
 	int numberofmoves;
 	int capture;
-	struct move2 movelist[MAXMOVES];
+	move2 movelist[MAXMOVES];
 
 	alphabetas++;
 	if (*play)
@@ -657,7 +657,7 @@ int alphabeta(int b[46], int depth, int alpha, int beta, int color)
 	int value;
 	int capture;
 	int numberofmoves;
-	struct move2 movelist[MAXMOVES];
+	move2 movelist[MAXMOVES];
 
 	alphabetas++;
 	if ((alphabetas & 0x3ff) == 0) {
@@ -726,7 +726,7 @@ int alphabeta(int b[46], int depth, int alpha, int beta, int color)
 	return(beta);
 }
 
-void domove(int b[46], struct move2 &move)
+void domove(int b[46], move2 &move)
 /*----------> purpose: execute move on board
   ----------> version: 1.1
   ----------> date: 25th october 97 */
@@ -741,7 +741,7 @@ void domove(int b[46], struct move2 &move)
 	}
 }
 
-void undomove(int b[46], struct move2 &move)
+void undomove(int b[46], move2 &move)
 {
 	int square, before;
 	int i;
@@ -1181,7 +1181,7 @@ int evaluation(int b[46], int color)
 }
 
 /*-------------- PART III: MOVE GENERATION -----------------------------------*/
-int generatemovelist(int b[46], struct move2 movelist[MAXMOVES], int color)
+int generatemovelist(int b[46], move2 movelist[MAXMOVES], int color)
 /*----------> purpose:generates all moves. no captures. returns number of moves
   ----------> version: 1.0
   ----------> date: 25th october 97 */
@@ -1434,7 +1434,7 @@ int generatemovelist(int b[46], struct move2 movelist[MAXMOVES], int color)
 	return(n);
 }
 
-int generatecapturelist(int b[46], struct move2 movelist[MAXMOVES], int color)
+int generatecapturelist(int b[46], move2 movelist[MAXMOVES], int color)
 /*----------> purpose: generate all possible captures
   ----------> version: 1.0
   ----------> date: 25th october 97 */
@@ -1825,11 +1825,11 @@ int generatecapturelist(int b[46], struct move2 movelist[MAXMOVES], int color)
 	return(n);
 }
 
-void blackmancapture(int b[46], int *n, struct move2 movelist[MAXMOVES], int i)
+void blackmancapture(int b[46], int *n, move2 movelist[MAXMOVES], int i)
 {
 	int m;
 	int found = 0;
-	struct move2 move, orgmove;
+	move2 move, orgmove;
 
 	orgmove = movelist[*n];
 	move = orgmove;
@@ -1887,12 +1887,12 @@ void blackmancapture(int b[46], int *n, struct move2 movelist[MAXMOVES], int i)
 		(*n)++;
 }
 
-void blackkingcapture(int b[46], int *n, struct move2 movelist[MAXMOVES], int i)
+void blackkingcapture(int b[46], int *n, move2 movelist[MAXMOVES], int i)
 {
 	int m;
 	int tmp;
 	int found = 0;
-	struct move2 move, orgmove;
+	move2 move, orgmove;
 
 	orgmove = movelist[*n];
 	move = orgmove;
@@ -2000,11 +2000,11 @@ void blackkingcapture(int b[46], int *n, struct move2 movelist[MAXMOVES], int i)
 		(*n)++;
 }
 
-void whitemancapture(int b[46], int *n, struct move2 movelist[MAXMOVES], int i)
+void whitemancapture(int b[46], int *n, move2 movelist[MAXMOVES], int i)
 {
 	int m;
 	int found = 0;
-	struct move2 move, orgmove;
+	move2 move, orgmove;
 
 	orgmove = movelist[*n];
 	move = orgmove;
@@ -2062,12 +2062,12 @@ void whitemancapture(int b[46], int *n, struct move2 movelist[MAXMOVES], int i)
 		(*n)++;
 }
 
-void whitekingcapture(int b[46], int *n, struct move2 movelist[MAXMOVES], int i)
+void whitekingcapture(int b[46], int *n, move2 movelist[MAXMOVES], int i)
 {
 	int m;
 	int tmp;
 	int found = 0;
-	struct move2 move, orgmove;
+	move2 move, orgmove;
 
 	orgmove = movelist[*n];
 	move = orgmove;

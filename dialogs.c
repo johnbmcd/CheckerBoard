@@ -28,11 +28,11 @@
 #define SetWindowLongPtr	SetWindowLong
 #endif
 #endif
-extern struct CBoptions cboptions;
+extern CBoptions cboptions;
 extern char str[1024];
 extern HINSTANCE g_hInst;
 extern HWND hwnd;
-extern struct PDNgame cbgame;
+extern PDNgame cbgame;
 
 int selected_game;					/* game selected by DialogFuncSelectgame(). */
 int HeaderHeight;
@@ -1328,7 +1328,7 @@ BOOL CALLBACK EngineDialogFunc(HWND hdwnd, UINT message, WPARAM wParam, LPARAM l
 
 	char pri_fname[MAX_PATH], sec_fname[MAX_PATH];
 	extern char CBdirectory[MAX_PATH];
-	extern struct CBoptions cboptions;
+	extern CBoptions cboptions;
 
 	switch (message) {
 	case WM_INITDIALOG:
@@ -1487,6 +1487,8 @@ BOOL DialogStartEngineMatchFunc(HWND hwnd, UINT message, WPARAM wparam, LPARAM l
 			hctrl = GetDlgItem(hwnd, IDC_EARLY_GAME_ADJ_CHECK);
 			lstatus = SendMessage(hctrl, BM_GETCHECK, 0, 0);
 			cboptions.early_game_adjudication = lstatus ? true : false;
+			GetDlgItemText(hwnd, IDC_START_POS_FILENAME, cboptions.start_pos_filename, sizeof(cboptions.start_pos_filename));
+
 			EndDialog(hwnd, TRUE);
 			return(TRUE);
 
@@ -1517,6 +1519,7 @@ BOOL DialogStartEngineMatchFunc(HWND hwnd, UINT message, WPARAM wparam, LPARAM l
 			hctrl = GetDlgItem(hwnd, IDC_EARLY_GAME_ADJ_CHECK);
 			lstatus = SendMessage(hctrl, BM_GETCHECK, 0, 0);
 			cboptions.early_game_adjudication = lstatus ? true : false;
+			GetDlgItemText(hwnd, IDC_START_POS_FILENAME, cboptions.start_pos_filename, sizeof(cboptions.start_pos_filename));
 			reset_match_stats();
 			EndDialog(hwnd, TRUE);
 			return(TRUE);

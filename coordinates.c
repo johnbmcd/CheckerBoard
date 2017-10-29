@@ -13,7 +13,7 @@
 #include "CBconsts.h"
 #include "coordinates.h"
 
-int coortonumber(struct coor coor, int gametype)
+int coortonumber(coor coor, int gametype)
 {
 	// given board coordinates x and y, this function returns the board number in
 	// standard checkers notation
@@ -54,7 +54,7 @@ int coortonumber(struct coor coor, int gametype)
 int coorstonumber(int x, int y, int gametype)
 {
 	// takes coordinates x and y, gametype, and returns the associated board number
-	struct coor c;
+	coor c;
 	c.x = x;
 	c.y = y;
 	return(coortonumber(c, gametype));

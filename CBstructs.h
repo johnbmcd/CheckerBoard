@@ -15,7 +15,7 @@ struct CBoptions {
 	// holds all options of CB.
 	// the point is that it is much easier to store one struct in the registry
 	// than to save every value separately.
-	unsigned int crc;					/* The crc is calculated on the whole struct using the sizeof(struct CBoptions) in the crc field. */
+	unsigned int crc;					/* The crc is calculated on the whole struct using the sizeof(CBoptions) in the crc field. */
 	char userdirectory[256];
 	char matchdirectory[256];
 	char EGTBdirectory[256];
@@ -100,10 +100,8 @@ struct gamepreview {
 };
 
 struct userbookentry {
-	// position
-	struct pos position;
-	// move
-	struct CBmove move;
+	pos position;
+	CBmove move;
 };
 
 /* A mapping between different time constants. */
