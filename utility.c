@@ -668,14 +668,6 @@ void log_fen(char *msg, int board[8][8], int color)
 	CBlog(buf);
 }
 
-void log_bitboard(char *msg, uint32_t black, uint32_t white, uint32_t king)
-{
-	char buf[150];
-
-	sprintf(buf, "%s: bwk(%x, %x, %x)", msg, black, white, king);
-	CBlog(buf);
-}
-
 /*
  * Separate the filename from the path.
  * Return 0 on success, 1 if no separators are found.
@@ -697,32 +689,50 @@ int extract_path(char *name, char *path)
 	return(0);
 }
 
-/*
-void builddb(char *str)
-	{
-	// call the db generator if there is enough free disk space
-	HINSTANCE hinst;
-	int error;
-	ULARGE_INTEGER FreeBytesAvailable,TotalNumberOfBytes,TotalNumberOfFreeBytes;
-	__int64 freebytes;
+uint32_t filesize(char *filename)
+{
+	uint32_t size;
+	HANDLE fp;
 
-	GetDiskFreeSpaceEx(NULL,&FreeBytesAvailable,&TotalNumberOfBytes,&TotalNumberOfFreeBytes);
-	
-	freebytes = (__int64)(FreeBytesAvailable.LowPart) + (((__int64)FreeBytesAvailable.HighPart)<<32);
+	fp = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
+	size = GetFileSize(fp, NULL);
+	CloseHandle(fp);
+	return(size);
+}
 
-	if(freebytes < (DWORD64)220000000)
-		{
-		(str,"not enough free disk space for this operation");
-		return;
-		}
-	else
-		sprintf(str,"There is enough free disk space (about %I64i MB) - building database...", freebytes/1024/1024);
+/* malloc a buffer large enough to hold the contents of the text file,
+ * and read the file into the buffer.
+ * Return a pointer to the buffer, or nullptr if the file could not be opened or read.
+ */
+char *read_text_file(char *filename, READ_TEXT_FILE_ERROR_TYPE &etype)
+{
+	uint32_t size;
+	size_t bytesread;
+	char *buf;
+	FILE *fp;
 
-	hinst = ShellExecute(NULL,"open","db\\dbgen.bat",NULL,NULL,SW_SHOW);
-	error = PtrToLong(hinst);
-	if (error <= 32)
-		sprintf(str,"error: %i", error);
-	
-	return;	
+	size = filesize(filename);
+	if (size == 0 || size == INVALID_FILE_SIZE) {
+		etype = RTF_FILE_ERROR;
+		return(nullptr);
 	}
-	*/
+
+	fp = fopen(filename, "r");
+	if (!fp) {
+		etype = RTF_FILE_ERROR;
+		return(nullptr);
+	}
+	
+	buf = (char *)malloc(size + 1);		/* Leave room for null terminator. */
+	if (!buf) {
+		fclose(fp);
+		etype = RTF_MALLOC_ERROR;
+		return(nullptr);
+	}
+
+	bytesread = fread(buf, 1, size, fp);
+	buf[bytesread] = 0;
+	fclose(fp);
+	etype = RTF_NO_ERROR;
+	return(buf);
+}

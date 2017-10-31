@@ -102,7 +102,7 @@ BOOL startmatch = TRUE;				/* startmatch is only true before engine match was st
 BOOL newposition = TRUE;			/* is true when position has changed. used in analysis mode to
 										restart search and then reset */
 BOOL startengine;					/* is true if engine is expected to start */
-int result;
+int game_result;					/* CB_DRAW, CB_WIN, CB_LOSS, or CB_UNKNOWN. */
 time_ctrl_t time_ctrl;				/* Clock control. */
 int toolbarheight = 30;				//30;
 int clockheight;					/* 0 or CLOCKHEIGHT when clock is visible. */
@@ -2187,12 +2187,11 @@ int addmovetouserbook(int b[8][8], CBmove *move)
 
 int handlegamereplace(int replaceindex, char *databasename)
 {
-	FILE *fp;
 	std::string gamestring;
 	char *dbstring, *p;
-	size_t bytesread;
 	int i;
-	size_t filesize = getfilesize(databasename);
+	FILE *fp;
+	READ_TEXT_FILE_ERROR_TYPE etype;
 
 	// give the user a chance to save new results / names
 	if (DialogBox(g_hInst, "IDD_SAVEGAME", hwnd, (DLGPROC) DialogFuncSavegame)) {
@@ -2202,23 +2201,14 @@ int handlegamereplace(int replaceindex, char *databasename)
 		reindex = 1;
 
 		// read database into memory */
-		dbstring = (char *)malloc(filesize);
+		dbstring = read_text_file(databasename, etype);
 		if (dbstring == NULL) {
-			sprintf(statusbar_txt, "malloc error");
+			if (etype == RTF_FILE_ERROR)
+				sprintf(statusbar_txt, "invalid filename");
+			if (etype == RTF_MALLOC_ERROR)
+				sprintf(statusbar_txt, "malloc error");
 			return 0;
 		}
-
-		fp = fopen(databasename, "r");
-
-		if (fp == NULL) {
-			sprintf(statusbar_txt, "invalid filename");
-			free(dbstring);
-			return 0;
-		}
-
-		bytesread = fread(dbstring, 1, filesize, fp);
-		dbstring[bytesread] = 0;
-		fclose(fp);
 
 		// rewrite file
 		fp = fopen(databasename, "w");
@@ -2344,33 +2334,24 @@ char *loadPDNdbstring(char *dbname)
 	// attempts to load the file <dbname> into the
 	// string dbstring - checks for existence of that
 	// file, allocates enough memory for the file, and loads it.
-	FILE *fp;
-	size_t filesize;
-	size_t bytesread;
 	char *dbstring;
+	READ_TEXT_FILE_ERROR_TYPE etype;
 
-	filesize = getfilesize(dbname);
-
-	dbstring = (char *)malloc(filesize);
+	// read pdn file into memory */
+	dbstring = read_text_file(dbname, etype);
 	if (dbstring == NULL) {
-		MessageBox(hwnd, "not enough memory for this operation", "Error", MB_OK);
-		SetCurrentDirectory(CBdirectory);
-		return 0;
-	}
-
-	fp = fopen(dbname, "r");
-	if (fp == NULL) {
-		MessageBox(hwnd,
+		if (etype == RTF_FILE_ERROR)
+			MessageBox(hwnd,
 				   "not a valid database!\nuse game->select database\nto select a valid database",
 				   "Error",
 				   MB_OK);
+
+		if (etype == RTF_MALLOC_ERROR)
+			MessageBox(hwnd, "not enough memory for this operation", "Error", MB_OK);
+
 		SetCurrentDirectory(CBdirectory);
 		return 0;
 	}
-
-	bytesread = fread(dbstring, 1, filesize, fp);
-	dbstring[bytesread] = 0;
-	fclose(fp);
 
 	return dbstring;
 }
@@ -2448,7 +2429,7 @@ int selectgame(int how)
 //		FINDTHEME:		only games with the current board position as "theme"
 //		LASTSEARCH:		re-display results of the last search
 {
-	int i;
+	int i, result;
 	static int oldgameindex;
 	int entry;
 	char *dbstring = NULL;
@@ -2731,7 +2712,6 @@ int loadgamefromPDNstring(int gameindex, char *dbstring)
 	//	it into a cbgame
 	if (doload(&cbgame, gamestring.c_str(), &cbcolor, cbboard8, errormsg))
 		MessageBox(hwnd, errormsg.c_str(), "Error", MB_OK);
-
 
 	// game is fully loaded, clean up
 	updateboardgraphics(hwnd);
@@ -3230,7 +3210,7 @@ DWORD SearchThreadFunc(LPVOID param)
 
 		if (CBstate == ENGINEMATCH || CBstate == ENGINEGAME) {
 			gameover = TRUE;
-			result = CB_LOSS;
+			game_result = CB_LOSS;
 			sprintf(statusbar_txt, "game over");
 		}
 
@@ -3317,7 +3297,7 @@ DWORD SearchThreadFunc(LPVOID param)
 			}
 
 			start_clock();
-			result = (getmove)(originalcopy, cbcolor, maxtime, statusbar_txt, &playnow, info, moreinfo, &localmove);
+			game_result = (getmove)(originalcopy, cbcolor, maxtime, statusbar_txt, &playnow, info, moreinfo, &localmove);
 			elapsed = (clock() - time_ctrl.starttime) / (double)CLK_TCK;
 
 			/* Display the Play! bitmap with black foreground when the engine is not searching. */
@@ -3385,10 +3365,10 @@ DWORD SearchThreadFunc(LPVOID param)
 		// if we are in engine match mode and one of the engines claims a win
 		// or a loss or a draw we stop
 		if (CBstate == ENGINEMATCH) {
-			if (result == CB_DRAW)
+			if (game_result == CB_DRAW)
 				gameover = TRUE;
 			else {
-				if (cboptions.early_game_adjudication && result != CB_UNKNOWN) {
+				if (cboptions.early_game_adjudication && game_result != CB_UNKNOWN) {
 					if (cbgame.movesindex > 0)
 						sprintf(cbgame.moves[cbgame.movesindex - 1].comment, "%s : gameover claimed", statusbar_txt);
 					gameover = TRUE;
@@ -3497,35 +3477,26 @@ DWORD SearchThreadFunc(LPVOID param)
 
 bool read_user_ballots_file(void)
 {
-	size_t size, bytesread;
 	char *pdnstring, *p;
-	FILE *fp;
 	PDNgame game;
 	BALLOT_INFO ballot;
+	READ_TEXT_FILE_ERROR_TYPE etype;
 	std::string gamestring;
 	std::string errormsg;
 
 	user_ballots.clear();
-	size = getfilesize(cboptions.start_pos_filename);
-	if (!size) {
-		MessageBox(hwnd, "Cannot open start positions file", "Error", MB_OK);
+
+	// read pdn file into memory */
+	pdnstring = read_text_file(cboptions.start_pos_filename, etype);
+	if (pdnstring == NULL) {
+		if (etype == RTF_FILE_ERROR)
+			MessageBox(hwnd, "Cannot open start positions file", "Error", MB_OK);
+
+		if (etype == RTF_MALLOC_ERROR)
+			MessageBox(hwnd, "not enough memory for this operation", "Error", MB_OK);
+
 		return(true);
 	}
-
-	pdnstring = (char *)malloc(size);
-	fp = fopen(cboptions.start_pos_filename, "r");
-	if (fp == NULL) {
-		MessageBox(hwnd, "Cannot open start positions file", "Error", MB_OK);
-		free(pdnstring);
-		return(true);
-	}
-
-	// read file into memory
-	bytesread = fread(pdnstring, 1, size, fp);
-	fclose(fp);
-
-	// Terminate the pdn string.
-	pdnstring[bytesread] = 0;
 
 	p = pdnstring;
 	while (1) {
@@ -4138,7 +4109,7 @@ DWORD AutoThreadFunc(LPVOID param)
 							writefile(statsfilename, "a", "%3i:", emstats.opening_index + 1);
 					}
 
-					dostats(result, movecount, gamenumber, &emstats);
+					dostats(game_result, movecount, gamenumber, &emstats);
 
 					// finally, display stats in window title
 					sprintf(windowtitle, "%s - %s", engine1, engine2);

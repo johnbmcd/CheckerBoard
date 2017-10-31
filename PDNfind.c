@@ -215,13 +215,11 @@ int pdnopen(char filename[256], int gametype)
 	int games_in_pdn;
 	int maxpos;
 	int ply, gamenumber;
-	FILE *fp;
 	std::string game;
 	char *start, *buffer, header[256], token[1024];
 	const char *startheader, *tag;
 	const char *starttoken;
 	int from, to;
-	size_t bytesread;
 	pos p;
 	int color = CB_BLACK;
 	char headername[MAXNAME], headervalue[MAXNAME];
@@ -229,7 +227,7 @@ int pdnopen(char filename[256], int gametype)
 	int win = 0, loss = 0, draw = 0, unknown = 0;
 	char FEN[255];
 	int board8[8][8];
-	size_t filesize;
+	READ_TEXT_FILE_ERROR_TYPE etype;
 	PDN_position position;
 
 	// get number of games in PDN
@@ -247,29 +245,15 @@ int pdnopen(char filename[256], int gametype)
 		return(0);
 	}
 
-	// get size of the file we want to open
-	filesize = getfilesize(filename);
-	filesize = ((filesize / 1024) + 1) * 1024;
+	buffer = read_text_file(filename, etype);
+	if (!buffer) {
+		if (etype == RTF_FILE_ERROR)
+			printf("\ncould not open input file %s\n", filename);
 
-	// allocate memory for the file
-	buffer = (char *)malloc(filesize);
-	if (buffer == NULL)
-		return 0;
-
-	// open the file
-	fp = fopen(filename, "r");
-	if (fp == NULL) {
-		printf("\ncould not open input file %s\n", filename);
-		free(buffer);
-		return 0;
+		if (etype == RTF_MALLOC_ERROR)
+			printf("\nmalloc error\n");
+		return(0);
 	}
-
-	// read file into memory
-	bytesread = fread(buffer, 1, filesize, fp);
-	fclose(fp);
-
-	// set termination 0 so functions wont run out of the buffer
-	buffer[bytesread] = 0;
 
 	// start parsing
 	start = buffer;

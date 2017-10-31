@@ -1,7 +1,6 @@
 #pragma once
 #include <string>
 
-#define MAXGAMESIZE 65536 // number of bytes we reasonably expect every game to be smaller than
 
 #define UTF8_LEFT_DBLQUOTE 147
 #define UTF8_RIGHT_DBLQUOTE 148
@@ -18,6 +17,5 @@ int PDNparseGetnexttag(const char **start,char *tag);			/* gets whats between ""
 int PDNparseTokentonumbers(char *token,int *from, int *to);
 int PDNparseGetnexttoken(const char **start, char *token);	/* gets the next token from **start */
 int PDNparseGetnextPDNtoken(const char ** start, char *token);
-int PDNparseGetnumberofgames(char *filename);			/* tokens are: -> {everything in a comment} */
-size_t getfilesize(char *filename);						/* -> a move: "11-15" or ""4x12" -> a text: "event" */
+int PDNparseGetnumberofgames(char *filename);
 

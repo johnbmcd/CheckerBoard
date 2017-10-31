@@ -11,59 +11,19 @@
 #include "utility.h"
 
 #define NEMESIS // enables detection of comments in round braces ( )
-size_t getfilesize(char *filename)
-{
-	// returns the file size, in bytes, of a file with name file, rounded up to the
-	// next multiple of 1024 = 1KB.
-	FILE *fp;
-	char buffer[1024];
-	size_t filesize = 0;
-
-	fp = fopen(filename, "r");
-	if (!fp)
-		return(0);
-
-	while (!feof(fp))
-		filesize += fread(buffer, 1024, 1, fp);
-
-	filesize++;
-
-	fclose(fp);
-	return filesize * 1024;
-}
 
 int PDNparseGetnumberofgames(char *filename)
 {
 	// returns the number of games in a PDN file
-	FILE *fp;
 	char *buffer;
 	std::string game;
 	char *p;
-	size_t filesize;
 	int ngames;
-	size_t bytesread;
+	READ_TEXT_FILE_ERROR_TYPE etype;
 
-	filesize = getfilesize(filename);
-	if (filesize == -1)
+	buffer = read_text_file(filename, etype);
+	if (buffer == nullptr)
 		return -1;
-
-	fp = fopen(filename, "r");
-	if (fp == NULL)
-		return -1;
-
-	// allocate a buffer large enough to load the entire file into memory:
-	filesize = ((filesize / 1024) + 2) * 1024;
-	buffer = (char *)malloc(filesize);
-	if (buffer == NULL)
-		return -1;
-
-	// and zero buffer
-	memset(buffer, 0, filesize);
-
-	// read file
-	bytesread = fread(buffer, 1, filesize, fp);
-	fclose(fp);
-	buffer[bytesread] = 0;
 
 	p = buffer;
 	ngames = 0;

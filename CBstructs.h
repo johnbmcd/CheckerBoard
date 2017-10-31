@@ -56,12 +56,11 @@ struct BALLOT_INFO {
 	std::string event;
 };
 
-typedef struct {
+struct RESULT {
 	int win;
 	int loss;
 	int draw;
-} RESULT;
-
+};
 
 /* A game move with associated move text, comments, and analysis text. */
 struct gamebody_entry {
