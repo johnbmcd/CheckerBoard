@@ -7,8 +7,8 @@
 #include <vector>
 
 // version 
-#define VERSION "1.73d"
-#define PLACE "August 17, 2017"
+#define VERSION "1.73e"
+#define PLACE "October 31, 2017"
 
 #define OP_BOARD 0			// different opening decks
 #define OP_MAILPLAY 1
