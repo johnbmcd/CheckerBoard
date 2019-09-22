@@ -1,5 +1,4 @@
 #pragma once
-#include <Windows.h>
 #include <stdint.h>
 
 /* Definitions shared between CheckerBoard and an engine.
@@ -71,13 +70,6 @@ struct CBmove {
 };
 
 typedef int Board8x8[8][8];
-
-/* Function pointer types of engine interface functions. */
-typedef INT (WINAPI *CB_GETMOVE)(Board8x8 board, int color, double maxtime, char str[1024], int *playnow, int info, int unused, CBmove *move);
-typedef INT (WINAPI *CB_GETSTRING)(char str[255]);		/* engine name, engine help */
-typedef unsigned int (WINAPI *CB_GETGAMETYPE)(void);	/* return GT_ENGLISH, GT_ITALIAN, ... */
-typedef INT (WINAPI *CB_ISLEGAL)(Board8x8 board, int color, int from, int to, CBmove *move);
-typedef INT (WINAPI *CB_ENGINECOMMAND)(char command[256], char reply[ENGINECOMMAND_REPLY_SIZE]);
 
 
 /*

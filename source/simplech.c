@@ -62,12 +62,9 @@
 
 
 /*----------> includes */
-#include <ShlObj.h>
-#include <Shlwapi.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include <windows.h>
 #include "cb_interface.h"
 #include "enginedefs.h"
 
@@ -99,7 +96,7 @@
                       MessageBox stating that this option is in fact not an option*/
 
 /* required functions */
-int WINAPI getmove
+/*int WINAPI getmove
 		(
 			Board8x8 board,
 			int color,
@@ -110,7 +107,7 @@ int WINAPI getmove
 			int unused,
 			CBmove *move
 		);
-
+*/
 void movetonotation(move2 move, char str[80]);
 
 /*----------> part II: search */
@@ -140,324 +137,6 @@ int *play;
 clock_t starttime;
 double absolute_maxtime;
 
-#ifdef LOG_TIME_MGMT
-char logfilename[MAX_PATH];
-
-void init_logfile()
-{
-	FILE *fp;
-	char path[MAX_PATH];
-
-	/* Create directories for Simplech under My Documents. */
-	if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_PERSONAL, NULL, 0, path))) {
-
-		/* Create the directories under My Documents. */
-		PathAppend(path, "Martin Fierz");
-		CreateDirectory(path, NULL);
-
-		PathAppend(path, "Simplech");
-		CreateDirectory(path, NULL);
-	}
-	sprintf(logfilename, "%s\\Simplech.log", path);
-	fp = fopen(logfilename, "w");
-	fclose(fp);
-}
-
-void log(const char *fmt, ...)
-{
-	FILE *fp;
-	va_list args;
-	va_start(args, fmt);
-
-	if (fmt == NULL)
-		return;
-
-	fp = fopen(logfilename, "a");
-	if (fp == NULL)
-		return;
-
-	vfprintf(fp, fmt, args);
-	fclose(fp);
-}
-#endif
-
-/*-------------- PART 1: dll stuff -------------------------------------------*/
-BOOL WINAPI DllMain(HANDLE hDLL, DWORD dwReason, LPVOID lpReserved)
-{
-	/* in a dll you used to have LibMain instead of WinMain in windows programs, or main
-   in normal C programs
-   win32 replaces LibMain with DllEntryPoint.*/
-	switch (dwReason) {
-	case DLL_PROCESS_ATTACH:
-		/* dll loaded. put initializations here! */
-#ifdef LOG_TIME_MGMT
-		init_logfile();
-#endif
-		break;
-
-	case DLL_PROCESS_DETACH:
-		/* program is unloading dll. put clean up here! */
-		break;
-
-	case DLL_THREAD_ATTACH:
-		break;
-
-	case DLL_THREAD_DETACH:
-		break;
-
-	default:
-		break;
-	}
-
-	return TRUE;
-}
-
-int WINAPI enginecommand(char str[256], char reply[256])
-{
-	// answer to commands sent by CheckerBoard.
-	// Simple Checkers does not answer to some of the commands,
-	// eg it has no engine options.
-	char command[256], param1[256], param2[256];
-
-	sscanf(str, "%s %s %s", command, param1, param2);
-
-	// check for command keywords
-	if (strcmp(command, "name") == 0) {
-		sprintf(reply, "Simple Checkers %s", VERSION);
-		return 1;
-	}
-
-	if (strcmp(command, "about") == 0) {
-		sprintf(reply, "Simple Checkers %s\n\n2002 by Martin Fierz", VERSION);
-		return 1;
-	}
-
-	if (strcmp(command, "help") == 0) {
-		sprintf(reply, "simplechhelp.htm");
-		return 1;
-	}
-
-	if (strcmp(command, "set") == 0) {
-		if (strcmp(param1, "hashsize") == 0) {
-			sprintf(reply, "?");
-			return 0;
-		}
-
-		if (strcmp(param1, "book") == 0) {
-			sprintf(reply, "?");
-			return 0;
-		}
-	}
-
-	if (strcmp(command, "get") == 0) {
-		if (strcmp(param1, "hashsize") == 0) {
-			sprintf(reply, "?");
-			return 0;
-		}
-
-		if (strcmp(param1, "book") == 0) {
-			sprintf(reply, "?");
-			return 0;
-		}
-
-		if (strcmp(param1, "protocolversion") == 0) {
-			sprintf(reply, "2");
-			return 1;
-		}
-
-		if (strcmp(param1, "gametype") == 0) {
-			sprintf(reply, "21");
-			return 1;
-		}
-	}
-
-	sprintf(reply, "?");
-	return 0;
-}
-
-int WINAPI getmove
-		(
-			Board8x8 b,
-			int color,
-			double maxtime,
-			char str[255],
-			int *playnow,
-			int info,
-			int moreinfo,
-			CBmove *move
-		)
-{
-	/* getmove is what checkerboard calls. you get 6 parameters:
-   b	 	is the current position. the values in the array are determined by
-   			the #defined values of CB_BLACK, CB_WHITE, CB_KING, CB_MAN. a black king for
-            instance is represented by CB_BLACK|CB_KING.
-   color		is the side to make a move. CB_BLACK or CB_WHITE.
-   maxtime	is the time your program should use to make a move. this is
-   		   what you specify as level in checkerboard. so if you exceed
-            this time it's not too bad - just don't exceed it too much...
-   str		is a pointer to the output string of the checkerboard status bar.
-   			you can use sprintf(str,"information"); to print any information you
-            want into the status bar.
-   *playnow	is a pointer to the playnow variable of checkerboard. if the user
-   			would like your engine to play immediately, this value is nonzero,
-            else zero. you should respond to a nonzero value of *playnow by
-            interrupting your search IMMEDIATELY.
-   CBmove *move
-   			is unused here. this parameter would allow engines playing different
-            versions of checkers to return a move to CB. for engines playing
-            english checkers this is not necessary.
-            */
-	int i;
-	int value;
-	bool incremental;
-	double desired, new_iter_maxtime;
-	double remaining, increment;
-	int board[46];
-
-	/* initialize board */
-	for (i = 0; i < 46; i++)
-		board[i] = OCCUPIED;
-	for (i = 5; i <= 40; i++)
-		board[i] = FREE;
-
-	/*				(white)
-   				37  38  39  40
-              32  33  34  35
-                28  29  30  31
-              23  24  25  26
-                19  20  21  22
-              14  15  16  17
-                10  11  12  13
-               5   6   7   8
-					(black)   */
-	board[5] = b[0][0];
-	board[6] = b[2][0];
-	board[7] = b[4][0];
-	board[8] = b[6][0];
-	board[10] = b[1][1];
-	board[11] = b[3][1];
-	board[12] = b[5][1];
-	board[13] = b[7][1];
-	board[14] = b[0][2];
-	board[15] = b[2][2];
-	board[16] = b[4][2];
-	board[17] = b[6][2];
-	board[19] = b[1][3];
-	board[20] = b[3][3];
-	board[21] = b[5][3];
-	board[22] = b[7][3];
-	board[23] = b[0][4];
-	board[24] = b[2][4];
-	board[25] = b[4][4];
-	board[26] = b[6][4];
-	board[28] = b[1][5];
-	board[29] = b[3][5];
-	board[30] = b[5][5];
-	board[31] = b[7][5];
-	board[32] = b[0][6];
-	board[33] = b[2][6];
-	board[34] = b[4][6];
-	board[35] = b[6][6];
-	board[37] = b[1][7];
-	board[38] = b[3][7];
-	board[39] = b[5][7];
-	board[40] = b[7][7];
-	for (i = 5; i <= 40; i++)
-		if (board[i] == 0)
-			board[i] = FREE;
-	for (i = 9; i <= 36; i += 9)
-		board[i] = OCCUPIED;
-
-	play = playnow;
-
-	starttime = clock();
-	if (incremental = get_incremental_times(info, moreinfo, &increment, &remaining)) {
-		if (remaining < increment) {
-			desired = remaining / 1.5;
-			absolute_maxtime = remaining;
-			new_iter_maxtime = 0.7 * absolute_maxtime / 1.5;
-		}
-		else {
-			desired = increment + remaining / 9;
-			absolute_maxtime = min(1.5 * desired, remaining);
-			new_iter_maxtime = 0.7 * absolute_maxtime / 1.5;
-		}
-
-		/* Allow a few msec for overhead. */
-		if (absolute_maxtime > .01)
-			absolute_maxtime -= .003;
-	}
-	else {
-		/* Using fixed time per move. These params result in an average search time of maxtime. */
-		new_iter_maxtime = 0.59 * maxtime;
-		absolute_maxtime = 3 * maxtime;
-	}
-
-	value = checkers(board, color, new_iter_maxtime, str);
-
-#ifdef LOG_TIME_MGMT
-	if (incremental) {
-		double elapsed = (clock() - starttime) / (double)CLK_TCK;
-		log("incr %.1f, remaining %.3f, abs maxt %.3f, desired %.3f, new iter maxt %.3f, actual %.3f, margin %.3f %s\n",
-			increment, remaining, absolute_maxtime, desired, new_iter_maxtime, 
-			elapsed, remaining - elapsed,
-			remaining - elapsed < 0 ? "***" : "");
-	}
-#endif
-	for (i = 5; i <= 40; i++)
-		if (board[i] == FREE)
-			board[i] = 0;
-
-	/* return the board */
-	b[0][0] = board[5];
-	b[2][0] = board[6];
-	b[4][0] = board[7];
-	b[6][0] = board[8];
-	b[1][1] = board[10];
-	b[3][1] = board[11];
-	b[5][1] = board[12];
-	b[7][1] = board[13];
-	b[0][2] = board[14];
-	b[2][2] = board[15];
-	b[4][2] = board[16];
-	b[6][2] = board[17];
-	b[1][3] = board[19];
-	b[3][3] = board[20];
-	b[5][3] = board[21];
-	b[7][3] = board[22];
-	b[0][4] = board[23];
-	b[2][4] = board[24];
-	b[4][4] = board[25];
-	b[6][4] = board[26];
-	b[1][5] = board[28];
-	b[3][5] = board[29];
-	b[5][5] = board[30];
-	b[7][5] = board[31];
-	b[0][6] = board[32];
-	b[2][6] = board[33];
-	b[4][6] = board[34];
-	b[6][6] = board[35];
-	b[1][7] = board[37];
-	b[3][7] = board[38];
-	b[5][7] = board[39];
-	b[7][7] = board[40];
-	if (color == BLACK) {
-		if (value > 4000)
-			return CB_WIN;
-		if (value < -4000)
-			return CB_LOSS;
-	}
-
-	if (color == WHITE) {
-		if (value > 4000)
-			return CB_LOSS;
-		if (value < -4000)
-			return CB_WIN;
-	}
-
-	return CB_UNKNOWN;
-}
-
 void movetonotation(move2 move, char str[80])
 {
 	int j, from, to;
@@ -482,7 +161,6 @@ void movetonotation(move2 move, char str[80])
 	c = '-';
 	if (move.n > 2)
 		c = 'x';
-	sprintf(str, "%2li%c%2li", from, c, to);
 }
 
 /*-------------- PART II: SEARCH ---------------------------------------------*/
@@ -495,6 +173,9 @@ int checkers(int b[46], int color, double maxtime, char *str)
   ----------> version: 1.1
   ----------> date: 9th october 98 */
 {
+	int playnow = 0;
+	play = &playnow;
+	
 	int i, numberofmoves;
 	int eval;
 	move2 best, lastbest, movelist[MAXMOVES];
@@ -528,22 +209,10 @@ int checkers(int b[46], int color, double maxtime, char *str)
 	}
 
 	eval = firstalphabeta(b, 1, -10000, 10000, color, &best);
-	for (i = 2; (i <= MAXDEPTH) && ((clock() - starttime) / (double)CLK_TCK < maxtime); i++) {
+	for (i = 2; (i <= MAXDEPTH) && ((clock() - starttime) / (double)CLOCKS_PER_SEC< maxtime); i++) {
 		lastbest = best;
 		eval = firstalphabeta(b, i, -10000, 10000, color, &best);
 		movetonotation(best, str2);
-#ifndef MUTE
-		sprintf(str, "best:%s time %2.2fs, depth %2li, value %4li", str2, (clock() - starttime) / (double)CLK_TCK, i, eval);
-#ifdef STATISTICS
-		sprintf(str2,
-				"  nodes %li, gms %li, gcs %li, evals %li",
-				alphabetas,
-				generatemovelists,
-				generatecapturelists,
-				evaluations);
-		strcat(str, str2);
-#endif
-#endif
 		if (*play)
 			break;
 		if (eval == 5000)
@@ -557,17 +226,6 @@ int checkers(int b[46], int color, double maxtime, char *str)
 		movetonotation(lastbest, str2);
 	else
 		movetonotation(best, str2);
-
-	sprintf(str,
-			"best:%s time %2.2f, depth %2li, value %4li  nodes %li, gms %li, gcs %li, evals %li",
-			str2,
-			(clock() - starttime) / (double)CLK_TCK,
-			i,
-			eval,
-			alphabetas,
-			generatemovelists,
-			generatecapturelists,
-			evaluations);
 
 	if (*play)
 		domove(b, lastbest);
@@ -661,10 +319,7 @@ int alphabeta(int b[46], int depth, int alpha, int beta, int color)
 
 	alphabetas++;
 	if ((alphabetas & 0x3ff) == 0) {
-		if ((clock() - starttime) / (double)CLK_TCK >= absolute_maxtime) {
-#ifdef LOG_TIME_MGMT
-			log("max detected at %.3f\n", (clock() - starttime) / (double)CLK_TCK);
-#endif
+		if ((clock() - starttime) / (double)CLOCKS_PER_SEC >= absolute_maxtime) {
 			*play = 1;
 		}
 	}
