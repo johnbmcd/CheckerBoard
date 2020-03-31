@@ -1,4 +1,6 @@
 #include <iostream>
+#include <vector>
+#include <array>
 #include "simplech.h"
 
 using namespace std;
@@ -39,11 +41,58 @@ void InitCheckerBoard(Board8x8 b)
 
 #define MAXDEPTH 99
 
+class BoardPrinter{
+public:
+	typedef std::array<unsigned char, 4> row;
+
+	BoardPrinter():
+	board_map 
+	{{
+		{37,  38,  39,  40},
+        {32,  33,  34,  35},
+        {28,  29,  30,  31},
+        {23,  24,  25,  26},
+        {19,  20,  21,  22},
+        {14,  15,  16,  17},
+        {10,  11,  12,  13},
+        {5 ,  6 ,  7 ,  8}
+	}}
+	{}
+
+	void operator()(int b[46])
+	{
+		bool odd_row = true;
+		for (const auto &r : board_map )
+		{
+			if (odd_row) cout << " ";
+			for (const auto &e : r)
+			{
+				char piece;
+				if (b[e]&CB_BLACK)
+					piece = 'B';
+				else if (b[e]&CB_WHITE) 
+					piece = 'W';
+				else
+					piece = ' ';	
+				
+				cout << piece << " ";
+			}
+			cout << "\n";
+			odd_row = !odd_row;
+		}
+
+	}
+
+private:
+	std::array<row, 8> board_map;
+};
+
 
 int main(){
     Board8x8 b;
     InitCheckerBoard(b);
 
+	BoardPrinter bp;
 
     int board[46];
 	/* initialize board */
@@ -100,16 +149,33 @@ int main(){
  	for (int i = 9; i <= 36; i += 9)
  		board[i] = OCCUPIED;
 
-    char str[200];
+    char str[200]="";
+	bp(board);
     checkers(board, CB_WHITE, 200, str);
+	cout << "Move: " << str << endl;
 
+	bp(board);
     checkers(board, CB_BLACK, 200, str);
+	cout << "Move: " << str << endl;
 
+	bp(board);
     checkers(board, CB_WHITE, 200, str);
+	cout << "Move: " << str << endl;
 
+	bp(board);
     checkers(board, CB_BLACK, 200, str); 
+	cout << "Move: " << str << endl;
 
+	bp(board);
     checkers(board, CB_WHITE, 200, str);
+	cout << "Move: " << str << endl;
 
+	bp(board);
     checkers(board, CB_BLACK, 200, str);   
+	cout << "Move: " << str << endl;
+
+	bp(board);
+    checkers(board, CB_WHITE, 200, str);
+	cout << "Move: " << str << endl;
+
 }
