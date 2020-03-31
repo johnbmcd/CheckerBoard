@@ -92,6 +92,10 @@ private:
 	const int BM = (CB_BLACK | CB_MAN);
 	const int WK = (CB_WHITE | CB_KING);
 	const int BK = (CB_BLACK | CB_KING);
+
+	/** Unicode printing of checkers pieces                                  */
+	/* see: https://altcodeunicode.com/alt-codes-die-checkers-shogi-symbols/ */
+	/* and https://stackoverflow.com/a/16970900                              */
 	const char *wman = "\u26C0";
 	const char *wking = "\u26C1";
 	const char *bman = "\u26C2";
@@ -164,7 +168,7 @@ int main(){
 
     char str[200]="";
 
-	const size_t NUM_MOVES = 10;
+	const size_t NUM_MOVES = 30;
 	for (int i = 0; i < NUM_MOVES; ++i)
 	{
 		bp(board);
