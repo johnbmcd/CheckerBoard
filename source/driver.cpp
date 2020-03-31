@@ -64,26 +64,39 @@ public:
 		bool odd_row = true;
 		for (const auto &r : board_map )
 		{
-			if (odd_row) cout << " ";
+			if (odd_row) cout << "[ ]";
 			for (const auto &e : r)
 			{
-				char piece;
-				if (b[e]&CB_BLACK)
-					piece = 'B';
-				else if (b[e]&CB_WHITE) 
-					piece = 'W';
+				const char *piece;
+				if (b[e] == BM)
+					piece = bman;
+				else if (b[e] == WM)
+					piece = wman;
+				else if (b[e] == BK)
+					piece = bking;
+				else if (b[e] == WK)
+					piece = wking;
 				else
-					piece = ' ';	
-				
-				cout << piece << " ";
+					piece = empty;
+
+				cout << "[" << piece << "][ ]";
 			}
+			if (odd_row) cout << "\b\b\b   ";
 			cout << "\n";
 			odd_row = !odd_row;
 		}
-
 	}
 
 private:
+	const int WM = (CB_WHITE | CB_MAN);
+	const int BM = (CB_BLACK | CB_MAN);
+	const int WK = (CB_WHITE | CB_KING);
+	const int BK = (CB_BLACK | CB_KING);
+	const char *wman = "\u26C0";
+	const char *wking = "\u26C1";
+	const char *bman = "\u26C2";
+	const char *bking = "\u26C3";
+	const char *empty = " ";
 	std::array<row, 8> board_map;
 };
 
@@ -150,32 +163,16 @@ int main(){
  		board[i] = OCCUPIED;
 
     char str[200]="";
-	bp(board);
-    checkers(board, CB_WHITE, 200, str);
-	cout << "Move: " << str << endl;
 
-	bp(board);
-    checkers(board, CB_BLACK, 200, str);
-	cout << "Move: " << str << endl;
+	const size_t NUM_MOVES = 10;
+	for (int i = 0; i < NUM_MOVES; ++i)
+	{
+		bp(board);
+		checkers(board, CB_WHITE, 200, str);
+		cout << "Move: " << str << endl;
 
-	bp(board);
-    checkers(board, CB_WHITE, 200, str);
-	cout << "Move: " << str << endl;
-
-	bp(board);
-    checkers(board, CB_BLACK, 200, str); 
-	cout << "Move: " << str << endl;
-
-	bp(board);
-    checkers(board, CB_WHITE, 200, str);
-	cout << "Move: " << str << endl;
-
-	bp(board);
-    checkers(board, CB_BLACK, 200, str);   
-	cout << "Move: " << str << endl;
-
-	bp(board);
-    checkers(board, CB_WHITE, 200, str);
-	cout << "Move: " << str << endl;
-
+		bp(board);
+		checkers(board, CB_BLACK, 200, str);
+		cout << "Move: " << str << endl;
+	}
 }
